@@ -7,8 +7,11 @@ I often need a scratch pad for text to be used elsewhere, like in a DM or commit
 
 The planck editor is a big empty textarea for a scratchpad. It is arguably a single-page app. Very very arguably.
 
-Todo in the future:
-- Better readability for longer text. Break lines at a limited number of words.
+## Installation
+
+<pre>git clone https://github.com/lucasgonze/planck-scale-editor
+git submodule update --init --recursive</pre>
+
+## Todo
+
 - Ability to switch between a monospace font and a sans-serif.
-- Link to Github repo
-- Ability to auto-update from the latest state of the repo
