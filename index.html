@@ -24,6 +24,13 @@
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/main.css">
 
+  <!-- readability via hello-css open-source project -->
+	<link rel="stylesheet" href="hello-css/base.css">
+	<link rel="stylesheet" href="hello-css/aside.css">
+	<link rel="stylesheet" href="hello-css/blockquote.css">
+	<link rel="stylesheet" href="hello-css/permalink.css">
+	<link rel="stylesheet" href="hello-css/postscript.css">
+
   <meta name="theme-color" content="#fafafa">
 
   <style type="text/css" media="screen">
@@ -43,6 +50,11 @@
         padding: 1em;
         border: 1px dotted gray;
     }
+
+    article.page {
+      margin-top: 2em;
+      height: 30em
+    }
   </style>
 
 </head>
@@ -53,7 +65,13 @@
   <script src="js/plugins.js"></script>
   <script src="js/main.js"></script>
 
-  <textarea id="editor" autofocus></textarea>
+  <article class="page">
+      <textarea id="editor" autofocus></textarea>
+  </article>
+
+  <footer class="right">
+    <a href="https://github.com/lucasgonze/planck-scale-editor">planck</a> scratchpad
+  </footer>
 
 </body>
 
