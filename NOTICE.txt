@@ -1,3 +1,8 @@
+Planck Scratchpad
+Copyright 2023 Lucas Gonze <lucas@gonze.com>
+
+The Initial Developer of some parts of this software is H5BP (https://h5bp.org)
+
 Copyright (c) HTML5 Boilerplate
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of

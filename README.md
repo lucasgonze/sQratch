@@ -1,15 +1,16 @@
-# planck-scale-editor
+# planck-scratchpad
+
 A browser-based editor with no saves, no features, no tracking, no load time. Just a blank textarea for a scratchpad.
 
 I often need a scratch pad for text to be used elsewhere, like in a DM or commit. For that I usually use a gist (https://gist.github.com/). However this is slow, bad for privacy, and has some annoying malfeatures.
 
-The planck editor is a big empty textarea for a scratchpad. It is arguably a single-page app. Very very arguably.
+The planck editor is a big empty textarea for a scratchpad. It is arguably a single-page app. Definitely a single page, arguably an app.
 
-Demo: https://gonze.com/planck-scale-editor
+Demo: https://planckscratchpad.xyz
 
 ## Installation
 
-<pre>git clone https://github.com/lucasgonze/planck-scale-editor
+<pre>git clone https://github.com/lucasgonze/planck-scratchpad
 git submodule update --init --recursive</pre>
 
 ## Todo
@@ -18,7 +19,7 @@ git submodule update --init --recursive</pre>
 
 ## Thanks and Praise and Copyright
 
-plank-scale-editor is under [version 2 of the Apache Public License](LICENSE.txt).
+plank-scratchpad is under [version 2 of the Apache Public License](LICENSE.txt).
 
 ### css
 

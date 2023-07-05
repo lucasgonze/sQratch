@@ -1,3 +1,3 @@
 [submodule "hello-css"]
-	path = hello-css
+	path = site/hello-css
 	url = https://github.com/arp242/hello-css
