@@ -1,78 +1,47 @@
 <!doctype html>
-<html class="no-js" lang="en">
-<!-- 
-  A scratchpad with no features, no load time, no tracking, no saves, no hosting. 
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>skratchpad - minimalist privacy-first editor</title>
+    <meta name="description" content="minimalist privacy-first editor for use as a scratchpad">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  To host it yourself:
-  git clone https://github.com/lucasgonze/planck-scratchpad
--->
-<head>
-  <meta charset="utf-8">
-  <title>Planck Scratchpad</title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:title" content="Skratchpad">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://skratchpad.xyz">
 
-  <meta property="og:title" content="">
-  <meta property="og:type" content="">
-  <meta property="og:url" content="">
-  <meta property="og:image" content="">
+    <style type="text/css" media="screen">
 
-  <link rel="manifest" href="site.webmanifest">
-  <link rel="apple-touch-icon" href="icon.png">
-  <!-- Place favicon.ico in the root directory -->
-
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/main.css">
-
-  <!-- readability via hello-css open-source project -->
-	<link rel="stylesheet" href="hello-css/base.css">
-	<link rel="stylesheet" href="hello-css/aside.css">
-	<link rel="stylesheet" href="hello-css/blockquote.css">
-	<link rel="stylesheet" href="hello-css/permalink.css">
-	<link rel="stylesheet" href="hello-css/postscript.css">
-
-  <meta name="theme-color" content="#fafafa">
-
-  <style type="text/css" media="screen">
-    body {
-        overflow: hidden;
-    }
-
-    #editor {
-        margin: 0;
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
+      body {
+        font-family:Arial, Helvetica, sans-serif;
         padding: 1em;
-        border: 1px dotted gray;
-    }
+        text-align: left;
+      }
+      article.editor {
+        margin: 2em;
+        padding: 1em;
+      }
 
-    article.page {
-      margin-top: 2em;
-      height: 30em
-    }
-  </style>
+      [data-placeholder]:empty:before{
+        content: attr(data-placeholder);
+        font-style: italic;
+      }
+    </style>
 
-</head>
+  </head>
 
-<body>
+  <body>
 
-  <script src="js/vendor/modernizr-3.11.2.min.js"></script>
-  <script src="js/plugins.js"></script>
-  <script src="js/main.js"></script>
+    <nav class="top">
+      <a href="https://github.com/lucasgonze/planck-scratchpad">skratchpad</a>
+    </nav>
 
-  <article class="page">
-      <textarea id="editor" autofocus></textarea>
-  </article>
+    <article 
+      class="editor" 
+      contenteditable 
+      data-placeholder="Edit this placeholder"
+      ></article>
 
-  <footer class="center">
-    <a href="https://github.com/lucasgonze/planck-scale-editor">planck scratchpad</a>
-  </footer>
-
-</body>
+  </body>
 
 </html>
