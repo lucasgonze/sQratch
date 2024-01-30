@@ -11,7 +11,8 @@
     "start": "npm run build && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "devDependencies": {
-    "parcel-bundler": "^1.12.4"
+  "dependencies": {
+    "package-lock.json": "^1.0.0",
+    "package.json": "^2.0.1"
   }
 }
