@@ -21,6 +21,10 @@
         margin: 2em;
         padding: 1em;
       }
+      p#counter {
+        text-align: right;
+        padding: 2em;
+      }
 
       @media (width <= 80em) {
         article.editor {
@@ -35,9 +39,23 @@
       }
     </style>
 
+    <script type="text/javascript">
+      window.addEventListener("load", (event) => {
+        console.log("page is fully loaded");
+        el = document.getElementsByTagName('article')[0];
+        el.focus({ focusVisible: true });
+
+        el.addEventListener("input", (event) => {
+          len = el.innerText.trim().length;
+          document.getElementById("counter").innerText = len;
+        });
+
+      });
+    </script>
+
   </head>
 
-  <body onload="document.getElementsByTagName('article')[0].focus({ focusVisible: true })"> 
+  <body onload=""> 
 
     <nav class="top">
       <a href="https://github.com/lucasgonze/planck-scratchpad">sKratchpad</a>
@@ -48,6 +66,7 @@
       contenteditable 
       data-placeholder="Edit this placeholder"
       ></article>
+      <p id="counter"></p>
 
   </body>
 
