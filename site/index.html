@@ -17,13 +17,13 @@
         padding: 1em;
         text-align: left;
       }
-      article.editor {
+      article.editor, article.sans-serif, article.serif, article.monospace {
         margin: 2em;
         padding: 1em;
       }
       p#counter {
         text-align: right;
-        padding: 2em;
+        padding-right: 1  em;
       }
 
       @media (width <= 80em) {
@@ -37,17 +37,30 @@
         content: attr(data-placeholder);
         font-style: italic;
       }
+
+      div#switches {
+        text-align: right;
+        padding-right: 1em;
+      }
+      article.sans-serif { font-family: sans-serif; }
+      article.serif { font-family: serif; }
+      article.monospace { font-family: monospace; }
     </style>
 
     <script type="text/javascript">
       window.addEventListener("load", (event) => {
         console.log("page is fully loaded");
+
         el = document.getElementsByTagName('article')[0];
         el.focus({ focusVisible: true });
-
         el.addEventListener("input", (event) => {
           len = el.innerText.trim().length;
           document.getElementById("counter").innerText = len;
+        });
+
+        document.getElementById('switches').addEventListener("change",() => {
+          document.getElementById('mcguffin').className = 
+            document.getElementById('font-select').value
         });
 
       });
@@ -61,10 +74,20 @@
       <a href="https://github.com/lucasgonze/planck-scratchpad">sKratchpad</a>
     </nav>
 
+    <div id="switches">
+      <label for="font-select">font:</label>
+      <select name="font" id="font-select">
+        <option value="sans-serif">sans-serif</option>
+        <option value="serif">serif</option>
+        <option value="monospace">monospace</option>
+      </select>
+    </div>
+
     <article 
       class="editor" 
       contenteditable 
       data-placeholder="Edit this placeholder"
+      id="mcguffin"
       ></article>
       <p id="counter"></p>
 
