@@ -8,7 +8,7 @@
 
     <meta property="og:title" content="Skratchpad">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://sKratchpad.xyz">
+    <meta property="og:url" content="https://sQratchpad.xyz">
 
     <style type="text/css" media="screen">
 
@@ -20,6 +20,7 @@
       article.editor, article.sans-serif, article.serif, article.monospace {
         margin: 2em;
         padding: 1em;
+        max-width: 60em;
       }
       p#counter {
         text-align: right;
@@ -30,6 +31,7 @@
         article.editor {
           margin: 1em;
           padding: 1em;
+          max-width: 60em;
         }
       }
 
@@ -59,7 +61,7 @@
         });
 
         document.getElementById('switches').addEventListener("change",() => {
-          document.getElementById('mcguffin').className = 
+          document.getElementById('mcguffin').className =
             document.getElementById('font-select').value
         });
 
@@ -68,10 +70,10 @@
 
   </head>
 
-  <body onload=""> 
+  <body onload="">
 
     <nav class="top">
-      <a href="https://github.com/lucasgonze/planck-scratchpad">sKratchpad</a>
+      <a href="https://github.com/lucasgonze/sqratchpad">sQratchpad</a>
     </nav>
 
     <div id="switches">
@@ -83,9 +85,9 @@
       </select>
     </div>
 
-    <article 
-      class="editor" 
-      contenteditable 
+    <article
+      class="editor"
+      contenteditable
       data-placeholder="Edit this placeholder"
       id="mcguffin"
       ></article>
