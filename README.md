@@ -1,21 +1,25 @@
 # sQratchpad
 
-A browser-based editor with no saves, no features, no tracking, no load time. Just a blank textarea for a scratchpad.
+I often need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
 
-I often need a scratch pad for text to be used elsewhere, like in a DM or commit. For that I usually use a gist (https://gist.github.com/). However this is slow, bad for privacy, and has some annoying malfeatures.
+- The gist editor in Github gives up PII to Microsoft and takes too long to load
+- CLI editors like Emacs and vi require you to open a console window
+- A full word processor like Word or GDocs takes forever to start up
+- Composing an email draft distracts you with emails. Ditto a Slack, Discord, whatever editor. Too much distraction.
 
-The planck editor is a big empty textarea for a scratchpad. It is arguably a single-page app. Definitely a single page, arguably an app.
+The app I'm building in this project:
+
+- Has zero privacy loss. There are no cookies and no logs.
+- Starts up superfast.
+- Gets you right into the edit box with no extra steps
+- Helps you focus instead of distracting you.
 
 Demo: https://planckscratchpad.xyz
 
 ## Installation
 
-<pre>git clone https://github.com/lucasgonze/planck-scratchpad
+<pre>git clone https://github.com/lucasgonze/sQratchpad
 git submodule update --init --recursive</pre>
-
-## Todo
-
-- Ability to switch between a monospace font and a sans-serif.
 
 ## Thanks and Praise and Copyright
 
