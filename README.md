@@ -1,4 +1,4 @@
-# sQratchpad
+# sQratch scratchpad
 
 I often need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
 
