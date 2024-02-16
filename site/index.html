@@ -4,35 +4,33 @@
     <meta charset="utf-8">
     <title>sQratch - privacy-first editor</title>
     <meta name="description" content="minimalist privacy-first editor for use as a scratchpad">
+
+    <!--To ensure proper rendering and touch zooming for all devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <meta property="og:title" content="sQratch">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sQratch.us">
 
+    <link href="/bootstrap-5.3.2-dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
     <style type="text/css" media="screen">
 
       body {
-        font-family:Arial, Helvetica, sans-serif;
         padding: 1em;
         text-align: left;
       }
       article.editor, article.sans-serif, article.serif, article.monospace {
         margin: 2em;
+        margin-right: 0;
         padding: 1em;
-        max-width: 60em;
+        padding-right: 0;
       }
       p#counter {
         text-align: right;
-        padding-right: 1  em;
       }
 
       @media (width <= 80em) {
-        article.editor {
-          margin: 1em;
-          padding: 1em;
-          max-width: 60em;
-        }
       }
 
       [data-placeholder]:empty:before{
@@ -42,7 +40,6 @@
 
       div#switches {
         text-align: right;
-        padding-right: 1em;
       }
       article.sans-serif { font-family: sans-serif; }
       article.serif { font-family: serif; }
@@ -70,29 +67,40 @@
 
   </head>
 
-  <body onload="">
+  <body>
 
-    <nav class="top">
-      <a href="https://github.com/lucasgonze/sqratch">sQratch</a>
-    </nav>
+    <div class="container-lg"><!-- top container, just under body -->
 
-    <div id="switches">
-      <label for="font-select">font:</label>
-      <select name="font" id="font-select">
-        <option value="sans-serif">sans-serif</option>
-        <option value="serif">serif</option>
-        <option value="monospace">monospace</option>
-      </select>
-    </div>
+      <nav>
+        <a href="https://github.com/lucasgonze/sqratch">sQratch</a>
+      </nav>
 
-    <article
-      class="editor"
-      contenteditable
-      data-placeholder="Edit this placeholder"
-      id="mcguffin"
-      ></article>
-      <p id="counter"></p>
+      <!-- editor -->
+      <div class="container">
 
+        <div id="switches">
+          <label for="font-select">font:</label>
+          <select name="font" id="font-select">
+            <option value="sans-serif">sans-serif</option>
+            <option value="serif">serif</option>
+            <option value="monospace">monospace</option>
+          </select>
+        </div>
+
+        <article
+          class="editor"
+          contenteditable
+          data-placeholder="Edit this placeholder"
+          id="mcguffin"
+          ></article>
+          <p id="counter"></p>
+        </div><!-- article container -->
+
+        <!-- Bottom container, just above /body -->
+      </div>
+
+      <!-- stubbed out until we need it -->
+      <!-- script src="/bootstrap-5.3.2-dist/js/bootstrap.bundle.min.js"></script -->
   </body>
 
 </html>
