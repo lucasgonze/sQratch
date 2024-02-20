@@ -47,6 +47,20 @@
       article.sans-serif { font-family: sans-serif; }
       article.serif { font-family: serif; }
       article.monospace { font-family: monospace; }
+
+      footer {
+        /* horizontal positioning */
+        text-align: center;
+        width: 100%;
+
+        font-size: small;
+
+        /* sticky on the bottom */
+        position: absolute;
+        bottom: 0;
+        height: 60px; /* Set the fixed height of the footer here */
+        line-height: 60px; /* Vertically center the text there */
+      }
     </style>
 
     <script type="text/javascript">
@@ -74,9 +88,7 @@
 
     <div class="container-lg"><!-- top container, just under body -->
 
-      <nav>
-        <a href="https://github.com/lucasgonze/sqratch">sQratch</a>
-      </nav>
+      <nav>sQratch</nav>
 
       <!-- editor -->
       <div class="container">
@@ -98,6 +110,10 @@
           ></article>
           <p id="counter"></p>
         </div><!-- article container -->
+
+        <footer>
+          <a href="https://github.com/lucasgonze/sqratch">github.com/lucasgonze/sqratch</a>
+        </footer>
 
         <!-- Bottom container, just above /body -->
       </div>
