@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>sQratch - privacy-first editor</title>
+    <title>sQratch - private editor</title>
     <meta name="description" content="minimalist privacy-first editor for use as a scratchpad">
 
     <!--To ensure proper rendering and touch zooming for all devices -->
@@ -21,7 +21,7 @@
         text-align: left;
       }
       article.editor, article.sans-serif, article.serif, article.monospace {
-        margin-top: 7px;
+	margin-top: 10px;
         margin-right: 0;
         margin-bottom: 7px;
         padding: 1em;
@@ -42,43 +42,34 @@
         font-style: italic;
       }
 
-      div#switches {
-        text-align: right;
-      }
-      article.sans-serif { font-family: sans-serif; }
-      article.serif { font-family: serif; }
-      article.monospace { font-family: monospace; }
-
-      footer {
-        /* horizontal positioning */
-        text-align: center;
-        width: 100%;
-
-        font-size: small;
-
-        /* sticky on the bottom */
-        position: absolute;
-        bottom: 0;
-        height: 60px; /* Set the fixed height of the footer here */
-        line-height: 60px; /* Vertically center the text there */
-      }
+      *.sans-serif { font-family: sans-serif; }
+      *.serif { font-family: serif; }
+      *.monospace { font-family: monospace; }
     </style>
 
     <script type="text/javascript">
       window.addEventListener("load", (event) => {
-        console.log("page is fully loaded");
 
         el = document.getElementsByTagName('article')[0];
-        el.focus({ focusVisible: true });
+
+        // character counter
         el.addEventListener("input", (event) => {
           len = el.innerText.trim().length;
           document.getElementById("counter").innerText = len;
         });
 
-        document.getElementById('switches').addEventListener("change",() => {
-          document.getElementById('mcguffin').className =
-            document.getElementById('font-select').value
-        });
+        document.querySelector('#buttons').addEventListener("click",
+          function handler(event){
+            font = event.target.dataset.font;
+            if( font == "sans-serif" || font == "serif" || font == "monospace" ){
+              article = document.querySelector('#mcguffin');
+              article.classList.remove("sans-serif");
+              article.classList.remove("serif");
+              article.classList.remove("monospace");
+              article.classList.add(font);
+            }
+          }
+        )
 
       });
     </script>
@@ -89,31 +80,29 @@
 
     <div class="container-lg"><!-- top container, just under body -->
 
-      <nav>sQratch</nav>
+      <nav>sQratch<a style="text-decoration:none" href="https://github.com/lucasgonze/sqratch">*</a></nav>
 
       <!-- editor -->
       <div class="container">
 
-        <div id="switches">
-          <select name="font" id="font-select">
-            <option value="sans-serif">sans-serif</option>
-            <option value="serif">serif</option>
-            <option value="monospace">monospace</option>
-          </select>
-        </div>
+        <div class="text-end" id="buttons">
+          <div class="btn-group" role="group" aria-label="Basic outlined example">
+            <button type="button" class="btn btn-outline-primary sans-serif" data-font="sans-serif">Aa</button>
+            <button type="button" class="btn btn-outline-primary serif" data-font="serif">Aa</button>
+            <button type="button" class="btn btn-outline-primary monospace" data-font="monospace">Aa</button>
+          </div>
+      </div>
 
         <article
           class="editor"
           contenteditable
           data-placeholder="Write here"
           id="mcguffin"
+          autofocus
           ></article>
           <p id="counter"></p>
         </div><!-- article container -->
 
-        <footer>
-          <a href="https://github.com/lucasgonze/sqratch">github.com/lucasgonze/sqratch</a>
-        </footer>
 
         <!-- Bottom container, just above /body -->
       </div>
