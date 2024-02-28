@@ -1,10 +1,10 @@
 # sQratch scratchpad
 
-I often need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
+Sometimes you need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
 
 - The gist editor in Github gives up PII to Microsoft and takes too long to load
 - CLI editors like Emacs and vi require you to open a console window
-- A full word processor like Word or GDocs takes forever to start up
+- A full word processor like Word or GDocs takes forever to start up and has zero privacy
 - Composing an email draft distracts you with your inbox. Ditto a Slack, Discord, whatever editor. Too much distraction.
 
 The app I'm building in this project:
