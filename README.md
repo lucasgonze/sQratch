@@ -1,6 +1,6 @@
 # sQratch scratchpad
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Sometimes you need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
@@ -43,6 +43,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.mathieu-william.com/"><img src="https://avatars.githubusercontent.com/u/135847735?v=4?s=100" width="100px;" alt="~ Matt"/><br /><sub><b>~ Matt</b></sub></a><br /><a href="#design-mathieu-william" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://gonze.com/about"><img src="https://avatars.githubusercontent.com/u/111581?v=4?s=100" width="100px;" alt="Lucas Gonze"/><br /><sub><b>Lucas Gonze</b></sub></a><br /><a href="#ideas-lucasgonze" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/lucasgonze/sQratch/commits?author=lucasgonze" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
