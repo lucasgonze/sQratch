@@ -1,4 +1,7 @@
 # sQratch scratchpad
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Sometimes you need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
 
@@ -28,3 +31,25 @@ the hello-css fonts directory is distributed under [the SIL Open Font License 1.
 The fleurons in the &lt;hr&gt; element are exports from the Deja-Vu font, which
 is in the public domain.
 
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.mathieu-william.com/"><img src="https://avatars.githubusercontent.com/u/135847735?v=4?s=100" width="100px;" alt="~ Matt"/><br /><sub><b>~ Matt</b></sub></a><br /><a href="#design-mathieu-william" title="Design">🎨</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
