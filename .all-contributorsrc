@@ -15,6 +15,16 @@
       "contributions": [
         "design"
       ]
+    },
+    {
+      "login": "lucasgonze",
+      "name": "Lucas Gonze",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111581?v=4",
+      "profile": "http://gonze.com/about",
+      "contributions": [
+        "ideas",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
