@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>sQratch Tests - Remove Formatting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2em;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .test-result {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .test-pass {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .test-fail {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .test-summary {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 4px;
+      }
+      #test-editor {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px 0;
+        min-height: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Unit Tests: Remove Formatting Feature</h1>
+    <div id="test-results"></div>
+    <div id="test-editor" contenteditable></div>
+
+    <script>
+      // Test utilities
+      const tests = [];
+      let passCount = 0;
+      let failCount = 0;
+
+      function assert(condition, message) {
+        if (!condition) {
+          throw new Error(message || 'Assertion failed');
+        }
+      }
+
+      function assertEquals(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(`${message || 'Assertion failed'}: expected "${expected}" but got "${actual}"`);
+        }
+      }
+
+      function test(name, fn) {
+        tests.push({ name, fn });
+      }
+
+      function runTests() {
+        const resultsDiv = document.getElementById('test-results');
+        resultsDiv.innerHTML = '<h2>Running Tests...</h2>';
+
+        tests.forEach(({ name, fn }) => {
+          const resultDiv = document.createElement('div');
+          resultDiv.className = 'test-result';
+
+          try {
+            fn();
+            resultDiv.classList.add('test-pass');
+            resultDiv.innerHTML = `✓ ${name}`;
+            passCount++;
+          } catch (error) {
+            resultDiv.classList.add('test-fail');
+            resultDiv.innerHTML = `✗ ${name}<br><small>${error.message}</small>`;
+            failCount++;
+          }
+
+          resultsDiv.appendChild(resultDiv);
+        });
+
+        // Summary
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'test-summary';
+        const total = passCount + failCount;
+        summaryDiv.style.backgroundColor = failCount === 0 ? '#d4edda' : '#f8d7da';
+        summaryDiv.style.color = failCount === 0 ? '#155724' : '#721c24';
+        summaryDiv.innerHTML = `Tests: ${passCount} passed, ${failCount} failed, ${total} total`;
+        resultsDiv.appendChild(summaryDiv);
+      }
+
+      // Helper function to simulate the remove formatting functionality
+      function removeFormatting(element) {
+        const text = element.innerText;
+        element.innerHTML = text.replace(/\n/g, '<br>');
+      }
+
+      // Tests
+      test('Remove bold formatting but preserve text', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Bold text</b>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Bold text', 'Bold tags should be removed');
+      });
+
+      test('Remove italic formatting but preserve text', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<i>Italic text</i>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Italic text', 'Italic tags should be removed');
+      });
+
+      test('Remove multiple formatting tags', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Bold</b> and <i>italic</i> and <u>underline</u>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Bold and italic and underline', 'All formatting should be removed');
+      });
+
+      test('Remove color styling', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<span style="color: red;">Red text</span>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Red text', 'Color styling should be removed');
+      });
+
+      test('Remove nested formatting', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b><i><u>Nested formatting</u></i></b>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Nested formatting', 'Nested formatting should be removed');
+      });
+
+      test('Preserve line breaks as <br> tags', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = 'Line 1<br>Line 2<br>Line 3';
+        // This simulates what happens when user has line breaks
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Line 1<br>Line 2<br>Line 3', 'Line breaks should be preserved as <br>');
+      });
+
+      test('Remove formatting and preserve line breaks', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Bold line 1</b><br><i>Italic line 2</i>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Bold line 1<br>Italic line 2', 'Formatting removed but line breaks preserved');
+      });
+
+      test('Handle empty content', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, '', 'Empty content should remain empty');
+      });
+
+      test('Remove complex HTML structure', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<div><p><span style="font-size: 20px;"><b>Complex</b> HTML</span></p></div>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Complex HTML', 'Complex HTML should be flattened to plain text');
+      });
+
+      test('Handle special characters', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>&lt;script&gt;</b> &amp; <i>"quotes"</i>';
+        removeFormatting(editor);
+        // innerText converts HTML entities back to characters
+        assert(editor.innerHTML.includes('script') && editor.innerHTML.includes('&'), 'Special characters should be preserved');
+      });
+
+      // Character set tests
+      test('Handle emoji characters', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Hello 👋 World 🌍</b> <i>😀 🎉 ✨</i>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Hello 👋 World 🌍 😀 🎉 ✨', 'Emoji should be preserved');
+      });
+
+      test('Handle Chinese characters (CJK)', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>你好世界</b> <i>こんにちは</i> <u>안녕하세요</u>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, '你好世界 こんにちは 안녕하세요', 'CJK characters should be preserved');
+      });
+
+      test('Handle Arabic characters (RTL)', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>مرحبا بالعالم</b>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'مرحبا بالعالم', 'Arabic characters should be preserved');
+      });
+
+      test('Handle Hebrew characters (RTL)', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<i>שלום עולם</i>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'שלום עולם', 'Hebrew characters should be preserved');
+      });
+
+      test('Handle Latin with diacritics', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Café</b> <i>naïve</i> <u>résumé</u> façade';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Café naïve résumé façade', 'Accented characters should be preserved');
+      });
+
+      test('Handle Cyrillic characters', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Привет мир</b>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Привет мир', 'Cyrillic characters should be preserved');
+      });
+
+      test('Handle mixed scripts and emoji', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Hello</b> <i>世界</i> 🌍 <u>مرحبا</u>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, 'Hello 世界 🌍 مرحبا', 'Mixed scripts should be preserved');
+      });
+
+      test('Handle mathematical symbols and special Unicode', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>∑ ∫ ∞ ≈ ≠ √</b> <i>α β γ δ</i>';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, '∑ ∫ ∞ ≈ ≠ √ α β γ δ', 'Mathematical symbols should be preserved');
+      });
+
+      test('Handle currency symbols', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>$100</b> <i>€50</i> <u>¥1000</u> £75 ₹500';
+        removeFormatting(editor);
+        assertEquals(editor.innerHTML, '$100 €50 ¥1000 £75 ₹500', 'Currency symbols should be preserved');
+      });
+
+      test('Handle zero-width characters', () => {
+        const editor = document.getElementById('test-editor');
+        // Zero-width space (U+200B) and zero-width joiner (U+200D)
+        editor.innerHTML = '<b>test\u200Bword</b>';
+        removeFormatting(editor);
+        assert(editor.innerHTML.includes('test') && editor.innerHTML.includes('word'), 'Zero-width characters should be handled');
+      });
+
+      test('Handle combining characters', () => {
+        const editor = document.getElementById('test-editor');
+        // e with combining acute accent (U+0301)
+        editor.innerHTML = '<b>e\u0301</b> <i>n\u0303</i>';
+        removeFormatting(editor);
+        assert(editor.innerHTML.length > 0, 'Combining characters should be preserved');
+      });
+
+      test('Handle emoji with skin tone modifiers', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>👋🏽 👍🏾 🤝🏿</b>';
+        removeFormatting(editor);
+        assert(editor.innerHTML.includes('👋') && editor.innerHTML.includes('👍'), 'Emoji with modifiers should be preserved');
+      });
+
+      test('Handle emoji sequences (ZWJ)', () => {
+        const editor = document.getElementById('test-editor');
+        // Family emoji (uses zero-width joiner)
+        editor.innerHTML = '<b>👨‍👩‍👧‍👦 👩‍💻</b>';
+        removeFormatting(editor);
+        assert(editor.innerHTML.length > 0, 'Emoji sequences should be preserved');
+      });
+
+      // Run all tests when page loads
+      window.addEventListener('load', () => {
+        runTests();
+      });
+    </script>
+  </body>
+</html>

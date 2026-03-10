@@ -253,6 +253,15 @@
           article.innerHTML = markdown.replace(/\n/g, '<br>');
         });
 
+        // Remove Formatting button
+        document.getElementById('remove-formatting').addEventListener("click", function() {
+          article = document.querySelector('#mcguffin');
+          // Get plain text with line breaks preserved
+          const text = article.innerText;
+          // Replace line breaks with <br> tags and set as HTML
+          article.innerHTML = text.replace(/\n/g, '<br>');
+        });
+
       });
     </script>
 
@@ -278,6 +287,7 @@
             <button type="button" class="btn btn-outline-primary monospace" data-font="monospace">Aa</button>
           </div>
           <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" title="convert markup to markdown">M↓</button>
+          <button type="button" class="btn btn-outline-secondary" id="remove-formatting">Remove Formatting</button>
       </div>
 
         <article
