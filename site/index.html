@@ -51,6 +51,176 @@
     </style>
 
     <script type="text/javascript">
+      // HTML to Markdown converter
+      function htmlToMarkdown(html) {
+        // Create a temporary div to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        let markdown = convertNodeToMarkdown(tempDiv);
+
+        // Limit to max 2 consecutive line breaks
+        markdown = markdown.replace(/\n{3,}/g, '\n\n');
+
+        return markdown;
+      }
+
+      function convertNodeToMarkdown(node, listDepth = 0) {
+        let markdown = '';
+
+        // Handle text nodes
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent;
+        }
+
+        // Handle element nodes
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tagName = node.tagName.toLowerCase();
+          const children = Array.from(node.childNodes);
+          let childContent = children.map(child => convertNodeToMarkdown(child, listDepth)).join('');
+
+          switch (tagName) {
+            // Headings
+            case 'h1':
+              return '# ' + childContent + '\n\n';
+            case 'h2':
+              return '## ' + childContent + '\n\n';
+            case 'h3':
+              return '### ' + childContent + '\n\n';
+            case 'h4':
+              return '#### ' + childContent + '\n\n';
+            case 'h5':
+              return '##### ' + childContent + '\n\n';
+            case 'h6':
+              return '###### ' + childContent + '\n\n';
+
+            // Bold
+            case 'b':
+            case 'strong':
+              return '**' + childContent + '**';
+
+            // Italic
+            case 'i':
+            case 'em':
+              return '*' + childContent + '*';
+
+            // Strikethrough
+            case 's':
+            case 'strike':
+            case 'del':
+              return '~~' + childContent + '~~';
+
+            // Inline code
+            case 'code':
+              if (node.parentElement && node.parentElement.tagName.toLowerCase() === 'pre') {
+                return childContent;
+              }
+              return '`' + childContent + '`';
+
+            // Code block
+            case 'pre':
+              const codeChild = node.querySelector('code');
+              const codeContent = codeChild ? codeChild.textContent : childContent;
+              return '```\n' + codeContent + '\n```\n\n';
+
+            // Links
+            case 'a':
+              const href = node.getAttribute('href') || '';
+              return '[' + childContent + '](' + href + ')';
+
+            // Images
+            case 'img':
+              const src = node.getAttribute('src') || '';
+              const alt = node.getAttribute('alt') || '';
+              return '![' + alt + '](' + src + ')';
+
+            // Blockquote
+            case 'blockquote':
+              return childContent.split('\n').map(line => '> ' + line).join('\n') + '\n\n';
+
+            // Horizontal rule
+            case 'hr':
+              return '\n---\n\n';
+
+            // Line break
+            case 'br':
+              return '\n';
+
+            // Paragraph
+            case 'p':
+              return childContent + '\n\n';
+
+            // Div (treat as block)
+            case 'div':
+              return childContent + '\n';
+
+            // Lists
+            case 'ul':
+            case 'ol':
+              const isOrdered = tagName === 'ol';
+              const listItems = Array.from(node.children).filter(child =>
+                child.tagName.toLowerCase() === 'li'
+              );
+              return listItems.map((li, index) => {
+                const indent = '  '.repeat(listDepth);
+                const bullet = isOrdered ? `${index + 1}. ` : '- ';
+                const content = convertNodeToMarkdown(li, listDepth + 1);
+                return indent + bullet + content.trim();
+              }).join('\n') + '\n\n';
+
+            case 'li':
+              // Content is handled by parent ul/ol
+              return childContent;
+
+            // Tables
+            case 'table':
+              return convertTableToMarkdown(node) + '\n\n';
+
+            // Underline (no markdown equivalent, just return text)
+            case 'u':
+              return childContent;
+
+            // Span and other inline elements (strip tags)
+            case 'span':
+            case 'font':
+            case 'mark':
+              return childContent;
+
+            // Default: just return child content
+            default:
+              return childContent;
+          }
+        }
+
+        // Handle other node types
+        return markdown;
+      }
+
+      function convertTableToMarkdown(table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        if (rows.length === 0) return '';
+
+        let markdown = '';
+        let isFirstRow = true;
+
+        rows.forEach(row => {
+          const cells = Array.from(row.querySelectorAll('th, td'));
+          const cellContents = cells.map(cell => {
+            return convertNodeToMarkdown(cell).trim().replace(/\n/g, ' ');
+          });
+
+          markdown += '| ' + cellContents.join(' | ') + ' |\n';
+
+          // Add separator after first row (header)
+          if (isFirstRow) {
+            markdown += '| ' + cells.map(() => '---').join(' | ') + ' |\n';
+            isFirstRow = false;
+          }
+        });
+
+        return markdown;
+      }
+
       window.addEventListener("load", (event) => {
 
         el = document.getElementsByTagName('article')[0];
@@ -73,6 +243,15 @@
             }
           }
         )
+
+        // Convert to Markdown button
+        document.getElementById('convert-to-markdown').addEventListener("click", function() {
+          const article = document.querySelector('#mcguffin');
+          const html = article.innerHTML;
+          const markdown = htmlToMarkdown(html).trim();
+          // Replace content with markdown, converting newlines to <br> for display
+          article.innerHTML = markdown.replace(/\n/g, '<br>');
+        });
 
       });
     </script>
@@ -98,6 +277,7 @@
             <button type="button" class="btn btn-outline-primary serif" data-font="serif">Aa</button>
             <button type="button" class="btn btn-outline-primary monospace" data-font="monospace">Aa</button>
           </div>
+          <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" title="convert markup to markdown">M↓</button>
       </div>
 
         <article

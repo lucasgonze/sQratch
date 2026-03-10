@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>sQratch Tests - HTML to Markdown Conversion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2em;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .test-result {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .test-pass {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .test-fail {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .test-summary {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 4px;
+      }
+      .test-detail {
+        font-size: 0.9em;
+        margin-top: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Unit Tests: HTML to Markdown Conversion</h1>
+    <div id="test-results"></div>
+
+    <script>
+      // Copy the converter functions from index.html
+      function htmlToMarkdown(html) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        let markdown = convertNodeToMarkdown(tempDiv);
+
+        // Limit to max 2 consecutive line breaks
+        markdown = markdown.replace(/\n{3,}/g, '\n\n');
+
+        return markdown;
+      }
+
+      function convertNodeToMarkdown(node, listDepth = 0) {
+        let markdown = '';
+
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent;
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tagName = node.tagName.toLowerCase();
+          const children = Array.from(node.childNodes);
+          let childContent = children.map(child => convertNodeToMarkdown(child, listDepth)).join('');
+
+          switch (tagName) {
+            case 'h1':
+              return '# ' + childContent + '\n\n';
+            case 'h2':
+              return '## ' + childContent + '\n\n';
+            case 'h3':
+              return '### ' + childContent + '\n\n';
+            case 'h4':
+              return '#### ' + childContent + '\n\n';
+            case 'h5':
+              return '##### ' + childContent + '\n\n';
+            case 'h6':
+              return '###### ' + childContent + '\n\n';
+            case 'b':
+            case 'strong':
+              return '**' + childContent + '**';
+            case 'i':
+            case 'em':
+              return '*' + childContent + '*';
+            case 's':
+            case 'strike':
+            case 'del':
+              return '~~' + childContent + '~~';
+            case 'code':
+              if (node.parentElement && node.parentElement.tagName.toLowerCase() === 'pre') {
+                return childContent;
+              }
+              return '`' + childContent + '`';
+            case 'pre':
+              const codeChild = node.querySelector('code');
+              const codeContent = codeChild ? codeChild.textContent : childContent;
+              return '```\n' + codeContent + '\n```\n\n';
+            case 'a':
+              const href = node.getAttribute('href') || '';
+              return '[' + childContent + '](' + href + ')';
+            case 'img':
+              const src = node.getAttribute('src') || '';
+              const alt = node.getAttribute('alt') || '';
+              return '![' + alt + '](' + src + ')';
+            case 'blockquote':
+              return childContent.split('\n').map(line => '> ' + line).join('\n') + '\n\n';
+            case 'hr':
+              return '\n---\n\n';
+            case 'br':
+              return '\n';
+            case 'p':
+              return childContent + '\n\n';
+            case 'div':
+              return childContent + '\n';
+            case 'ul':
+            case 'ol':
+              const isOrdered = tagName === 'ol';
+              const listItems = Array.from(node.children).filter(child =>
+                child.tagName.toLowerCase() === 'li'
+              );
+              return listItems.map((li, index) => {
+                const indent = '  '.repeat(listDepth);
+                const bullet = isOrdered ? `${index + 1}. ` : '- ';
+                const content = convertNodeToMarkdown(li, listDepth + 1);
+                return indent + bullet + content.trim();
+              }).join('\n') + '\n\n';
+            case 'li':
+              return childContent;
+            case 'table':
+              return convertTableToMarkdown(node) + '\n\n';
+            case 'u':
+              return childContent;
+            case 'span':
+            case 'font':
+            case 'mark':
+              return childContent;
+            default:
+              return childContent;
+          }
+        }
+
+        return markdown;
+      }
+
+      function convertTableToMarkdown(table) {
+        const rows = Array.from(table.querySelectorAll('tr'));
+        if (rows.length === 0) return '';
+
+        let markdown = '';
+        let isFirstRow = true;
+
+        rows.forEach(row => {
+          const cells = Array.from(row.querySelectorAll('th, td'));
+          const cellContents = cells.map(cell => {
+            return convertNodeToMarkdown(cell).trim().replace(/\n/g, ' ');
+          });
+
+          markdown += '| ' + cellContents.join(' | ') + ' |\n';
+
+          if (isFirstRow) {
+            markdown += '| ' + cells.map(() => '---').join(' | ') + ' |\n';
+            isFirstRow = false;
+          }
+        });
+
+        return markdown;
+      }
+
+      // Test utilities
+      const tests = [];
+      let passCount = 0;
+      let failCount = 0;
+
+      function assertEquals(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(`${message || 'Assertion failed'}:\nExpected: "${expected}"\nGot: "${actual}"`);
+        }
+      }
+
+      function assertContains(actual, expected, message) {
+        if (!actual.includes(expected)) {
+          throw new Error(`${message || 'Assertion failed'}: "${expected}" not found in "${actual}"`);
+        }
+      }
+
+      function test(name, fn) {
+        tests.push({ name, fn });
+      }
+
+      function runTests() {
+        const resultsDiv = document.getElementById('test-results');
+        resultsDiv.innerHTML = '<h2>Running Tests...</h2>';
+
+        tests.forEach(({ name, fn }) => {
+          const resultDiv = document.createElement('div');
+          resultDiv.className = 'test-result';
+
+          try {
+            fn();
+            resultDiv.classList.add('test-pass');
+            resultDiv.innerHTML = `✓ ${name}`;
+            passCount++;
+          } catch (error) {
+            resultDiv.classList.add('test-fail');
+            resultDiv.innerHTML = `✗ ${name}<div class="test-detail">${error.message}</div>`;
+            failCount++;
+          }
+
+          resultsDiv.appendChild(resultDiv);
+        });
+
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'test-summary';
+        const total = passCount + failCount;
+        summaryDiv.style.backgroundColor = failCount === 0 ? '#d4edda' : '#f8d7da';
+        summaryDiv.style.color = failCount === 0 ? '#155724' : '#721c24';
+        summaryDiv.innerHTML = `Tests: ${passCount} passed, ${failCount} failed, ${total} total`;
+        resultsDiv.appendChild(summaryDiv);
+      }
+
+      // ===== BASIC FORMATTING TESTS =====
+
+      test('Convert bold text', () => {
+        const result = htmlToMarkdown('<b>bold text</b>').trim();
+        assertEquals(result, '**bold text**', 'Bold should convert to **text**');
+      });
+
+      test('Convert strong tag to bold', () => {
+        const result = htmlToMarkdown('<strong>strong text</strong>').trim();
+        assertEquals(result, '**strong text**', 'Strong should convert to **text**');
+      });
+
+      test('Convert italic text', () => {
+        const result = htmlToMarkdown('<i>italic text</i>').trim();
+        assertEquals(result, '*italic text*', 'Italic should convert to *text*');
+      });
+
+      test('Convert em tag to italic', () => {
+        const result = htmlToMarkdown('<em>emphasized text</em>').trim();
+        assertEquals(result, '*emphasized text*', 'Em should convert to *text*');
+      });
+
+      test('Convert strikethrough', () => {
+        const result = htmlToMarkdown('<s>strikethrough</s>').trim();
+        assertEquals(result, '~~strikethrough~~', 'Strikethrough should convert to ~~text~~');
+      });
+
+      test('Convert del tag to strikethrough', () => {
+        const result = htmlToMarkdown('<del>deleted</del>').trim();
+        assertEquals(result, '~~deleted~~', 'Del should convert to ~~text~~');
+      });
+
+      test('Convert inline code', () => {
+        const result = htmlToMarkdown('<code>inline code</code>').trim();
+        assertEquals(result, '`inline code`', 'Code should convert to `text`');
+      });
+
+      test('Convert nested formatting', () => {
+        const result = htmlToMarkdown('<b><i>bold italic</i></b>').trim();
+        assertEquals(result, '***bold italic***', 'Nested bold+italic should work');
+      });
+
+      // ===== HEADING TESTS =====
+
+      test('Convert H1 heading', () => {
+        const result = htmlToMarkdown('<h1>Heading 1</h1>').trim();
+        assertEquals(result, '# Heading 1', 'H1 should convert to # text');
+      });
+
+      test('Convert H2 heading', () => {
+        const result = htmlToMarkdown('<h2>Heading 2</h2>').trim();
+        assertEquals(result, '## Heading 2', 'H2 should convert to ## text');
+      });
+
+      test('Convert H3 heading', () => {
+        const result = htmlToMarkdown('<h3>Heading 3</h3>').trim();
+        assertEquals(result, '### Heading 3', 'H3 should convert to ### text');
+      });
+
+      test('Convert H4 heading', () => {
+        const result = htmlToMarkdown('<h4>Heading 4</h4>').trim();
+        assertEquals(result, '#### Heading 4', 'H4 should convert');
+      });
+
+      test('Convert H5 heading', () => {
+        const result = htmlToMarkdown('<h5>Heading 5</h5>').trim();
+        assertEquals(result, '##### Heading 5', 'H5 should convert');
+      });
+
+      test('Convert H6 heading', () => {
+        const result = htmlToMarkdown('<h6>Heading 6</h6>').trim();
+        assertEquals(result, '###### Heading 6', 'H6 should convert');
+      });
+
+      // ===== LINK AND IMAGE TESTS =====
+
+      test('Convert link', () => {
+        const result = htmlToMarkdown('<a href="https://example.com">link text</a>').trim();
+        assertEquals(result, '[link text](https://example.com)', 'Links should convert to [text](url)');
+      });
+
+      test('Convert link without href', () => {
+        const result = htmlToMarkdown('<a>link text</a>').trim();
+        assertEquals(result, '[link text]()', 'Link without href should have empty URL');
+      });
+
+      test('Convert image', () => {
+        const result = htmlToMarkdown('<img src="image.jpg" alt="description">').trim();
+        assertEquals(result, '![description](image.jpg)', 'Images should convert to ![alt](src)');
+      });
+
+      test('Convert image without alt', () => {
+        const result = htmlToMarkdown('<img src="image.jpg">').trim();
+        assertEquals(result, '![](image.jpg)', 'Image without alt should have empty alt text');
+      });
+
+      // ===== LIST TESTS =====
+
+      test('Convert unordered list', () => {
+        const html = '<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '- Item 1', 'Should have first item');
+        assertContains(result, '- Item 2', 'Should have second item');
+        assertContains(result, '- Item 3', 'Should have third item');
+      });
+
+      test('Convert ordered list', () => {
+        const html = '<ol><li>First</li><li>Second</li><li>Third</li></ol>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '1. First', 'Should have first item');
+        assertContains(result, '2. Second', 'Should have second item');
+        assertContains(result, '3. Third', 'Should have third item');
+      });
+
+      test('Convert nested lists', () => {
+        const html = '<ul><li>Item 1<ul><li>Nested 1</li><li>Nested 2</li></ul></li><li>Item 2</li></ul>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '- Item 1', 'Should have parent item');
+        assertContains(result, '  - Nested 1', 'Should have nested item with indent');
+      });
+
+      // ===== CODE BLOCK TESTS =====
+
+      test('Convert code block', () => {
+        const html = '<pre><code>const x = 5;\nconsole.log(x);</code></pre>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '```', 'Should have code fence');
+        assertContains(result, 'const x = 5;', 'Should preserve code content');
+      });
+
+      test('Convert pre without code tag', () => {
+        const html = '<pre>plain preformatted text</pre>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '```', 'Should have code fence');
+        assertContains(result, 'plain preformatted text', 'Should preserve content');
+      });
+
+      // ===== BLOCKQUOTE TESTS =====
+
+      test('Convert blockquote', () => {
+        const html = '<blockquote>This is a quote</blockquote>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '> This is a quote', 'Should have > prefix');
+      });
+
+      test('Convert multi-line blockquote', () => {
+        const html = '<blockquote>Line 1\nLine 2</blockquote>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '> Line 1', 'Should quote first line');
+        assertContains(result, '> Line 2', 'Should quote second line');
+      });
+
+      // ===== TABLE TESTS =====
+
+      test('Convert simple table', () => {
+        const html = '<table><tr><th>Header</th></tr><tr><td>Data</td></tr></table>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '| Header |', 'Should have header');
+        assertContains(result, '| --- |', 'Should have separator');
+        assertContains(result, '| Data |', 'Should have data row');
+      });
+
+      test('Convert table with multiple columns', () => {
+        const html = '<table><tr><th>Col1</th><th>Col2</th></tr><tr><td>A</td><td>B</td></tr></table>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '| Col1 | Col2 |', 'Should have both headers');
+        assertContains(result, '| A | B |', 'Should have both data cells');
+      });
+
+      // ===== PARAGRAPH AND LINE BREAK TESTS =====
+
+      test('Convert paragraph', () => {
+        const html = '<p>Paragraph text</p>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, 'Paragraph text', 'Paragraph should preserve text');
+      });
+
+      test('Convert multiple paragraphs', () => {
+        const html = '<p>Para 1</p><p>Para 2</p>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, 'Para 1', 'Should have first paragraph');
+        assertContains(result, 'Para 2', 'Should have second paragraph');
+      });
+
+      test('Convert line break', () => {
+        const html = 'Line 1<br>Line 2';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, 'Line 1\nLine 2', 'Should preserve line break');
+      });
+
+      test('Convert multiple line breaks', () => {
+        const html = 'Line 1<br>Line 2<br>Line 3';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, 'Line 1\nLine 2\nLine 3', 'Should preserve all line breaks');
+      });
+
+      test('Convert line breaks with formatting', () => {
+        const html = '<b>Bold line</b><br><i>Italic line</i>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, '**Bold line**\n*Italic line*', 'Should preserve line breaks in formatted text');
+      });
+
+      test('Convert horizontal rule', () => {
+        const html = '<hr>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '---', 'Should convert to markdown HR');
+      });
+
+      // ===== EDGE CASES AND SPECIAL CHARACTERS =====
+
+      test('Handle empty content', () => {
+        const result = htmlToMarkdown('').trim();
+        assertEquals(result, '', 'Empty content should return empty string');
+      });
+
+      test('Handle plain text', () => {
+        const result = htmlToMarkdown('plain text').trim();
+        assertEquals(result, 'plain text', 'Plain text should pass through');
+      });
+
+      test('Handle emoji in formatted text', () => {
+        const html = '<b>Hello 👋</b> <i>World 🌍</i>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, '**Hello 👋** *World 🌍*', 'Should preserve emoji');
+      });
+
+      test('Handle Chinese characters', () => {
+        const html = '<b>你好</b> <i>世界</i>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, '**你好** *世界*', 'Should preserve CJK');
+      });
+
+      test('Handle Arabic text', () => {
+        const html = '<b>مرحبا</b>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, '**مرحبا**', 'Should preserve RTL text');
+      });
+
+      test('Handle special HTML characters', () => {
+        const html = '<b>&lt;tag&gt;</b> &amp; <i>&quot;quotes&quot;</i>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '**<tag>**', 'Should decode HTML entities');
+      });
+
+      test('Strip unsupported formatting (underline)', () => {
+        const html = '<u>underlined text</u>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, 'underlined text', 'Should strip underline but keep text');
+      });
+
+      test('Strip color styling', () => {
+        const html = '<span style="color: red;">red text</span>';
+        const result = htmlToMarkdown(html).trim();
+        assertEquals(result, 'red text', 'Should strip color but keep text');
+      });
+
+      test('Convert complex nested structure', () => {
+        const html = '<div><h2>Title</h2><p>Some <b>bold</b> and <i>italic</i> text.</p></div>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '## Title', 'Should have heading');
+        assertContains(result, '**bold**', 'Should have bold');
+        assertContains(result, '*italic*', 'Should have italic');
+      });
+
+      test('Convert mixed content with multiple elements', () => {
+        const html = '<h1>Title</h1><p>Text with <a href="url">link</a></p><ul><li>Item</li></ul>';
+        const result = htmlToMarkdown(html).trim();
+        assertContains(result, '# Title', 'Should have heading');
+        assertContains(result, '[link](url)', 'Should have link');
+        assertContains(result, '- Item', 'Should have list item');
+      });
+
+      test('Limit consecutive line breaks to maximum of 2', () => {
+        const html = '<p>Para 1</p><p>Para 2</p><p>Para 3</p>';
+        const result = htmlToMarkdown(html);
+        // Each <p> adds \n\n, so we'd have 4+ consecutive newlines without limiting
+        const hasMoreThanTwoConsecutive = /\n{3,}/.test(result);
+        assertEquals(hasMoreThanTwoConsecutive, false, 'Should not have more than 2 consecutive line breaks');
+      });
+
+      test('Preserve exactly 2 line breaks between blocks', () => {
+        const html = '<h1>Heading</h1><p>Paragraph</p>';
+        const result = htmlToMarkdown(html);
+        // Should have at most 2 newlines between heading and paragraph
+        const hasMoreThanTwoConsecutive = /\n{3,}/.test(result);
+        assertEquals(hasMoreThanTwoConsecutive, false, 'Should limit to 2 line breaks between blocks');
+      });
+
+      // Run all tests when page loads
+      window.addEventListener('load', () => {
+        runTests();
+      });
+    </script>
+  </body>
+</html>
