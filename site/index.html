@@ -34,6 +34,17 @@
         text-align: right;
       }
 
+      #preview-controls {
+        text-align: right;
+        margin-top: 10px;
+        margin-bottom: 5px;
+        display: none;
+      }
+
+      #preview-controls.active {
+        display: block;
+      }
+
       article.editor {
         box-shadow: 2px 2px;
         border: 1px solid black;
@@ -48,6 +59,49 @@
       *.sans-serif { font-family: sans-serif; }
       *.serif { font-family: serif; }
       *.monospace { font-family: monospace; }
+
+      /* Footer */
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85em;
+        color: #999;
+        border-top: 1px solid #eee;
+      }
+
+      footer a {
+        color: #999;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: #666;
+        text-decoration: underline;
+      }
+
+      /* Formatting removed message */
+      #formatting-message {
+        display: inline-block;
+        color: #999;
+        font-size: 0.9em;
+        opacity: 0;
+        transition: opacity 10s ease-out;
+        float: left;
+      }
+
+      #formatting-message.show {
+        opacity: 1;
+        transition: none;
+      }
+
+      #formatting-message.fade {
+        opacity: 0;
+      }
 
       /* Markdown mode active button */
       .btn-markdown-active {
@@ -416,6 +470,7 @@
         const markdownBtn = document.getElementById('convert-to-markdown');
         const preview = document.getElementById('markdown-preview');
         const help = document.getElementById('markdown-help');
+        const previewControls = document.getElementById('preview-controls');
 
         markdownBtn.addEventListener("click", function() {
           markdownMode = !markdownMode;
@@ -425,6 +480,7 @@
             markdownBtn.classList.add('btn-markdown-active');
             preview.classList.add('active');
             help.classList.add('active');
+            previewControls.classList.add('active');
 
             // Convert current HTML to markdown
             const article = document.querySelector('#mcguffin');
@@ -449,6 +505,7 @@
             markdownBtn.classList.remove('btn-markdown-active');
             preview.classList.remove('active');
             help.classList.remove('active');
+            previewControls.classList.remove('active');
           }
         });
 
@@ -468,6 +525,67 @@
           range.collapse(false); // Collapse to end
           sel.removeAllRanges();
           sel.addRange(range);
+
+          // Show formatting removed message and fade it out over 15 seconds
+          const message = document.getElementById('formatting-message');
+          message.classList.remove('fade');
+          message.classList.add('show');
+          // Force reflow to restart animation
+          void message.offsetWidth;
+          message.classList.remove('show');
+          message.classList.add('fade');
+        });
+
+        // Copy all text button
+        document.getElementById('copy-all').addEventListener("click", function() {
+          const article = document.querySelector('#mcguffin');
+          const text = article.innerText;
+
+          navigator.clipboard.writeText(text).then(function() {
+            // Provide visual feedback
+            const btn = document.getElementById('copy-all');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            setTimeout(function() {
+              btn.innerHTML = originalText;
+            }, 2000);
+          }).catch(function(err) {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard');
+          });
+        });
+
+        // Copy formatted HTML button
+        document.getElementById('copy-formatted').addEventListener("click", function() {
+          const preview = document.getElementById('markdown-preview');
+          const html = preview.innerHTML;
+
+          // Create a temporary element to copy HTML
+          const blob = new Blob([html], { type: 'text/html' });
+          const clipboardItem = new ClipboardItem({ 'text/html': blob });
+
+          navigator.clipboard.write([clipboardItem]).then(function() {
+            // Provide visual feedback
+            const btn = document.getElementById('copy-formatted');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            setTimeout(function() {
+              btn.innerHTML = originalText;
+            }, 2000);
+          }).catch(function(err) {
+            // Fallback: copy as plain HTML text
+            navigator.clipboard.writeText(html).then(function() {
+              const btn = document.getElementById('copy-formatted');
+              const originalText = btn.innerHTML;
+              btn.innerHTML = '✓ Copied';
+              setTimeout(function() {
+                btn.innerHTML = originalText;
+              }, 2000);
+            }).catch(function(err2) {
+              console.error('Failed to copy HTML: ', err2);
+              alert('Failed to copy to clipboard');
+            });
+          });
         });
 
         // Markdown editor keyboard handlers
@@ -787,8 +905,8 @@
 
 
       <nav>
-	sQratch<a style="text-decoration:none" href="https://github.com/lucasgonze/sqratch">*</a> 
-	<p id="tagline" class="text-muted"><small>Private distraction-free notepad</small></p>
+	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;">notepad</span>
+	<p id="tagline" class="text-muted"><small><span title="instant loading">fast</span> • <span title="no logging, ever">private</span> • <span title="distraction free for high focus">quiet</span></small></p>
 	</nav>
 
       <!-- editor -->
@@ -796,11 +914,12 @@
 
         <div class="text-end" id="buttons">
           <div class="btn-group" role="group" aria-label="Basic outlined example">
-            <button type="button" class="btn btn-outline-primary sans-serif font-active" data-font="sans-serif" title="Sans-serif font (clean, modern)">Aa</button>
-            <button type="button" class="btn btn-outline-primary monospace" data-font="monospace" title="Monospace font (code, typewriter)">Aa</button>
+            <button type="button" class="btn btn-outline-secondary sans-serif font-active" data-font="sans-serif" title="Sans-serif font (clean, modern)">Aa</button>
+            <button type="button" class="btn btn-outline-secondary monospace" data-font="monospace" title="Monospace font (code, typewriter)">Aa</button>
           </div>
           <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" title="convert markup to markdown">M↓</button>
           <button type="button" class="btn btn-outline-secondary" id="remove-formatting" title="Remove all formatting">⌫</button>
+          <button type="button" class="btn btn-outline-secondary" id="copy-all" title="copy all" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
       </div>
 
         <article
@@ -810,7 +929,13 @@
           id="mcguffin"
           autofocus
           ></article>
-          <p id="counter"></p>
+          <div style="overflow: auto;">
+            <span id="formatting-message">formatting removed</span>
+            <p id="counter"></p>
+          </div>
+          <div id="preview-controls">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
+          </div>
           <div id="markdown-preview"></div>
           <div id="markdown-help">
             <div class="help-section">
@@ -850,6 +975,10 @@
 
         <!-- Bottom container, just above /body -->
       </div>
+
+      <footer>
+        <a href="https://github.com/lucasgonze/sqratch">Open source by Lucas Gonze <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: text-bottom;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+      </footer>
 
       <script src="/bootstrap-5.3.2-dist/js/bootstrap.bundle.min.js"></script>
   </body>
