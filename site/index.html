@@ -48,6 +48,98 @@
       *.sans-serif { font-family: sans-serif; }
       *.serif { font-family: serif; }
       *.monospace { font-family: monospace; }
+
+      /* Markdown mode active button */
+      .btn-markdown-active {
+        font-weight: bold;
+        background-color: #0d6efd;
+        color: white;
+      }
+
+      /* Active font button */
+      .font-active {
+        font-weight: bold;
+      }
+
+      /* Markdown preview */
+      #markdown-preview {
+        margin-top: 10px;
+        padding: 1em;
+        border: 1px solid #ddd;
+        background-color: white;
+        min-height: 100px;
+        display: none;
+      }
+
+      #markdown-preview.active {
+        display: block;
+      }
+
+      /* Markdown preview styling */
+      #markdown-preview h1 { font-size: 2em; margin: 0.5em 0; }
+      #markdown-preview h2 { font-size: 1.5em; margin: 0.5em 0; }
+      #markdown-preview h3 { font-size: 1.25em; margin: 0.5em 0; }
+      #markdown-preview h4 { font-size: 1.1em; margin: 0.5em 0; }
+      #markdown-preview h5 { font-size: 1em; margin: 0.5em 0; font-weight: bold; }
+      #markdown-preview h6 { font-size: 0.9em; margin: 0.5em 0; font-weight: bold; }
+      #markdown-preview code { background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+      #markdown-preview pre { background-color: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+      #markdown-preview blockquote { border-left: 4px solid #ddd; padding-left: 1em; margin: 1em 0; color: #666; }
+      #markdown-preview table { border-collapse: collapse; margin: 1em 0; }
+      #markdown-preview th, #markdown-preview td { border: 1px solid #ddd; padding: 8px; }
+      #markdown-preview th { background-color: #f5f5f5; }
+      #markdown-preview ul, #markdown-preview ol { margin: 0.5em 0; padding-left: 2em; }
+      #markdown-preview hr { border: none; border-top: 2px solid #ddd; margin: 1em 0; }
+
+      /* Markdown help */
+      #markdown-help {
+        margin-top: 10px;
+        padding: 0.75em;
+        font-size: 0.75em;
+        color: #aaa;
+        background-color: #fcfcfc;
+        border: 1px solid #f0f0f0;
+        border-radius: 3px;
+        display: none;
+        line-height: 1.6;
+        opacity: 0.85;
+      }
+
+      #markdown-help.active {
+        display: block;
+      }
+
+      #markdown-help h4 {
+        margin: 0 0 0.5em 0;
+        font-size: 1em;
+        color: #999;
+        font-weight: normal;
+      }
+
+      #markdown-help .help-section {
+        margin-bottom: 0.75em;
+      }
+
+      #markdown-help .help-section:last-child {
+        margin-bottom: 0;
+      }
+
+      #markdown-help kbd {
+        background-color: #fafafa;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        padding: 1px 4px;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #777;
+      }
+
+      #markdown-help code {
+        background-color: #fafafa;
+        padding: 1px 3px;
+        font-family: monospace;
+        color: #888;
+      }
     </style>
 
     <script type="text/javascript">
@@ -221,36 +313,143 @@
         return markdown;
       }
 
+      // Simple markdown to HTML renderer
+      function renderMarkdown(text) {
+        let html = text;
+
+        // Escape HTML
+        html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Headers
+        html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+        html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+        html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+        html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+
+        // Bold
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+        // Italic
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+        // Strikethrough
+        html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
+
+        // Inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // Code blocks
+        html = html.replace(/```\n?([\s\S]*?)\n?```/g, '<pre><code>$1</code></pre>');
+
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+        // Images
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+
+        // Horizontal rules
+        html = html.replace(/^---$/gm, '<hr>');
+        html = html.replace(/^\*\*\*$/gm, '<hr>');
+
+        // Blockquotes
+        html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+
+        // Unordered lists
+        html = html.replace(/^\*\s+(.+)$/gm, '<li>$1</li>');
+        html = html.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+        // Ordered lists
+        html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+        // Checkbox lists
+        html = html.replace(/<li>\[ \]\s+(.+)<\/li>/g, '<li><input type="checkbox" disabled> $1</li>');
+        html = html.replace(/<li>\[x\]\s+(.+)<\/li>/g, '<li><input type="checkbox" checked disabled> $1</li>');
+
+        // Line breaks
+        html = html.replace(/\n/g, '<br>');
+
+        return html;
+      }
+
+      let markdownMode = false;
+
       window.addEventListener("load", (event) => {
 
         el = document.getElementsByTagName('article')[0];
 
-        // character counter
+        // character counter and markdown preview
         el.addEventListener("input", (event) => {
           len = el.innerText.trim().length;
           document.getElementById("counter").innerText = len;
+
+          // Update markdown preview if in markdown mode
+          if (markdownMode) {
+            const text = el.innerText;
+            const preview = document.getElementById('markdown-preview');
+            preview.innerHTML = renderMarkdown(text);
+          }
         });
 
         document.querySelector('#buttons').addEventListener("click",
           function handler(event){
             font = event.target.dataset.font;
-            if( font == "sans-serif" || font == "serif" || font == "monospace" ){
+            if( font == "sans-serif" || font == "monospace" ){
               article = document.querySelector('#mcguffin');
               article.classList.remove("sans-serif");
-              article.classList.remove("serif");
               article.classList.remove("monospace");
               article.classList.add(font);
+
+              // Update active button styling
+              const fontButtons = document.querySelectorAll('[data-font]');
+              fontButtons.forEach(btn => btn.classList.remove('font-active'));
+              event.target.classList.add('font-active');
             }
           }
         )
 
-        // Convert to Markdown button
-        document.getElementById('convert-to-markdown').addEventListener("click", function() {
-          const article = document.querySelector('#mcguffin');
-          const html = article.innerHTML;
-          const markdown = htmlToMarkdown(html).trim();
-          // Replace content with markdown, converting newlines to <br> for display
-          article.innerHTML = markdown.replace(/\n/g, '<br>');
+        // Markdown mode toggle
+        const markdownBtn = document.getElementById('convert-to-markdown');
+        const preview = document.getElementById('markdown-preview');
+        const help = document.getElementById('markdown-help');
+
+        markdownBtn.addEventListener("click", function() {
+          markdownMode = !markdownMode;
+
+          if (markdownMode) {
+            // Activate markdown mode
+            markdownBtn.classList.add('btn-markdown-active');
+            preview.classList.add('active');
+            help.classList.add('active');
+
+            // Convert current HTML to markdown
+            const article = document.querySelector('#mcguffin');
+            const html = article.innerHTML;
+            const markdown = htmlToMarkdown(html).trim();
+            article.innerHTML = markdown.replace(/\n/g, '<br>');
+
+            // Show preview
+            const text = article.innerText;
+            preview.innerHTML = renderMarkdown(text);
+
+            // Restore cursor position at the end
+            article.focus();
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(article);
+            range.collapse(false); // Collapse to end
+            sel.removeAllRanges();
+            sel.addRange(range);
+          } else {
+            // Deactivate markdown mode
+            markdownBtn.classList.remove('btn-markdown-active');
+            preview.classList.remove('active');
+            help.classList.remove('active');
+          }
         });
 
         // Remove Formatting button
@@ -260,6 +459,321 @@
           const text = article.innerText;
           // Replace line breaks with <br> tags and set as HTML
           article.innerHTML = text.replace(/\n/g, '<br>');
+
+          // Restore cursor position at the end
+          article.focus();
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(article);
+          range.collapse(false); // Collapse to end
+          sel.removeAllRanges();
+          sel.addRange(range);
+        });
+
+        // Markdown editor keyboard handlers
+        el.addEventListener("keydown", function(event) {
+          if (!markdownMode) return;
+
+          const article = this;
+
+          // Tab: indent
+          if (event.key === 'Tab' && !event.shiftKey) {
+            event.preventDefault();
+            document.execCommand('insertText', false, '  ');
+            return;
+          }
+
+          // Shift+Tab: unindent
+          if (event.key === 'Tab' && event.shiftKey) {
+            event.preventDefault();
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              const textNode = range.startContainer;
+              if (textNode.nodeType === Node.TEXT_NODE) {
+                const text = textNode.textContent;
+                const offset = range.startOffset;
+                // Remove up to 2 spaces before cursor
+                let removed = 0;
+                if (offset > 0 && text[offset - 1] === ' ') {
+                  removed = 1;
+                  if (offset > 1 && text[offset - 2] === ' ') {
+                    removed = 2;
+                  }
+                }
+                if (removed > 0) {
+                  const newText = text.slice(0, offset - removed) + text.slice(offset);
+                  textNode.textContent = newText;
+                  range.setStart(textNode, offset - removed);
+                  range.collapse(true);
+                  sel.removeAllRanges();
+                  sel.addRange(range);
+                }
+              }
+            }
+            return;
+          }
+
+          // Enter: handle list continuation
+          if (event.key === 'Enter') {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              const textNode = range.startContainer;
+              if (textNode.nodeType === Node.TEXT_NODE) {
+                const text = textNode.textContent;
+                const offset = range.startOffset;
+
+                // Find the start of the current line
+                let lineStart = text.lastIndexOf('\n', offset - 1) + 1;
+                const currentLine = text.substring(lineStart, offset);
+
+                // Check for unordered list (*, -, +)
+                const unorderedMatch = currentLine.match(/^(\s*)([-*+])\s+(.*)$/);
+                if (unorderedMatch) {
+                  event.preventDefault();
+                  const indent = unorderedMatch[1];
+                  const marker = unorderedMatch[2];
+                  const content = unorderedMatch[3];
+
+                  // If line is empty list item, exit list mode
+                  if (!content.trim()) {
+                    document.execCommand('insertText', false, '\n');
+                  } else {
+                    // Continue list
+                    document.execCommand('insertText', false, '\n' + indent + marker + ' ');
+                  }
+                  return;
+                }
+
+                // Check for ordered list (1., 2., etc.)
+                const orderedMatch = currentLine.match(/^(\s*)(\d+)\.\s+(.*)$/);
+                if (orderedMatch) {
+                  event.preventDefault();
+                  const indent = orderedMatch[1];
+                  const num = parseInt(orderedMatch[2]);
+                  const content = orderedMatch[3];
+
+                  // If line is empty list item, exit list mode
+                  if (!content.trim()) {
+                    document.execCommand('insertText', false, '\n');
+                  } else {
+                    // Continue list with incremented number
+                    document.execCommand('insertText', false, '\n' + indent + (num + 1) + '. ');
+                  }
+                  return;
+                }
+
+                // Check for checkbox list (- [ ] or - [x])
+                const checkboxMatch = currentLine.match(/^(\s*)-\s+\[([ x])\]\s+(.*)$/);
+                if (checkboxMatch) {
+                  event.preventDefault();
+                  const indent = checkboxMatch[1];
+                  const content = checkboxMatch[3];
+
+                  if (!content.trim()) {
+                    document.execCommand('insertText', false, '\n');
+                  } else {
+                    document.execCommand('insertText', false, '\n' + indent + '- [ ] ');
+                  }
+                  return;
+                }
+
+                // Check for blockquote
+                const blockquoteMatch = currentLine.match(/^(>\s+)(.*)$/);
+                if (blockquoteMatch) {
+                  event.preventDefault();
+                  const content = blockquoteMatch[2];
+                  if (!content.trim()) {
+                    document.execCommand('insertText', false, '\n');
+                  } else {
+                    document.execCommand('insertText', false, '\n> ');
+                  }
+                  return;
+                }
+              }
+            }
+          }
+
+          // Keyboard shortcuts
+          if (event.ctrlKey || event.metaKey) {
+            let handled = false;
+
+            // Ctrl/Cmd+B: Bold
+            if (event.key === 'b' || event.key === 'B') {
+              event.preventDefault();
+              wrapSelection('**', '**');
+              handled = true;
+            }
+
+            // Ctrl/Cmd+I: Italic
+            if (event.key === 'i' || event.key === 'I') {
+              event.preventDefault();
+              wrapSelection('*', '*');
+              handled = true;
+            }
+
+            // Ctrl/Cmd+K: Link
+            if (event.key === 'k' || event.key === 'K') {
+              event.preventDefault();
+              const sel = window.getSelection();
+              const selectedText = sel.toString();
+              if (selectedText) {
+                wrapSelection('[', '](url)');
+              } else {
+                document.execCommand('insertText', false, '[](url)');
+              }
+              handled = true;
+            }
+
+            // Ctrl/Cmd+`: Inline code
+            if (event.key === '`') {
+              event.preventDefault();
+              wrapSelection('`', '`');
+              handled = true;
+            }
+
+            // Ctrl/Cmd+1-6: Headings
+            if (event.key >= '1' && event.key <= '6') {
+              event.preventDefault();
+              const level = event.key;
+              const hashes = '#'.repeat(level);
+              insertAtLineStart(hashes + ' ');
+              handled = true;
+            }
+          }
+        });
+
+        // Helper function to wrap selection with prefix and suffix
+        function wrapSelection(prefix, suffix) {
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            const selectedText = sel.toString();
+            const newText = prefix + selectedText + suffix;
+            document.execCommand('insertText', false, newText);
+
+            // If there was no selection, move cursor between the markers
+            if (!selectedText) {
+              const newSel = window.getSelection();
+              const newRange = newSel.getRangeAt(0);
+              newRange.setStart(newRange.startContainer, newRange.startOffset - suffix.length);
+              newRange.collapse(true);
+              newSel.removeAllRanges();
+              newSel.addRange(newRange);
+            }
+          }
+        }
+
+        // Helper function to insert text at start of current line
+        function insertAtLineStart(text) {
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            const textNode = range.startContainer;
+            if (textNode.nodeType === Node.TEXT_NODE) {
+              const fullText = textNode.textContent;
+              const offset = range.startOffset;
+              const lineStart = fullText.lastIndexOf('\n', offset - 1) + 1;
+
+              // Insert at line start
+              const newText = fullText.slice(0, lineStart) + text + fullText.slice(lineStart);
+              textNode.textContent = newText;
+
+              // Move cursor after inserted text
+              range.setStart(textNode, lineStart + text.length);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          }
+        }
+
+        // Auto-pairing for markdown syntax
+        el.addEventListener("beforeinput", function(event) {
+          if (!markdownMode) return;
+
+          // Auto-pair * for bold/italic
+          if (event.data === '*' && event.inputType === 'insertText') {
+            event.preventDefault();
+            document.execCommand('insertText', false, '**');
+            // Move cursor back 1 position to be in the middle
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              const textNode = range.startContainer;
+              if (textNode.nodeType === Node.TEXT_NODE) {
+                const offset = range.startOffset;
+                range.setStart(textNode, offset - 1);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+            }
+            return;
+          }
+
+          // Auto-pair ` for code
+          if (event.data === '`' && event.inputType === 'insertText') {
+            event.preventDefault();
+            document.execCommand('insertText', false, '``');
+            // Move cursor back 1 position to be in the middle
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              const textNode = range.startContainer;
+              if (textNode.nodeType === Node.TEXT_NODE) {
+                const offset = range.startOffset;
+                range.setStart(textNode, offset - 1);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+            }
+            return;
+          }
+
+          // Auto-pair [] for links
+          if (event.data === '[' && event.inputType === 'insertText') {
+            event.preventDefault();
+            document.execCommand('insertText', false, '[]');
+            // Move cursor back 1 position
+            const sel = window.getSelection();
+            const range = sel.getRangeAt(0);
+            range.setStart(range.startContainer, range.startOffset - 1);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+
+          // Auto-complete ]( for links
+          if (event.data === ']' && event.inputType === 'insertText') {
+            const sel = window.getSelection();
+            if (sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              const textNode = range.startContainer;
+              if (textNode.nodeType === Node.TEXT_NODE) {
+                const text = textNode.textContent;
+                const offset = range.startOffset;
+                // Check if next char is already ]
+                if (offset < text.length && text[offset] === ']') {
+                  event.preventDefault();
+                  // Move cursor forward and add ()
+                  range.setStart(textNode, offset + 1);
+                  range.collapse(true);
+                  sel.removeAllRanges();
+                  sel.addRange(range);
+                  document.execCommand('insertText', false, '()');
+                  // Move cursor back 1
+                  const newRange = sel.getRangeAt(0);
+                  newRange.setStart(newRange.startContainer, newRange.startOffset - 1);
+                  newRange.collapse(true);
+                  sel.removeAllRanges();
+                  sel.addRange(newRange);
+                }
+              }
+            }
+          }
         });
 
       });
@@ -282,22 +796,55 @@
 
         <div class="text-end" id="buttons">
           <div class="btn-group" role="group" aria-label="Basic outlined example">
-            <button type="button" class="btn btn-outline-primary sans-serif" data-font="sans-serif">Aa</button>
-            <button type="button" class="btn btn-outline-primary serif" data-font="serif">Aa</button>
-            <button type="button" class="btn btn-outline-primary monospace" data-font="monospace">Aa</button>
+            <button type="button" class="btn btn-outline-primary sans-serif font-active" data-font="sans-serif" title="Sans-serif font (clean, modern)">Aa</button>
+            <button type="button" class="btn btn-outline-primary monospace" data-font="monospace" title="Monospace font (code, typewriter)">Aa</button>
           </div>
           <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" title="convert markup to markdown">M↓</button>
-          <button type="button" class="btn btn-outline-secondary" id="remove-formatting">Remove Formatting</button>
+          <button type="button" class="btn btn-outline-secondary" id="remove-formatting" title="Remove all formatting">⌫</button>
       </div>
 
         <article
-          class="editor"
+          class="editor sans-serif"
           contenteditable
           data-placeholder="Write here"
           id="mcguffin"
           autofocus
           ></article>
           <p id="counter"></p>
+          <div id="markdown-preview"></div>
+          <div id="markdown-help">
+            <div class="help-section">
+              <strong>Keyboard Shortcuts:</strong>
+              <kbd>Ctrl/Cmd+B</kbd> Bold •
+              <kbd>Ctrl/Cmd+I</kbd> Italic •
+              <kbd>Ctrl/Cmd+K</kbd> Link •
+              <kbd>Ctrl/Cmd+`</kbd> Code •
+              <kbd>Ctrl/Cmd+1-6</kbd> Headings
+            </div>
+            <div class="help-section">
+              <strong>Indentation:</strong>
+              <kbd>Tab</kbd> Indent •
+              <kbd>Shift+Tab</kbd> Unindent
+            </div>
+            <div class="help-section">
+              <strong>Links:</strong>
+              <code>[text](url)</code> creates a hyperlink •
+              Type <code>[</code> to auto-pair brackets •
+              <kbd>Ctrl/Cmd+K</kbd> wraps selection in link
+            </div>
+            <div class="help-section">
+              <strong>Auto-Lists:</strong>
+              Type <code>* </code> or <code>- </code> for bullets •
+              <code>1. </code> for numbers •
+              <code>- [ ] </code> for checkboxes •
+              <code>> </code> for quotes
+            </div>
+            <div class="help-section">
+              <strong>Auto-Pairing:</strong>
+              <code>**</code> <code>`</code> <code>[</code> auto-complete •
+              Press <kbd>Enter</kbd> in lists to continue
+            </div>
+          </div>
         </div><!-- article container -->
 
 
