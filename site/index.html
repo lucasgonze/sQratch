@@ -60,6 +60,15 @@
       *.serif { font-family: serif; }
       *.monospace { font-family: monospace; }
 
+      /* Tagline fade */
+      #tagline {
+        transition: opacity 10s ease-out;
+      }
+
+      #tagline.fade-out {
+        opacity: 0;
+      }
+
       /* Footer */
       footer {
         position: fixed;
@@ -436,6 +445,12 @@
 
         el = document.getElementsByTagName('article')[0];
 
+        // Fade out tagline after 20 seconds
+        setTimeout(function() {
+          const tagline = document.getElementById('tagline');
+          tagline.classList.add('fade-out');
+        }, 20000);
+
         // character counter and markdown preview
         el.addEventListener("input", (event) => {
           len = el.innerText.trim().length;
@@ -509,6 +524,18 @@
           }
         });
 
+        // Helper function to show prompt message
+        function showPrompt(text) {
+          const message = document.getElementById('formatting-message');
+          message.textContent = text;
+          message.classList.remove('fade');
+          message.classList.add('show');
+          // Force reflow to restart animation
+          void message.offsetWidth;
+          message.classList.remove('show');
+          message.classList.add('fade');
+        }
+
         // Remove Formatting button
         document.getElementById('remove-formatting').addEventListener("click", function() {
           article = document.querySelector('#mcguffin');
@@ -526,14 +553,7 @@
           sel.removeAllRanges();
           sel.addRange(range);
 
-          // Show formatting removed message and fade it out over 15 seconds
-          const message = document.getElementById('formatting-message');
-          message.classList.remove('fade');
-          message.classList.add('show');
-          // Force reflow to restart animation
-          void message.offsetWidth;
-          message.classList.remove('show');
-          message.classList.add('fade');
+          showPrompt('formatting removed');
         });
 
         // Copy all text button
@@ -541,17 +561,16 @@
           const article = document.querySelector('#mcguffin');
           const text = article.innerText;
 
+          // Don't copy if there's no content
+          if (!text || text.trim().length === 0) {
+            return;
+          }
+
           navigator.clipboard.writeText(text).then(function() {
-            // Provide visual feedback
-            const btn = document.getElementById('copy-all');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '✓ Copied';
-            setTimeout(function() {
-              btn.innerHTML = originalText;
-            }, 2000);
+            showPrompt('copied to clipboard');
           }).catch(function(err) {
             console.error('Failed to copy text: ', err);
-            alert('Failed to copy to clipboard');
+            showPrompt('copy failed');
           });
         });
 
@@ -560,30 +579,24 @@
           const preview = document.getElementById('markdown-preview');
           const html = preview.innerHTML;
 
+          // Don't copy if there's no content
+          if (!html || html.trim().length === 0) {
+            return;
+          }
+
           // Create a temporary element to copy HTML
           const blob = new Blob([html], { type: 'text/html' });
           const clipboardItem = new ClipboardItem({ 'text/html': blob });
 
           navigator.clipboard.write([clipboardItem]).then(function() {
-            // Provide visual feedback
-            const btn = document.getElementById('copy-formatted');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '✓ Copied';
-            setTimeout(function() {
-              btn.innerHTML = originalText;
-            }, 2000);
+            showPrompt('formatted text copied');
           }).catch(function(err) {
             // Fallback: copy as plain HTML text
             navigator.clipboard.writeText(html).then(function() {
-              const btn = document.getElementById('copy-formatted');
-              const originalText = btn.innerHTML;
-              btn.innerHTML = '✓ Copied';
-              setTimeout(function() {
-                btn.innerHTML = originalText;
-              }, 2000);
+              showPrompt('formatted text copied');
             }).catch(function(err2) {
               console.error('Failed to copy HTML: ', err2);
-              alert('Failed to copy to clipboard');
+              showPrompt('copy failed');
             });
           });
         });
@@ -906,7 +919,7 @@
 
       <nav>
 	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;">notepad</span>
-	<p id="tagline" class="text-muted"><small><span title="instant loading">fast</span> • <span title="no logging, ever">private</span> • <span title="distraction free for high focus">quiet</span></small></p>
+	<p id="tagline" class="text-muted"><small><span title="instant loading">fast</span> • <span title="no logging, ever">private</span> • <span title="distraction free for high focus">calm</span></small></p>
 	</nav>
 
       <!-- editor -->
@@ -930,7 +943,7 @@
           autofocus
           ></article>
           <div style="overflow: auto;">
-            <span id="formatting-message">formatting removed</span>
+            <span id="formatting-message"></span>
             <p id="counter"></p>
           </div>
           <div id="preview-controls">
