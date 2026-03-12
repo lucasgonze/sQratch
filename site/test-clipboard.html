@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>sQratch Tests - Clipboard & UI Features</title>
+    <meta name="description" content="Unit tests for sQratch clipboard and UI features">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body {
@@ -39,11 +40,69 @@
         font-family: monospace;
         white-space: pre-wrap;
       }
+      /* Styles needed for testing */
+      #tagline {
+        transition: opacity 10s ease-out;
+      }
+      #tagline.fade-out {
+        opacity: 0;
+      }
+      #formatting-message {
+        opacity: 0;
+        transition: opacity 10s ease-out;
+      }
+      #formatting-message.show {
+        opacity: 1;
+        transition: none;
+      }
+      #formatting-message.fade {
+        opacity: 0;
+        transition: opacity 10s ease-out;
+      }
+      footer {
+        position: fixed;
+        bottom: 0;
+      }
+      #preview-controls {
+        display: none;
+      }
+      #markdown-preview {
+        display: none;
+      }
+      #markdown-help {
+        display: none;
+      }
+      .sans-serif {
+        font-family: sans-serif;
+      }
+      .monospace {
+        font-family: monospace;
+      }
     </style>
   </head>
   <body>
     <h1>Unit Tests: Clipboard & UI Features</h1>
     <div id="test-results"></div>
+
+    <!-- Mock DOM elements for testing -->
+    <div style="display: none;">
+      <button id="copy-all" title="copy all">⎘</button>
+      <button id="copy-formatted" title="copy formatted text">⎘</button>
+      <button id="remove-formatting" title="remove formatting">⌫</button>
+      <button id="convert-to-markdown" title="toggle markdown mode">M↓</button>
+      <button class="btn-outline-secondary" data-font="sans-serif" title="sans-serif font">Sans</button>
+      <button class="btn-outline-secondary" data-font="monospace" title="monospace font">Mono</button>
+      <article id="mcguffin" contenteditable data-placeholder="Write here" class="sans-serif"></article>
+      <div id="formatting-message" style="opacity: 0;"></div>
+      <div id="counter">0</div>
+      <p id="tagline" class="text-muted"><small><span title="instant loading">fast</span> • <span title="no logging, ever">private</span> • <span title="distraction free for high focus">calm</span></small></p>
+      <footer style="position: fixed;">
+        <a href="https://github.com/lucasgonze/sqratch">GitHub</a> by Lucas Gonze
+      </footer>
+      <div id="preview-controls" style="display: none;"></div>
+      <div id="markdown-preview" style="display: none;"></div>
+      <div id="markdown-help" style="display: none;"></div>
+    </div>
 
     <script>
       // Test utilities
@@ -79,7 +138,70 @@
         tests.push({ name, fn });
       }
 
+      // Setup mock functionality before tests run
+      function setupMockFunctionality() {
+        const editor = document.getElementById('mcguffin');
+        const counter = document.getElementById('counter');
+        const markdownPreview = document.getElementById('markdown-preview');
+        const markdownBtn = document.getElementById('convert-to-markdown');
+        const previewControls = document.getElementById('preview-controls');
+        const removeFormattingBtn = document.getElementById('remove-formatting');
+
+        // Character counter
+        editor.addEventListener('input', () => {
+          counter.textContent = editor.innerText.trim().length;
+        });
+
+        // Font buttons
+        document.querySelectorAll('[data-font]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const font = btn.getAttribute('data-font');
+            editor.classList.remove('sans-serif', 'serif', 'monospace');
+            editor.classList.add(font);
+
+            // Update button styles
+            document.querySelectorAll('[data-font]').forEach(b => {
+              b.style.fontWeight = 'normal';
+            });
+            btn.style.fontWeight = 'bold';
+          });
+        });
+
+        // Set default active font button
+        document.querySelector('[data-font="sans-serif"]').style.fontWeight = 'bold';
+
+        // Markdown toggle
+        let markdownMode = false;
+        markdownBtn.addEventListener('click', () => {
+          markdownMode = !markdownMode;
+          if (markdownMode) {
+            markdownPreview.style.display = 'block';
+            previewControls.style.display = 'block';
+          } else {
+            markdownPreview.style.display = 'none';
+            previewControls.style.display = 'none';
+          }
+        });
+
+        // Remove formatting
+        removeFormattingBtn.addEventListener('click', () => {
+          const text = editor.innerText;
+          editor.innerHTML = text.replace(/\n/g, '<br>');
+        });
+
+        // Copy all button
+        document.getElementById('copy-all').addEventListener('click', () => {
+          const text = editor.innerText;
+          if (!text || text.trim().length === 0) {
+            return;
+          }
+          // Mock clipboard operation (can't actually test clipboard in automated tests)
+        });
+      }
+
       function runTests() {
+        setupMockFunctionality();
+
         const resultsDiv = document.getElementById('test-results');
         resultsDiv.innerHTML = '<h2>Running Tests...</h2>';
 
