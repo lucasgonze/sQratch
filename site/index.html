@@ -206,7 +206,79 @@
     </style>
 
     <script type="text/javascript">
-      // HTML to Markdown converter
+      // ===== CONSTANTS =====
+      const TIMING = {
+        TAGLINE_FADE_DELAY: 20000,        // 20 seconds before tagline fades
+        PROMPT_FADE_DURATION: 10000,      // 10 seconds for prompt fade
+      };
+
+      const MAX_CONSECUTIVE_BREAKS = 2;
+
+      // ===== STATE =====
+      let markdownMode = false;
+      let editor = null;
+      let characterCount = 0;
+
+      // ===== DOM ELEMENT CACHE =====
+      const DOM = {};
+
+      // ===== UTILITY FUNCTIONS =====
+
+      /**
+       * Cache DOM element references for better performance
+       */
+      function cacheDOMElements() {
+        DOM.editor = document.querySelector('#mcguffin');
+        DOM.counter = document.getElementById('counter');
+        DOM.tagline = document.getElementById('tagline');
+        DOM.formattingMessage = document.getElementById('formatting-message');
+        DOM.markdownBtn = document.getElementById('convert-to-markdown');
+        DOM.markdownPreview = document.getElementById('markdown-preview');
+        DOM.markdownHelp = document.getElementById('markdown-help');
+        DOM.previewControls = document.getElementById('preview-controls');
+        DOM.removeFormattingBtn = document.getElementById('remove-formatting');
+        DOM.copyAllBtn = document.getElementById('copy-all');
+        DOM.copyFormattedBtn = document.getElementById('copy-formatted');
+        DOM.buttons = document.querySelector('#buttons');
+        DOM.fontButtons = document.querySelectorAll('[data-font]');
+      }
+
+      /**
+       * Show a temporary prompt message that fades out
+       * @param {string} text - Message to display
+       */
+      function showPrompt(text) {
+        const message = DOM.formattingMessage;
+        message.textContent = text;
+        message.classList.remove('fade');
+        message.classList.add('show');
+        // Force reflow to restart animation
+        void message.offsetWidth;
+        message.classList.remove('show');
+        message.classList.add('fade');
+      }
+
+      /**
+       * Restore cursor position to end of content
+       * @param {HTMLElement} element - Element to focus
+       */
+      function restoreCursorToEnd(element) {
+        element.focus();
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(element);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      // ===== MARKDOWN CONVERSION =====
+
+      /**
+       * Convert HTML content to Markdown format
+       * @param {string} html - HTML string to convert
+       * @returns {string} Markdown formatted string
+       */
       function htmlToMarkdown(html) {
         // Create a temporary div to parse HTML
         const tempDiv = document.createElement('div');
@@ -214,12 +286,20 @@
 
         let markdown = convertNodeToMarkdown(tempDiv);
 
-        // Limit to max 2 consecutive line breaks
-        markdown = markdown.replace(/\n{3,}/g, '\n\n');
+        // Limit consecutive line breaks
+        const maxBreaks = MAX_CONSECUTIVE_BREAKS + 1;
+        const regex = new RegExp(`\\n{${maxBreaks},}`, 'g');
+        markdown = markdown.replace(regex, '\n'.repeat(MAX_CONSECUTIVE_BREAKS));
 
         return markdown;
       }
 
+      /**
+       * Recursively convert DOM node to Markdown
+       * @param {Node} node - DOM node to convert
+       * @param {number} listDepth - Current nesting level for lists
+       * @returns {string} Markdown string
+       */
       function convertNodeToMarkdown(node, listDepth = 0) {
         let markdown = '';
 
@@ -351,6 +431,11 @@
         return markdown;
       }
 
+      /**
+       * Convert HTML table to Markdown table format
+       * @param {HTMLTableElement} table - Table element to convert
+       * @returns {string} Markdown table string
+       */
       function convertTableToMarkdown(table) {
         const rows = Array.from(table.querySelectorAll('tr'));
         if (rows.length === 0) return '';
@@ -377,6 +462,13 @@
       }
 
       // Simple markdown to HTML renderer
+      // ===== MARKDOWN RENDERING =====
+
+      /**
+       * Render Markdown text to HTML
+       * @param {string} text - Markdown formatted text
+       * @returns {string} HTML string
+       */
       function renderMarkdown(text) {
         let html = text;
 
@@ -439,173 +531,156 @@
         return html;
       }
 
-      let markdownMode = false;
+      // ===== UI EVENT HANDLERS =====
 
-      window.addEventListener("load", (event) => {
+      /**
+       * Initialize tagline fade-out
+       */
+      function initializeTaglineFade() {
+        setTimeout(() => {
+          DOM.tagline.classList.add('fade-out');
+        }, TIMING.TAGLINE_FADE_DELAY);
+      }
 
-        el = document.getElementsByTagName('article')[0];
-
-        // Fade out tagline after 20 seconds
-        setTimeout(function() {
-          const tagline = document.getElementById('tagline');
-          tagline.classList.add('fade-out');
-        }, 20000);
-
-        // character counter and markdown preview
-        el.addEventListener("input", (event) => {
-          len = el.innerText.trim().length;
-          document.getElementById("counter").innerText = len;
+      /**
+       * Initialize character counter and markdown preview updates
+       */
+      function initializeEditorInput() {
+        DOM.editor.addEventListener("input", () => {
+          characterCount = DOM.editor.innerText.trim().length;
+          DOM.counter.innerText = characterCount;
 
           // Update markdown preview if in markdown mode
           if (markdownMode) {
-            const text = el.innerText;
-            const preview = document.getElementById('markdown-preview');
-            preview.innerHTML = renderMarkdown(text);
+            const text = DOM.editor.innerText;
+            DOM.markdownPreview.innerHTML = renderMarkdown(text);
           }
         });
+      }
 
-        document.querySelector('#buttons').addEventListener("click",
-          function handler(event){
-            font = event.target.dataset.font;
-            if( font == "sans-serif" || font == "monospace" ){
-              article = document.querySelector('#mcguffin');
-              article.classList.remove("sans-serif");
-              article.classList.remove("monospace");
-              article.classList.add(font);
+      /**
+       * Initialize font switching buttons
+       */
+      function initializeFontButtons() {
+        DOM.buttons.addEventListener("click", (event) => {
+          const font = event.target.dataset.font;
+          if (font === "sans-serif" || font === "monospace") {
+            DOM.editor.classList.remove("sans-serif", "monospace");
+            DOM.editor.classList.add(font);
 
-              // Update active button styling
-              const fontButtons = document.querySelectorAll('[data-font]');
-              fontButtons.forEach(btn => btn.classList.remove('font-active'));
-              event.target.classList.add('font-active');
-            }
+            // Update active button styling
+            DOM.fontButtons.forEach(btn => btn.classList.remove('font-active'));
+            event.target.classList.add('font-active');
           }
-        )
+        });
+      }
 
-        // Markdown mode toggle
-        const markdownBtn = document.getElementById('convert-to-markdown');
-        const preview = document.getElementById('markdown-preview');
-        const help = document.getElementById('markdown-help');
-        const previewControls = document.getElementById('preview-controls');
-
-        markdownBtn.addEventListener("click", function() {
+      /**
+       * Initialize markdown mode toggle
+       */
+      function initializeMarkdownToggle() {
+        DOM.markdownBtn.addEventListener("click", () => {
           markdownMode = !markdownMode;
 
           if (markdownMode) {
             // Activate markdown mode
-            markdownBtn.classList.add('btn-markdown-active');
-            preview.classList.add('active');
-            help.classList.add('active');
-            previewControls.classList.add('active');
+            DOM.markdownBtn.classList.add('btn-markdown-active');
+            DOM.markdownPreview.classList.add('active');
+            DOM.markdownHelp.classList.add('active');
+            DOM.previewControls.classList.add('active');
 
             // Convert current HTML to markdown
-            const article = document.querySelector('#mcguffin');
-            const html = article.innerHTML;
+            const html = DOM.editor.innerHTML;
             const markdown = htmlToMarkdown(html).trim();
-            article.innerHTML = markdown.replace(/\n/g, '<br>');
+            DOM.editor.innerHTML = markdown.replace(/\n/g, '<br>');
 
             // Show preview
-            const text = article.innerText;
-            preview.innerHTML = renderMarkdown(text);
+            const text = DOM.editor.innerText;
+            DOM.markdownPreview.innerHTML = renderMarkdown(text);
 
             // Restore cursor position at the end
-            article.focus();
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(article);
-            range.collapse(false); // Collapse to end
-            sel.removeAllRanges();
-            sel.addRange(range);
+            restoreCursorToEnd(DOM.editor);
           } else {
             // Deactivate markdown mode
-            markdownBtn.classList.remove('btn-markdown-active');
-            preview.classList.remove('active');
-            help.classList.remove('active');
-            previewControls.classList.remove('active');
+            DOM.markdownBtn.classList.remove('btn-markdown-active');
+            DOM.markdownPreview.classList.remove('active');
+            DOM.markdownHelp.classList.remove('active');
+            DOM.previewControls.classList.remove('active');
           }
         });
+      }
 
-        // Helper function to show prompt message
-        function showPrompt(text) {
-          const message = document.getElementById('formatting-message');
-          message.textContent = text;
-          message.classList.remove('fade');
-          message.classList.add('show');
-          // Force reflow to restart animation
-          void message.offsetWidth;
-          message.classList.remove('show');
-          message.classList.add('fade');
-        }
-
-        // Remove Formatting button
-        document.getElementById('remove-formatting').addEventListener("click", function() {
-          article = document.querySelector('#mcguffin');
+      /**
+       * Initialize remove formatting button
+       */
+      function initializeRemoveFormatting() {
+        DOM.removeFormattingBtn.addEventListener("click", () => {
           // Get plain text with line breaks preserved
-          const text = article.innerText;
+          const text = DOM.editor.innerText;
           // Replace line breaks with <br> tags and set as HTML
-          article.innerHTML = text.replace(/\n/g, '<br>');
+          DOM.editor.innerHTML = text.replace(/\n/g, '<br>');
 
           // Restore cursor position at the end
-          article.focus();
-          const range = document.createRange();
-          const sel = window.getSelection();
-          range.selectNodeContents(article);
-          range.collapse(false); // Collapse to end
-          sel.removeAllRanges();
-          sel.addRange(range);
+          restoreCursorToEnd(DOM.editor);
 
           showPrompt('formatting removed');
         });
+      }
 
+      /**
+       * Initialize copy to clipboard buttons
+       */
+      function initializeClipboardButtons() {
         // Copy all text button
-        document.getElementById('copy-all').addEventListener("click", function() {
-          const article = document.querySelector('#mcguffin');
-          const text = article.innerText;
+        DOM.copyAllBtn.addEventListener("click", () => {
+          const text = DOM.editor.innerText;
 
           // Don't copy if there's no content
           if (!text || text.trim().length === 0) {
             return;
           }
 
-          navigator.clipboard.writeText(text).then(function() {
-            showPrompt('copied to clipboard');
-          }).catch(function(err) {
-            console.error('Failed to copy text: ', err);
-            showPrompt('copy failed');
-          });
+          navigator.clipboard.writeText(text)
+            .then(() => showPrompt('copied to clipboard'))
+            .catch((err) => {
+              console.error('Failed to copy text: ', err);
+              showPrompt('copy failed');
+            });
         });
 
         // Copy formatted HTML button
-        document.getElementById('copy-formatted').addEventListener("click", function() {
-          const preview = document.getElementById('markdown-preview');
-          const html = preview.innerHTML;
+        DOM.copyFormattedBtn.addEventListener("click", () => {
+          const html = DOM.markdownPreview.innerHTML;
 
           // Don't copy if there's no content
           if (!html || html.trim().length === 0) {
             return;
           }
 
-          // Create a temporary element to copy HTML
+          // Create a clipboard item with HTML
           const blob = new Blob([html], { type: 'text/html' });
           const clipboardItem = new ClipboardItem({ 'text/html': blob });
 
-          navigator.clipboard.write([clipboardItem]).then(function() {
-            showPrompt('formatted text copied');
-          }).catch(function(err) {
-            // Fallback: copy as plain HTML text
-            navigator.clipboard.writeText(html).then(function() {
-              showPrompt('formatted text copied');
-            }).catch(function(err2) {
-              console.error('Failed to copy HTML: ', err2);
-              showPrompt('copy failed');
+          navigator.clipboard.write([clipboardItem])
+            .then(() => showPrompt('formatted text copied'))
+            .catch((err) => {
+              // Fallback: copy as plain HTML text
+              navigator.clipboard.writeText(html)
+                .then(() => showPrompt('formatted text copied'))
+                .catch((err2) => {
+                  console.error('Failed to copy HTML: ', err2);
+                  showPrompt('copy failed');
+                });
             });
-          });
         });
+      }
 
-        // Markdown editor keyboard handlers
-        el.addEventListener("keydown", function(event) {
+      /**
+       * Initialize markdown editor keyboard handlers
+       */
+      function initializeMarkdownKeyboard() {
+        DOM.editor.addEventListener("keydown", (event) => {
           if (!markdownMode) return;
-
-          const article = this;
 
           // Tab: indent
           if (event.key === 'Tab' && !event.shiftKey) {
@@ -906,8 +981,26 @@
             }
           }
         });
+      }
 
-      });
+      // ===== MAIN INITIALIZATION =====
+
+      /**
+       * Initialize all features when DOM is loaded
+       */
+      function initialize() {
+        cacheDOMElements();
+        initializeTaglineFade();
+        initializeEditorInput();
+        initializeFontButtons();
+        initializeMarkdownToggle();
+        initializeRemoveFormatting();
+        initializeClipboardButtons();
+        initializeMarkdownKeyboard();
+      }
+
+      // Initialize when page loads
+      window.addEventListener("load", initialize);
     </script>
 
   </head>
