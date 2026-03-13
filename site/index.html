@@ -272,6 +272,69 @@
         sel.addRange(range);
       }
 
+      /**
+       * Save cursor position as character offset from start
+       * @param {HTMLElement} element - Element to get cursor position from
+       * @returns {number} Character offset from start of element
+       */
+      function saveCursorPosition(element) {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return 0;
+
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+
+        return preCaretRange.toString().length;
+      }
+
+      /**
+       * Restore cursor position from character offset
+       * @param {HTMLElement} element - Element to restore cursor position in
+       * @param {number} offset - Character offset from start
+       */
+      function restoreCursorPosition(element, offset) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+
+        let charCount = 0;
+        let nodeStack = [element];
+        let node, foundNode, foundOffset;
+
+        while (node = nodeStack.pop()) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const nextCharCount = charCount + node.length;
+            if (!foundNode && offset >= charCount && offset <= nextCharCount) {
+              foundNode = node;
+              foundOffset = offset - charCount;
+              break;
+            }
+            charCount = nextCharCount;
+          } else {
+            // Add child nodes to stack in reverse order to process in correct order
+            for (let i = node.childNodes.length - 1; i >= 0; i--) {
+              nodeStack.push(node.childNodes[i]);
+            }
+          }
+        }
+
+        if (foundNode) {
+          range.setStart(foundNode, foundOffset);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else {
+          // If we can't find the exact position, put cursor at end
+          range.selectNodeContents(element);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+
+        element.focus();
+      }
+
       // ===== MARKDOWN CONVERSION =====
 
       /**
@@ -589,6 +652,9 @@
             DOM.markdownHelp.classList.add('active');
             DOM.previewControls.classList.add('active');
 
+            // Save cursor position before modifying content
+            const cursorPosition = saveCursorPosition(DOM.editor);
+
             // Convert current HTML to markdown
             const html = DOM.editor.innerHTML;
             const markdown = htmlToMarkdown(html).trim();
@@ -598,8 +664,8 @@
             const text = DOM.editor.innerText;
             DOM.markdownPreview.innerHTML = renderMarkdown(text);
 
-            // Restore cursor position at the end
-            restoreCursorToEnd(DOM.editor);
+            // Restore cursor position to where it was
+            restoreCursorPosition(DOM.editor, cursorPosition);
           } else {
             // Deactivate markdown mode
             DOM.markdownBtn.classList.remove('btn-markdown-active');
@@ -615,13 +681,16 @@
        */
       function initializeRemoveFormatting() {
         DOM.removeFormattingBtn.addEventListener("click", () => {
+          // Save cursor position before modifying content
+          const cursorPosition = saveCursorPosition(DOM.editor);
+
           // Get plain text with line breaks preserved
           const text = DOM.editor.innerText;
           // Replace line breaks with <br> tags and set as HTML
           DOM.editor.innerHTML = text.replace(/\n/g, '<br>');
 
-          // Restore cursor position at the end
-          restoreCursorToEnd(DOM.editor);
+          // Restore cursor position to where it was
+          restoreCursorPosition(DOM.editor, cursorPosition);
 
           showPrompt('formatting removed');
         });
