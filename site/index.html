@@ -2,8 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>sQratch - private notepad</title>
-    <meta name="description" content="minimalist privacy-first editor for use as a scratchpad">
+    <title data-i18n-title="page_subtitle">sQratch - private notepad</title>
+    <meta name="description" content="minimalist privacy-first editor for use as a scratchpad" data-i18n-content="meta_description">
 
     <!--To ensure proper rendering and touch zooming for all devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,7 +62,7 @@
 
       /* Tagline fade */
       #tagline {
-        transition: opacity 10s ease-out;
+        transition: opacity 30s ease-out;
       }
 
       #tagline.fade-out {
@@ -218,6 +218,1421 @@
       let markdownMode = false;
       let editor = null;
       let characterCount = 0;
+      let currentLang = 'en';
+
+      // ===== TRANSLATIONS =====
+      const TRANSLATIONS = {
+        en: {
+          page_subtitle: "private notepad",
+          meta_description: "minimalist privacy-first editor for use as a scratchpad",
+          nav_subtitle: "notepad",
+          tagline_fast: "fast",
+          tagline_private: "private",
+          tagline_calm: "calm",
+          tooltip_fast: "instant loading",
+          tooltip_private: "no logging, ever",
+          tooltip_calm: "distraction free for high focus",
+          btn_font_sans: "Sans-serif font (clean, modern)",
+          btn_font_mono: "Monospace font (code, typewriter)",
+          btn_markdown: "convert markup to markdown",
+          btn_remove_formatting: "Remove all formatting",
+          btn_copy_all: "copy all",
+          btn_copy_formatted: "copy formatted text",
+          editor_placeholder: "Write here",
+          msg_formatting_removed: "formatting removed",
+          msg_copied: "copied to clipboard",
+          msg_formatted_copied: "formatted text copied",
+          msg_copy_failed: "copy failed",
+          help_keyboard_shortcuts: "Keyboard Shortcuts:",
+          help_bold: "Bold",
+          help_italic: "Italic",
+          help_link: "Link",
+          help_code: "Code",
+          help_headings: "Headings",
+          help_indentation: "Indentation:",
+          help_indent: "Indent",
+          help_unindent: "Unindent",
+          help_links_title: "Links:",
+          help_creates_hyperlink: "creates a hyperlink",
+          help_type: "Type",
+          help_to_autopair: "to auto-pair brackets",
+          help_wraps_selection: "wraps selection in link",
+          help_auto_lists: "Auto-Lists:",
+          help_or: "or",
+          help_for_bullets: "for bullets",
+          help_for_numbers: "for numbers",
+          help_for_checkboxes: "for checkboxes",
+          help_for_quotes: "for quotes",
+          help_auto_pairing: "Auto-Pairing:",
+          help_auto_complete: "auto-complete",
+          help_press: "Press",
+          help_in_lists: "in lists to continue",
+          footer_open_source: "Open source by"
+        },
+        es: {
+          page_subtitle: "bloc de notas privado",
+          meta_description: "editor minimalista centrado en la privacidad para usar como borrador",
+          nav_subtitle: "bloc de notas",
+          tagline_fast: "rápido",
+          tagline_private: "privado",
+          tagline_calm: "tranquilo",
+          tooltip_fast: "carga instantánea",
+          tooltip_private: "sin registro, nunca",
+          tooltip_calm: "libre de distracciones para alta concentración",
+          btn_font_sans: "Fuente Sans-serif (limpia, moderna)",
+          btn_font_mono: "Fuente monoespaciada (código, máquina de escribir)",
+          btn_markdown: "convertir marcado a markdown",
+          btn_remove_formatting: "Eliminar todo el formato",
+          btn_copy_all: "copiar todo",
+          btn_copy_formatted: "copiar texto formateado",
+          editor_placeholder: "Escribe aquí",
+          msg_formatting_removed: "formato eliminado",
+          msg_copied: "copiado al portapapeles",
+          msg_formatted_copied: "texto formateado copiado",
+          msg_copy_failed: "copia fallida",
+          help_keyboard_shortcuts: "Atajos de teclado:",
+          help_bold: "Negrita",
+          help_italic: "Cursiva",
+          help_link: "Enlace",
+          help_code: "Código",
+          help_headings: "Encabezados",
+          help_indentation: "Sangría:",
+          help_indent: "Indentar",
+          help_unindent: "Desindentar",
+          help_links_title: "Enlaces:",
+          help_creates_hyperlink: "crea un hipervínculo",
+          help_type: "Escribe",
+          help_to_autopair: "para emparejar corchetes automáticamente",
+          help_wraps_selection: "envuelve la selección en enlace",
+          help_auto_lists: "Listas automáticas:",
+          help_or: "o",
+          help_for_bullets: "para viñetas",
+          help_for_numbers: "para números",
+          help_for_checkboxes: "para casillas de verificación",
+          help_for_quotes: "para citas",
+          help_auto_pairing: "Emparejamiento automático:",
+          help_auto_complete: "autocompletar",
+          help_press: "Presiona",
+          help_in_lists: "en listas para continuar",
+          footer_open_source: "Código abierto por"
+        },
+        zh: {
+          page_subtitle: "私人记事本",
+          meta_description: "简约的隐私优先编辑器，用作便签本",
+          nav_subtitle: "记事本",
+          tagline_fast: "快速",
+          tagline_private: "私密",
+          tagline_calm: "平静",
+          tooltip_fast: "即时加载",
+          tooltip_private: "永不记录",
+          tooltip_calm: "无干扰，高专注",
+          btn_font_sans: "无衬线字体（简洁、现代）",
+          btn_font_mono: "等宽字体（代码、打字机）",
+          btn_markdown: "将标记转换为markdown",
+          btn_remove_formatting: "删除所有格式",
+          btn_copy_all: "全部复制",
+          btn_copy_formatted: "复制格式化文本",
+          editor_placeholder: "在此输入",
+          msg_formatting_removed: "格式已删除",
+          msg_copied: "已复制到剪贴板",
+          msg_formatted_copied: "格式化文本已复制",
+          msg_copy_failed: "复制失败",
+          help_keyboard_shortcuts: "键盘快捷键：",
+          help_bold: "粗体",
+          help_italic: "斜体",
+          help_link: "链接",
+          help_code: "代码",
+          help_headings: "标题",
+          help_indentation: "缩进：",
+          help_indent: "增加缩进",
+          help_unindent: "减少缩进",
+          help_links_title: "链接：",
+          help_creates_hyperlink: "创建超链接",
+          help_type: "输入",
+          help_to_autopair: "自动配对括号",
+          help_wraps_selection: "将选择包裹在链接中",
+          help_auto_lists: "自动列表：",
+          help_or: "或",
+          help_for_bullets: "用于项目符号",
+          help_for_numbers: "用于编号",
+          help_for_checkboxes: "用于复选框",
+          help_for_quotes: "用于引用",
+          help_auto_pairing: "自动配对：",
+          help_auto_complete: "自动完成",
+          help_press: "按",
+          help_in_lists: "在列表中继续",
+          footer_open_source: "开源作者"
+        },
+        hi: {
+          page_subtitle: "निजी नोटपैड",
+          meta_description: "स्क्रैचपैड के रूप में उपयोग के लिए न्यूनतम गोपनीयता-प्रथम संपादक",
+          nav_subtitle: "नोटपैड",
+          tagline_fast: "तेज़",
+          tagline_private: "निजी",
+          tagline_calm: "शांत",
+          tooltip_fast: "तुरंत लोडिंग",
+          tooltip_private: "कभी लॉग नहीं",
+          tooltip_calm: "उच्च फोकस के लिए विघ्न मुक्त",
+          btn_font_sans: "सेंस-सेरिफ़ फ़ॉन्ट (साफ, आधुनिक)",
+          btn_font_mono: "मोनोस्पेस फ़ॉन्ट (कोड, टाइपराइटर)",
+          btn_markdown: "मार्कअप को मार्कडाउन में बदलें",
+          btn_remove_formatting: "सभी फ़ॉर्मेटिंग हटाएं",
+          btn_copy_all: "सब कॉपी करें",
+          btn_copy_formatted: "फ़ॉर्मेट किया हुआ टेक्स्ट कॉपी करें",
+          editor_placeholder: "यहाँ लिखें",
+          msg_formatting_removed: "फ़ॉर्मेटिंग हटा दी गई",
+          msg_copied: "क्लिपबोर्ड पर कॉपी किया गया",
+          msg_formatted_copied: "फ़ॉर्मेट किया हुआ टेक्स्ट कॉपी किया गया",
+          msg_copy_failed: "कॉपी विफल",
+          help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
+          help_bold: "बोल्ड",
+          help_italic: "इटैलिक",
+          help_link: "लिंक",
+          help_code: "कोड",
+          help_headings: "शीर्षक",
+          help_indentation: "इंडेंटेशन:",
+          help_indent: "इंडेंट",
+          help_unindent: "अनइंडेंट",
+          help_links_title: "लिंक:",
+          help_creates_hyperlink: "हाइपरलिंक बनाता है",
+          help_type: "टाइप करें",
+          help_to_autopair: "ब्रैकेट स्वचालित जोड़ी के लिए",
+          help_wraps_selection: "चयन को लिंक में लपेटता है",
+          help_auto_lists: "स्वचालित सूचियां:",
+          help_or: "या",
+          help_for_bullets: "बुलेट के लिए",
+          help_for_numbers: "संख्याओं के लिए",
+          help_for_checkboxes: "चेकबॉक्स के लिए",
+          help_for_quotes: "उद्धरणों के लिए",
+          help_auto_pairing: "स्वचालित जोड़ी:",
+          help_auto_complete: "स्वचालित पूर्ण",
+          help_press: "दबाएं",
+          help_in_lists: "सूचियों में जारी रखने के लिए",
+          footer_open_source: "ओपन सोर्स द्वारा"
+        },
+        fr: {
+          page_subtitle: "bloc-notes privé",
+          meta_description: "éditeur minimaliste axé sur la confidentialité pour une utilisation comme bloc-notes",
+          nav_subtitle: "bloc-notes",
+          tagline_fast: "rapide",
+          tagline_private: "privé",
+          tagline_calm: "calme",
+          tooltip_fast: "chargement instantané",
+          tooltip_private: "aucun enregistrement, jamais",
+          tooltip_calm: "sans distraction pour une concentration élevée",
+          btn_font_sans: "Police sans-serif (épurée, moderne)",
+          btn_font_mono: "Police monospace (code, machine à écrire)",
+          btn_markdown: "convertir le balisage en markdown",
+          btn_remove_formatting: "Supprimer tout le formatage",
+          btn_copy_all: "tout copier",
+          btn_copy_formatted: "copier le texte formaté",
+          editor_placeholder: "Écrivez ici",
+          msg_formatting_removed: "formatage supprimé",
+          msg_copied: "copié dans le presse-papiers",
+          msg_formatted_copied: "texte formaté copié",
+          msg_copy_failed: "échec de la copie",
+          help_keyboard_shortcuts: "Raccourcis clavier:",
+          help_bold: "Gras",
+          help_italic: "Italique",
+          help_link: "Lien",
+          help_code: "Code",
+          help_headings: "Titres",
+          help_indentation: "Indentation:",
+          help_indent: "Indenter",
+          help_unindent: "Désindenter",
+          help_links_title: "Liens:",
+          help_creates_hyperlink: "crée un hyperlien",
+          help_type: "Tapez",
+          help_to_autopair: "pour apparier automatiquement les crochets",
+          help_wraps_selection: "enveloppe la sélection dans un lien",
+          help_auto_lists: "Listes automatiques:",
+          help_or: "ou",
+          help_for_bullets: "pour les puces",
+          help_for_numbers: "pour les numéros",
+          help_for_checkboxes: "pour les cases à cocher",
+          help_for_quotes: "pour les citations",
+          help_auto_pairing: "Appariement automatique:",
+          help_auto_complete: "auto-complétion",
+          help_press: "Appuyez",
+          help_in_lists: "dans les listes pour continuer",
+          footer_open_source: "Open source par"
+        },
+        ar: {
+          page_subtitle: "مفكرة خاصة",
+          meta_description: "محرر بسيط يركز على الخصوصية للاستخدام كمفكرة",
+          nav_subtitle: "مفكرة",
+          tagline_fast: "سريع",
+          tagline_private: "خاص",
+          tagline_calm: "هادئ",
+          tooltip_fast: "تحميل فوري",
+          tooltip_private: "لا سجلات، أبداً",
+          tooltip_calm: "خالٍ من التشتيت للتركيز العالي",
+          btn_font_sans: "خط بدون serif (نظيف، حديث)",
+          btn_font_mono: "خط أحادي المسافة (كود، آلة كاتبة)",
+          btn_markdown: "تحويل العلامات إلى markdown",
+          btn_remove_formatting: "إزالة كل التنسيق",
+          btn_copy_all: "نسخ الكل",
+          btn_copy_formatted: "نسخ النص المنسق",
+          editor_placeholder: "اكتب هنا",
+          msg_formatting_removed: "تمت إزالة التنسيق",
+          msg_copied: "تم النسخ إلى الحافظة",
+          msg_formatted_copied: "تم نسخ النص المنسق",
+          msg_copy_failed: "فشل النسخ",
+          help_keyboard_shortcuts: "اختصارات لوحة المفاتيح:",
+          help_bold: "غامق",
+          help_italic: "مائل",
+          help_link: "رابط",
+          help_code: "كود",
+          help_headings: "عناوين",
+          help_indentation: "المسافة البادئة:",
+          help_indent: "إضافة مسافة",
+          help_unindent: "إزالة مسافة",
+          help_links_title: "روابط:",
+          help_creates_hyperlink: "إنشاء ارتباط تشعبي",
+          help_type: "اكتب",
+          help_to_autopair: "للإقران التلقائي للأقواس",
+          help_wraps_selection: "يلف التحديد في رابط",
+          help_auto_lists: "القوائم التلقائية:",
+          help_or: "أو",
+          help_for_bullets: "للنقاط",
+          help_for_numbers: "للأرقام",
+          help_for_checkboxes: "لمربعات الاختيار",
+          help_for_quotes: "للاقتباسات",
+          help_auto_pairing: "الإقران التلقائي:",
+          help_auto_complete: "الإكمال التلقائي",
+          help_press: "اضغط",
+          help_in_lists: "في القوائم للمتابعة",
+          footer_open_source: "مفتوح المصدر بواسطة"
+        },
+        bn: {
+          page_subtitle: "ব্যক্তিগত নোটপ্যাড",
+          meta_description: "স্ক্র্যাচপ্যাড হিসাবে ব্যবহারের জন্য ন্যূনতম গোপনীয়তা-প্রথম সম্পাদক",
+          nav_subtitle: "নোটপ্যাড",
+          tagline_fast: "দ্রুত",
+          tagline_private: "ব্যক্তিগত",
+          tagline_calm: "শান্ত",
+          tooltip_fast: "তাৎক্ষণিক লোডিং",
+          tooltip_private: "কোনো লগিং নেই, কখনও না",
+          tooltip_calm: "উচ্চ ফোকাসের জন্য বিক্ষেপমুক্ত",
+          btn_font_sans: "সানস-সেরিফ ফন্ট (পরিষ্কার, আধুনিক)",
+          btn_font_mono: "মনোস্পেস ফন্ট (কোড, টাইপরাইটার)",
+          btn_markdown: "মার্কআপকে মার্কডাউনে রূপান্তর করুন",
+          btn_remove_formatting: "সমস্ত ফরম্যাটিং সরান",
+          btn_copy_all: "সব কপি করুন",
+          btn_copy_formatted: "ফরম্যাট করা টেক্সট কপি করুন",
+          editor_placeholder: "এখানে লিখুন",
+          msg_formatting_removed: "ফরম্যাটিং সরানো হয়েছে",
+          msg_copied: "ক্লিপবোর্ডে কপি করা হয়েছে",
+          msg_formatted_copied: "ফরম্যাট করা টেক্সট কপি করা হয়েছে",
+          msg_copy_failed: "কপি ব্যর্থ",
+          help_keyboard_shortcuts: "কীবোর্ড শর্টকাট:",
+          help_bold: "বোল্ড",
+          help_italic: "ইটালিক",
+          help_link: "লিংক",
+          help_code: "কোড",
+          help_headings: "শিরোনাম",
+          help_indentation: "ইন্ডেন্টেশন:",
+          help_indent: "ইন্ডেন্ট",
+          help_unindent: "আনইন্ডেন্ট",
+          help_links_title: "লিংক:",
+          help_creates_hyperlink: "হাইপারলিংক তৈরি করে",
+          help_type: "টাইপ করুন",
+          help_to_autopair: "ব্র্যাকেট স্বয়ংক্রিয় জোড়ার জন্য",
+          help_wraps_selection: "নির্বাচনকে লিংকে মোড়ে",
+          help_auto_lists: "স্বয়ংক্রিয় তালিকা:",
+          help_or: "অথবা",
+          help_for_bullets: "বুলেটের জন্য",
+          help_for_numbers: "সংখ্যার জন্য",
+          help_for_checkboxes: "চেকবক্সের জন্য",
+          help_for_quotes: "উদ্ধৃতির জন্য",
+          help_auto_pairing: "স্বয়ংক্রিয় জোড়া:",
+          help_auto_complete: "স্বয়ংক্রিয় সম্পূর্ণ",
+          help_press: "চাপুন",
+          help_in_lists: "তালিকায় চালিয়ে যেতে",
+          footer_open_source: "ওপেন সোর্স দ্বারা"
+        },
+        ru: {
+          page_subtitle: "личный блокнот",
+          meta_description: "минималистичный редактор с приоритетом конфиденциальности для использования в качестве блокнота",
+          nav_subtitle: "блокнот",
+          tagline_fast: "быстро",
+          tagline_private: "приватно",
+          tagline_calm: "спокойно",
+          tooltip_fast: "мгновенная загрузка",
+          tooltip_private: "без логирования, никогда",
+          tooltip_calm: "без отвлечений для высокой концентрации",
+          btn_font_sans: "Шрифт без засечек (чистый, современный)",
+          btn_font_mono: "Моноширинный шрифт (код, пишущая машинка)",
+          btn_markdown: "преобразовать разметку в markdown",
+          btn_remove_formatting: "Удалить все форматирование",
+          btn_copy_all: "копировать все",
+          btn_copy_formatted: "копировать форматированный текст",
+          editor_placeholder: "Пишите здесь",
+          msg_formatting_removed: "форматирование удалено",
+          msg_copied: "скопировано в буфер обмена",
+          msg_formatted_copied: "форматированный текст скопирован",
+          msg_copy_failed: "ошибка копирования",
+          help_keyboard_shortcuts: "Горячие клавиши:",
+          help_bold: "Жирный",
+          help_italic: "Курсив",
+          help_link: "Ссылка",
+          help_code: "Код",
+          help_headings: "Заголовки",
+          help_indentation: "Отступ:",
+          help_indent: "Увеличить отступ",
+          help_unindent: "Уменьшить отступ",
+          help_links_title: "Ссылки:",
+          help_creates_hyperlink: "создает гиперссылку",
+          help_type: "Введите",
+          help_to_autopair: "для автоматического сопряжения скобок",
+          help_wraps_selection: "обертывает выделение в ссылку",
+          help_auto_lists: "Автоматические списки:",
+          help_or: "или",
+          help_for_bullets: "для маркеров",
+          help_for_numbers: "для чисел",
+          help_for_checkboxes: "для флажков",
+          help_for_quotes: "для цитат",
+          help_auto_pairing: "Автосопряжение:",
+          help_auto_complete: "автозаполнение",
+          help_press: "Нажмите",
+          help_in_lists: "в списках для продолжения",
+          footer_open_source: "Открытый исходный код от"
+        },
+        pt: {
+          page_subtitle: "bloco de notas privado",
+          meta_description: "editor minimalista com foco na privacidade para uso como rascunho",
+          nav_subtitle: "bloco de notas",
+          tagline_fast: "rápido",
+          tagline_private: "privado",
+          tagline_calm: "calmo",
+          tooltip_fast: "carregamento instantâneo",
+          tooltip_private: "sem registro, nunca",
+          tooltip_calm: "livre de distrações para alta concentração",
+          btn_font_sans: "Fonte sem serifa (limpa, moderna)",
+          btn_font_mono: "Fonte monoespaçada (código, máquina de escrever)",
+          btn_markdown: "converter marcação para markdown",
+          btn_remove_formatting: "Remover toda a formatação",
+          btn_copy_all: "copiar tudo",
+          btn_copy_formatted: "copiar texto formatado",
+          editor_placeholder: "Escreva aqui",
+          msg_formatting_removed: "formatação removida",
+          msg_copied: "copiado para a área de transferência",
+          msg_formatted_copied: "texto formatado copiado",
+          msg_copy_failed: "falha ao copiar",
+          help_keyboard_shortcuts: "Atalhos de teclado:",
+          help_bold: "Negrito",
+          help_italic: "Itálico",
+          help_link: "Link",
+          help_code: "Código",
+          help_headings: "Títulos",
+          help_indentation: "Indentação:",
+          help_indent: "Indentar",
+          help_unindent: "Desindentar",
+          help_links_title: "Links:",
+          help_creates_hyperlink: "cria um hiperlink",
+          help_type: "Digite",
+          help_to_autopair: "para emparelhar colchetes automaticamente",
+          help_wraps_selection: "envolve a seleção em link",
+          help_auto_lists: "Listas automáticas:",
+          help_or: "ou",
+          help_for_bullets: "para marcadores",
+          help_for_numbers: "para números",
+          help_for_checkboxes: "para caixas de seleção",
+          help_for_quotes: "para citações",
+          help_auto_pairing: "Emparelhamento automático:",
+          help_auto_complete: "autocompletar",
+          help_press: "Pressione",
+          help_in_lists: "em listas para continuar",
+          footer_open_source: "Código aberto por"
+        },
+        de: {
+          page_subtitle: "privater Notizblock",
+          meta_description: "minimalistischer, datenschutzorientierter Editor zur Verwendung als Notizblock",
+          nav_subtitle: "Notizblock",
+          tagline_fast: "schnell",
+          tagline_private: "privat",
+          tagline_calm: "ruhig",
+          tooltip_fast: "sofortiges Laden",
+          tooltip_private: "keine Protokollierung, niemals",
+          tooltip_calm: "ablenkungsfrei für hohe Konzentration",
+          btn_font_sans: "Sans-Serif-Schrift (sauber, modern)",
+          btn_font_mono: "Festbreitenschrift (Code, Schreibmaschine)",
+          btn_markdown: "Markup in Markdown konvertieren",
+          btn_remove_formatting: "Alle Formatierungen entfernen",
+          btn_copy_all: "alles kopieren",
+          btn_copy_formatted: "formatierten Text kopieren",
+          editor_placeholder: "Hier schreiben",
+          msg_formatting_removed: "Formatierung entfernt",
+          msg_copied: "in die Zwischenablage kopiert",
+          msg_formatted_copied: "formatierter Text kopiert",
+          msg_copy_failed: "Kopieren fehlgeschlagen",
+          help_keyboard_shortcuts: "Tastenkombinationen:",
+          help_bold: "Fett",
+          help_italic: "Kursiv",
+          help_link: "Link",
+          help_code: "Code",
+          help_headings: "Überschriften",
+          help_indentation: "Einrückung:",
+          help_indent: "Einrücken",
+          help_unindent: "Ausrücken",
+          help_links_title: "Links:",
+          help_creates_hyperlink: "erstellt einen Hyperlink",
+          help_type: "Tippen",
+          help_to_autopair: "um Klammern automatisch zu paaren",
+          help_wraps_selection: "umschließt Auswahl mit Link",
+          help_auto_lists: "Automatische Listen:",
+          help_or: "oder",
+          help_for_bullets: "für Aufzählungszeichen",
+          help_for_numbers: "für Nummern",
+          help_for_checkboxes: "für Kontrollkästchen",
+          help_for_quotes: "für Zitate",
+          help_auto_pairing: "Automatische Paarung:",
+          help_auto_complete: "Autovervollständigung",
+          help_press: "Drücken",
+          help_in_lists: "in Listen zum Fortfahren",
+          footer_open_source: "Open Source von"
+        },
+        ja: {
+          page_subtitle: "プライベートメモ帳",
+          meta_description: "スクラッチパッドとして使用するための最小限のプライバシー優先エディタ",
+          nav_subtitle: "メモ帳",
+          tagline_fast: "高速",
+          tagline_private: "プライベート",
+          tagline_calm: "静か",
+          tooltip_fast: "即座に読み込み",
+          tooltip_private: "ログなし、絶対に",
+          tooltip_calm: "高い集中力のための気が散らない",
+          btn_font_sans: "サンセリフフォント（クリーン、モダン）",
+          btn_font_mono: "等幅フォント（コード、タイプライター）",
+          btn_markdown: "マークアップをMarkdownに変換",
+          btn_remove_formatting: "すべての書式を削除",
+          btn_copy_all: "すべてコピー",
+          btn_copy_formatted: "書式付きテキストをコピー",
+          editor_placeholder: "ここに書く",
+          msg_formatting_removed: "書式を削除しました",
+          msg_copied: "クリップボードにコピーしました",
+          msg_formatted_copied: "書式付きテキストをコピーしました",
+          msg_copy_failed: "コピー失敗",
+          help_keyboard_shortcuts: "キーボードショートカット：",
+          help_bold: "太字",
+          help_italic: "斜体",
+          help_link: "リンク",
+          help_code: "コード",
+          help_headings: "見出し",
+          help_indentation: "インデント：",
+          help_indent: "インデント",
+          help_unindent: "インデント解除",
+          help_links_title: "リンク：",
+          help_creates_hyperlink: "ハイパーリンクを作成",
+          help_type: "入力",
+          help_to_autopair: "括弧を自動ペア",
+          help_wraps_selection: "選択をリンクで囲む",
+          help_auto_lists: "自動リスト：",
+          help_or: "または",
+          help_for_bullets: "箇条書き用",
+          help_for_numbers: "番号付き用",
+          help_for_checkboxes: "チェックボックス用",
+          help_for_quotes: "引用用",
+          help_auto_pairing: "自動ペア：",
+          help_auto_complete: "自動補完",
+          help_press: "押す",
+          help_in_lists: "リストで続ける",
+          footer_open_source: "オープンソース by"
+        },
+        ko: {
+          page_subtitle: "개인 메모장",
+          meta_description: "스크래치패드로 사용하기 위한 미니멀한 개인정보 보호 우선 에디터",
+          nav_subtitle: "메모장",
+          tagline_fast: "빠름",
+          tagline_private: "비공개",
+          tagline_calm: "조용함",
+          tooltip_fast: "즉시 로딩",
+          tooltip_private: "로깅 없음, 절대",
+          tooltip_calm: "높은 집중력을 위한 방해 없음",
+          btn_font_sans: "산세리프 폰트 (깔끔한, 현대적인)",
+          btn_font_mono: "고정폭 폰트 (코드, 타자기)",
+          btn_markdown: "마크업을 마크다운으로 변환",
+          btn_remove_formatting: "모든 서식 제거",
+          btn_copy_all: "모두 복사",
+          btn_copy_formatted: "서식이 있는 텍스트 복사",
+          editor_placeholder: "여기에 쓰세요",
+          msg_formatting_removed: "서식 제거됨",
+          msg_copied: "클립보드에 복사됨",
+          msg_formatted_copied: "서식이 있는 텍스트가 복사됨",
+          msg_copy_failed: "복사 실패",
+          help_keyboard_shortcuts: "키보드 단축키:",
+          help_bold: "굵게",
+          help_italic: "기울임",
+          help_link: "링크",
+          help_code: "코드",
+          help_headings: "제목",
+          help_indentation: "들여쓰기:",
+          help_indent: "들여쓰기",
+          help_unindent: "내어쓰기",
+          help_links_title: "링크:",
+          help_creates_hyperlink: "하이퍼링크 생성",
+          help_type: "입력",
+          help_to_autopair: "괄호 자동 페어링",
+          help_wraps_selection: "선택 영역을 링크로 감싸기",
+          help_auto_lists: "자동 목록:",
+          help_or: "또는",
+          help_for_bullets: "글머리 기호용",
+          help_for_numbers: "번호용",
+          help_for_checkboxes: "체크박스용",
+          help_for_quotes: "인용문용",
+          help_auto_pairing: "자동 페어링:",
+          help_auto_complete: "자동 완성",
+          help_press: "누르기",
+          help_in_lists: "목록에서 계속하기",
+          footer_open_source: "오픈소스 by"
+        },
+        it: {
+          page_subtitle: "blocco note privato",
+          meta_description: "editor minimalista incentrato sulla privacy da utilizzare come blocco appunti",
+          nav_subtitle: "blocco note",
+          tagline_fast: "veloce",
+          tagline_private: "privato",
+          tagline_calm: "calmo",
+          tooltip_fast: "caricamento istantaneo",
+          tooltip_private: "nessuna registrazione, mai",
+          tooltip_calm: "senza distrazioni per alta concentrazione",
+          btn_font_sans: "Font sans-serif (pulito, moderno)",
+          btn_font_mono: "Font monospazio (codice, macchina da scrivere)",
+          btn_markdown: "converti markup in markdown",
+          btn_remove_formatting: "Rimuovi tutta la formattazione",
+          btn_copy_all: "copia tutto",
+          btn_copy_formatted: "copia testo formattato",
+          editor_placeholder: "Scrivi qui",
+          msg_formatting_removed: "formattazione rimossa",
+          msg_copied: "copiato negli appunti",
+          msg_formatted_copied: "testo formattato copiato",
+          msg_copy_failed: "copia fallita",
+          help_keyboard_shortcuts: "Scorciatoie da tastiera:",
+          help_bold: "Grassetto",
+          help_italic: "Corsivo",
+          help_link: "Link",
+          help_code: "Codice",
+          help_headings: "Intestazioni",
+          help_indentation: "Indentazione:",
+          help_indent: "Indenta",
+          help_unindent: "Rimuovi indentazione",
+          help_links_title: "Link:",
+          help_creates_hyperlink: "crea un collegamento ipertestuale",
+          help_type: "Digita",
+          help_to_autopair: "per accoppiare automaticamente le parentesi",
+          help_wraps_selection: "avvolge la selezione in un link",
+          help_auto_lists: "Liste automatiche:",
+          help_or: "o",
+          help_for_bullets: "per i punti elenco",
+          help_for_numbers: "per i numeri",
+          help_for_checkboxes: "per le caselle di controllo",
+          help_for_quotes: "per le citazioni",
+          help_auto_pairing: "Accoppiamento automatico:",
+          help_auto_complete: "completamento automatico",
+          help_press: "Premi",
+          help_in_lists: "nelle liste per continuare",
+          footer_open_source: "Open source di"
+        },
+        tr: {
+          page_subtitle: "özel not defteri",
+          meta_description: "taslak olarak kullanmak için minimalist gizlilik odaklı düzenleyici",
+          nav_subtitle: "not defteri",
+          tagline_fast: "hızlı",
+          tagline_private: "özel",
+          tagline_calm: "sakin",
+          tooltip_fast: "anında yükleme",
+          tooltip_private: "kayıt yok, asla",
+          tooltip_calm: "yüksek odaklanma için dikkat dağıtıcı yok",
+          btn_font_sans: "Sans-serif yazı tipi (temiz, modern)",
+          btn_font_mono: "Monospace yazı tipi (kod, daktilo)",
+          btn_markdown: "işaretlemeyi markdown'a dönüştür",
+          btn_remove_formatting: "Tüm biçimlendirmeyi kaldır",
+          btn_copy_all: "tümünü kopyala",
+          btn_copy_formatted: "biçimlendirilmiş metni kopyala",
+          editor_placeholder: "Buraya yazın",
+          msg_formatting_removed: "biçimlendirme kaldırıldı",
+          msg_copied: "panoya kopyalandı",
+          msg_formatted_copied: "biçimlendirilmiş metin kopyalandı",
+          msg_copy_failed: "kopyalama başarısız",
+          help_keyboard_shortcuts: "Klavye Kısayolları:",
+          help_bold: "Kalın",
+          help_italic: "İtalik",
+          help_link: "Bağlantı",
+          help_code: "Kod",
+          help_headings: "Başlıklar",
+          help_indentation: "Girinti:",
+          help_indent: "Girintiyi artır",
+          help_unindent: "Girintiyi azalt",
+          help_links_title: "Bağlantılar:",
+          help_creates_hyperlink: "köprü oluşturur",
+          help_type: "Yazın",
+          help_to_autopair: "parantezleri otomatik eşleştir",
+          help_wraps_selection: "seçimi bağlantıyla sarar",
+          help_auto_lists: "Otomatik Listeler:",
+          help_or: "veya",
+          help_for_bullets: "madde işaretleri için",
+          help_for_numbers: "sayılar için",
+          help_for_checkboxes: "onay kutuları için",
+          help_for_quotes: "alıntılar için",
+          help_auto_pairing: "Otomatik Eşleştirme:",
+          help_auto_complete: "otomatik tamamlama",
+          help_press: "Basın",
+          help_in_lists: "listelerde devam etmek için",
+          footer_open_source: "Açık kaynak"
+        },
+        pl: {
+          page_subtitle: "prywatny notatnik",
+          meta_description: "minimalistyczny edytor zorientowany na prywatność do użytku jako notatnik",
+          nav_subtitle: "notatnik",
+          tagline_fast: "szybki",
+          tagline_private: "prywatny",
+          tagline_calm: "spokojny",
+          tooltip_fast: "natychmiastowe ładowanie",
+          tooltip_private: "bez logowania, nigdy",
+          tooltip_calm: "bez rozpraszaczy dla wysokiej koncentracji",
+          btn_font_sans: "Czcionka bezszeryfowa (czysta, nowoczesna)",
+          btn_font_mono: "Czcionka o stałej szerokości (kod, maszyna do pisania)",
+          btn_markdown: "konwertuj znaczniki na markdown",
+          btn_remove_formatting: "Usuń całe formatowanie",
+          btn_copy_all: "kopiuj wszystko",
+          btn_copy_formatted: "kopiuj sformatowany tekst",
+          editor_placeholder: "Pisz tutaj",
+          msg_formatting_removed: "formatowanie usunięte",
+          msg_copied: "skopiowano do schowka",
+          msg_formatted_copied: "sformatowany tekst skopiowany",
+          msg_copy_failed: "kopiowanie nie powiodło się",
+          help_keyboard_shortcuts: "Skróty klawiszowe:",
+          help_bold: "Pogrubienie",
+          help_italic: "Kursywa",
+          help_link: "Link",
+          help_code: "Kod",
+          help_headings: "Nagłówki",
+          help_indentation: "Wcięcie:",
+          help_indent: "Zwiększ wcięcie",
+          help_unindent: "Zmniejsz wcięcie",
+          help_links_title: "Linki:",
+          help_creates_hyperlink: "tworzy hiperłącze",
+          help_type: "Wpisz",
+          help_to_autopair: "aby automatycznie parować nawiasy",
+          help_wraps_selection: "owija zaznaczenie w link",
+          help_auto_lists: "Automatyczne listy:",
+          help_or: "lub",
+          help_for_bullets: "dla wypunktowań",
+          help_for_numbers: "dla numerów",
+          help_for_checkboxes: "dla pól wyboru",
+          help_for_quotes: "dla cytatów",
+          help_auto_pairing: "Automatyczne parowanie:",
+          help_auto_complete: "autouzupełnianie",
+          help_press: "Naciśnij",
+          help_in_lists: "na listach, aby kontynuować",
+          footer_open_source: "Otwarte źródło od"
+        },
+        uk: {
+          page_subtitle: "приватний блокнот",
+          meta_description: "мінімалістичний редактор з пріоритетом конфіденційності для використання як чернетка",
+          nav_subtitle: "блокнот",
+          tagline_fast: "швидко",
+          tagline_private: "приватно",
+          tagline_calm: "спокійно",
+          tooltip_fast: "миттєве завантаження",
+          tooltip_private: "без логування, ніколи",
+          tooltip_calm: "без відволікань для високої концентрації",
+          btn_font_sans: "Шрифт без засічок (чистий, сучасний)",
+          btn_font_mono: "Моноширинний шрифт (код, друкарська машинка)",
+          btn_markdown: "перетворити розмітку в markdown",
+          btn_remove_formatting: "Видалити все форматування",
+          btn_copy_all: "копіювати все",
+          btn_copy_formatted: "копіювати форматований текст",
+          editor_placeholder: "Пишіть тут",
+          msg_formatting_removed: "форматування видалено",
+          msg_copied: "скопійовано в буфер обміну",
+          msg_formatted_copied: "форматований текст скопійовано",
+          msg_copy_failed: "помилка копіювання",
+          help_keyboard_shortcuts: "Гарячі клавіші:",
+          help_bold: "Жирний",
+          help_italic: "Курсив",
+          help_link: "Посилання",
+          help_code: "Код",
+          help_headings: "Заголовки",
+          help_indentation: "Відступ:",
+          help_indent: "Збільшити відступ",
+          help_unindent: "Зменшити відступ",
+          help_links_title: "Посилання:",
+          help_creates_hyperlink: "створює гіперпосилання",
+          help_type: "Введіть",
+          help_to_autopair: "для автоматичного спарювання дужок",
+          help_wraps_selection: "обертає виділення в посилання",
+          help_auto_lists: "Автоматичні списки:",
+          help_or: "або",
+          help_for_bullets: "для маркерів",
+          help_for_numbers: "для чисел",
+          help_for_checkboxes: "для прапорців",
+          help_for_quotes: "для цитат",
+          help_auto_pairing: "Автоспарювання:",
+          help_auto_complete: "автозаповнення",
+          help_press: "Натисніть",
+          help_in_lists: "у списках для продовження",
+          footer_open_source: "Відкритий код від"
+        },
+        vi: {
+          page_subtitle: "sổ ghi chú riêng tư",
+          meta_description: "trình soạn thảo tối giản ưu tiên quyền riêng tư để sử dụng làm nháp",
+          nav_subtitle: "sổ ghi chú",
+          tagline_fast: "nhanh",
+          tagline_private: "riêng tư",
+          tagline_calm: "yên tĩnh",
+          tooltip_fast: "tải tức thì",
+          tooltip_private: "không ghi nhật ký, bao giờ",
+          tooltip_calm: "không bị phân tâm để tập trung cao",
+          btn_font_sans: "Phông chữ sans-serif (sạch, hiện đại)",
+          btn_font_mono: "Phông chữ monospace (mã, máy đánh chữ)",
+          btn_markdown: "chuyển đổi đánh dấu sang markdown",
+          btn_remove_formatting: "Xóa tất cả định dạng",
+          btn_copy_all: "sao chép tất cả",
+          btn_copy_formatted: "sao chép văn bản có định dạng",
+          editor_placeholder: "Viết ở đây",
+          msg_formatting_removed: "đã xóa định dạng",
+          msg_copied: "đã sao chép vào clipboard",
+          msg_formatted_copied: "văn bản có định dạng đã được sao chép",
+          msg_copy_failed: "sao chép thất bại",
+          help_keyboard_shortcuts: "Phím tắt:",
+          help_bold: "Đậm",
+          help_italic: "Nghiêng",
+          help_link: "Liên kết",
+          help_code: "Mã",
+          help_headings: "Tiêu đề",
+          help_indentation: "Thụt lề:",
+          help_indent: "Tăng thụt lề",
+          help_unindent: "Giảm thụt lề",
+          help_links_title: "Liên kết:",
+          help_creates_hyperlink: "tạo siêu liên kết",
+          help_type: "Gõ",
+          help_to_autopair: "để tự động ghép nối dấu ngoặc",
+          help_wraps_selection: "bao bọc vùng chọn trong liên kết",
+          help_auto_lists: "Danh sách tự động:",
+          help_or: "hoặc",
+          help_for_bullets: "cho dấu đầu dòng",
+          help_for_numbers: "cho số",
+          help_for_checkboxes: "cho hộp kiểm",
+          help_for_quotes: "cho trích dẫn",
+          help_auto_pairing: "Ghép nối tự động:",
+          help_auto_complete: "tự động hoàn thành",
+          help_press: "Nhấn",
+          help_in_lists: "trong danh sách để tiếp tục",
+          footer_open_source: "Mã nguồn mở bởi"
+        },
+        th: {
+          page_subtitle: "สมุดบันทึกส่วนตัว",
+          meta_description: "โปรแกรมแก้ไขที่เน้นความเป็นส่วนตัวแบบมินิมัลสำหรับใช้เป็นร่าง",
+          nav_subtitle: "สมุดบันทึก",
+          tagline_fast: "รวดเร็ว",
+          tagline_private: "ส่วนตัว",
+          tagline_calm: "สงบ",
+          tooltip_fast: "โหลดทันที",
+          tooltip_private: "ไม่มีการบันทึก ไม่เคย",
+          tooltip_calm: "ไม่มีสิ่งรบกวนเพื่อการมีสมาธิสูง",
+          btn_font_sans: "แบบอักษร Sans-serif (สะอาด ทันสมัย)",
+          btn_font_mono: "แบบอักษร Monospace (โค้ด เครื่องพิมพ์ดีด)",
+          btn_markdown: "แปลงมาร์กอัปเป็น markdown",
+          btn_remove_formatting: "ลบการจัดรูปแบบทั้งหมด",
+          btn_copy_all: "คัดลอกทั้งหมด",
+          btn_copy_formatted: "คัดลอกข้อความที่มีรูปแบบ",
+          editor_placeholder: "เขียนที่นี่",
+          msg_formatting_removed: "ลบการจัดรูปแบบแล้ว",
+          msg_copied: "คัดลอกไปยังคลิปบอร์ดแล้ว",
+          msg_formatted_copied: "คัดลอกข้อความที่มีรูปแบบแล้ว",
+          msg_copy_failed: "คัดลอกล้มเหลว",
+          help_keyboard_shortcuts: "แป้นพิมพ์ลัด:",
+          help_bold: "ตัวหนา",
+          help_italic: "ตัวเอียง",
+          help_link: "ลิงก์",
+          help_code: "โค้ด",
+          help_headings: "หัวเรื่อง",
+          help_indentation: "การเยื้อง:",
+          help_indent: "เพิ่มการเยื้อง",
+          help_unindent: "ลดการเยื้อง",
+          help_links_title: "ลิงก์:",
+          help_creates_hyperlink: "สร้างไฮเปอร์ลิงก์",
+          help_type: "พิมพ์",
+          help_to_autopair: "เพื่อจับคู่วงเล็บอัตโนมัติ",
+          help_wraps_selection: "ห่อส่วนที่เลือกในลิงก์",
+          help_auto_lists: "รายการอัตโนมัติ:",
+          help_or: "หรือ",
+          help_for_bullets: "สำหรับจุดหัวข้อย่อย",
+          help_for_numbers: "สำหรับตัวเลข",
+          help_for_checkboxes: "สำหรับช่องทำเครื่องหมาย",
+          help_for_quotes: "สำหรับคำพูด",
+          help_auto_pairing: "การจับคู่อัตโนมัติ:",
+          help_auto_complete: "เติมอัตโนมัติ",
+          help_press: "กด",
+          help_in_lists: "ในรายการเพื่อดำเนินการต่อ",
+          footer_open_source: "โอเพนซอร์สโดย"
+        },
+        id: {
+          page_subtitle: "notepad pribadi",
+          meta_description: "editor minimalis yang mengutamakan privasi untuk digunakan sebagai scratchpad",
+          nav_subtitle: "notepad",
+          tagline_fast: "cepat",
+          tagline_private: "pribadi",
+          tagline_calm: "tenang",
+          tooltip_fast: "loading instan",
+          tooltip_private: "tidak ada logging, tidak pernah",
+          tooltip_calm: "bebas gangguan untuk fokus tinggi",
+          btn_font_sans: "Font sans-serif (bersih, modern)",
+          btn_font_mono: "Font monospace (kode, mesin tik)",
+          btn_markdown: "konversi markup ke markdown",
+          btn_remove_formatting: "Hapus semua pemformatan",
+          btn_copy_all: "salin semua",
+          btn_copy_formatted: "salin teks berformat",
+          editor_placeholder: "Tulis di sini",
+          msg_formatting_removed: "pemformatan dihapus",
+          msg_copied: "disalin ke clipboard",
+          msg_formatted_copied: "teks berformat disalin",
+          msg_copy_failed: "gagal menyalin",
+          help_keyboard_shortcuts: "Pintasan Keyboard:",
+          help_bold: "Tebal",
+          help_italic: "Miring",
+          help_link: "Tautan",
+          help_code: "Kode",
+          help_headings: "Judul",
+          help_indentation: "Indentasi:",
+          help_indent: "Indentasi",
+          help_unindent: "Hapus indentasi",
+          help_links_title: "Tautan:",
+          help_creates_hyperlink: "membuat hyperlink",
+          help_type: "Ketik",
+          help_to_autopair: "untuk memasangkan tanda kurung otomatis",
+          help_wraps_selection: "membungkus seleksi dalam tautan",
+          help_auto_lists: "Daftar Otomatis:",
+          help_or: "atau",
+          help_for_bullets: "untuk poin",
+          help_for_numbers: "untuk angka",
+          help_for_checkboxes: "untuk kotak centang",
+          help_for_quotes: "untuk kutipan",
+          help_auto_pairing: "Pemasangan Otomatis:",
+          help_auto_complete: "pelengkapan otomatis",
+          help_press: "Tekan",
+          help_in_lists: "dalam daftar untuk melanjutkan",
+          footer_open_source: "Sumber terbuka oleh"
+        },
+        nl: {
+          page_subtitle: "privé notitieblok",
+          meta_description: "minimalistische privacy-first editor voor gebruik als kladblok",
+          nav_subtitle: "notitieblok",
+          tagline_fast: "snel",
+          tagline_private: "privé",
+          tagline_calm: "rustig",
+          tooltip_fast: "instant laden",
+          tooltip_private: "geen logging, nooit",
+          tooltip_calm: "afleidingsvrij voor hoge focus",
+          btn_font_sans: "Sans-serif lettertype (schoon, modern)",
+          btn_font_mono: "Monospace lettertype (code, typemachine)",
+          btn_markdown: "converteer opmaak naar markdown",
+          btn_remove_formatting: "Verwijder alle opmaak",
+          btn_copy_all: "kopieer alles",
+          btn_copy_formatted: "kopieer opgemaakte tekst",
+          editor_placeholder: "Schrijf hier",
+          msg_formatting_removed: "opmaak verwijderd",
+          msg_copied: "gekopieerd naar klembord",
+          msg_formatted_copied: "opgemaakte tekst gekopieerd",
+          msg_copy_failed: "kopiëren mislukt",
+          help_keyboard_shortcuts: "Sneltoetsen:",
+          help_bold: "Vet",
+          help_italic: "Cursief",
+          help_link: "Link",
+          help_code: "Code",
+          help_headings: "Koppen",
+          help_indentation: "Inspringing:",
+          help_indent: "Inspringen",
+          help_unindent: "Inspringen ongedaan maken",
+          help_links_title: "Links:",
+          help_creates_hyperlink: "maakt een hyperlink",
+          help_type: "Typ",
+          help_to_autopair: "om haakjes automatisch te koppelen",
+          help_wraps_selection: "omhult selectie in link",
+          help_auto_lists: "Automatische lijsten:",
+          help_or: "of",
+          help_for_bullets: "voor opsommingstekens",
+          help_for_numbers: "voor nummers",
+          help_for_checkboxes: "voor selectievakjes",
+          help_for_quotes: "voor citaten",
+          help_auto_pairing: "Automatisch koppelen:",
+          help_auto_complete: "automatisch aanvullen",
+          help_press: "Druk op",
+          help_in_lists: "in lijsten om door te gaan",
+          footer_open_source: "Open source door"
+        },
+        ur: {
+          page_subtitle: "نجی نوٹ پیڈ",
+          meta_description: "سکریچ پیڈ کے طور پر استعمال کے لیے کم سے کم رازداری پہلے ایڈیٹر",
+          nav_subtitle: "نوٹ پیڈ",
+          tagline_fast: "تیز",
+          tagline_private: "نجی",
+          tagline_calm: "پرسکون",
+          tooltip_fast: "فوری لوڈنگ",
+          tooltip_private: "کوئی لاگنگ نہیں، کبھی نہیں",
+          tooltip_calm: "اعلی فوکس کے لیے خلفشار سے پاک",
+          btn_font_sans: "سینس سیرف فونٹ (صاف، جدید)",
+          btn_font_mono: "مونوسپیس فونٹ (کوڈ، ٹائپ رائٹر)",
+          btn_markdown: "مارک اپ کو مارکڈاؤن میں تبدیل کریں",
+          btn_remove_formatting: "تمام فارمیٹنگ ہٹائیں",
+          btn_copy_all: "سب کاپی کریں",
+          btn_copy_formatted: "فارمیٹ شدہ متن کاپی کریں",
+          editor_placeholder: "یہاں لکھیں",
+          msg_formatting_removed: "فارمیٹنگ ہٹا دی گئی",
+          msg_copied: "کلپ بورڈ میں کاپی کیا گیا",
+          msg_formatted_copied: "فارمیٹ شدہ متن کاپی کیا گیا",
+          msg_copy_failed: "کاپی ناکام",
+          help_keyboard_shortcuts: "کی بورڈ شارٹ کٹس:",
+          help_bold: "بولڈ",
+          help_italic: "ترچھا",
+          help_link: "لنک",
+          help_code: "کوڈ",
+          help_headings: "عنوانات",
+          help_indentation: "انڈینٹیشن:",
+          help_indent: "انڈینٹ",
+          help_unindent: "ان انڈینٹ",
+          help_links_title: "لنکس:",
+          help_creates_hyperlink: "ہائپر لنک بناتا ہے",
+          help_type: "ٹائپ کریں",
+          help_to_autopair: "بریکٹ خودکار جوڑے کے لیے",
+          help_wraps_selection: "انتخاب کو لنک میں لپیٹتا ہے",
+          help_auto_lists: "خودکار فہرستیں:",
+          help_or: "یا",
+          help_for_bullets: "بلٹس کے لیے",
+          help_for_numbers: "نمبروں کے لیے",
+          help_for_checkboxes: "چیک باکسز کے لیے",
+          help_for_quotes: "اقتباسات کے لیے",
+          help_auto_pairing: "خودکار جوڑا بنانا:",
+          help_auto_complete: "خودکار مکمل",
+          help_press: "دبائیں",
+          help_in_lists: "فہرستوں میں جاری رکھنے کے لیے",
+          footer_open_source: "اوپن سورس"
+        },
+        sw: {
+          page_subtitle: "kumbukumbu binafsi",
+          meta_description: "hariri ya kidogo inayotanguliza faragha kwa matumizi kama scratchpad",
+          nav_subtitle: "kumbukumbu",
+          tagline_fast: "haraka",
+          tagline_private: "binafsi",
+          tagline_calm: "tulivu",
+          tooltip_fast: "kupakia papo hapo",
+          tooltip_private: "hakuna kuingia, kamwe",
+          tooltip_calm: "bila usumbufu kwa mkusanyiko wa juu",
+          btn_font_sans: "Fonti ya sans-serif (safi, ya kisasa)",
+          btn_font_mono: "Fonti ya monospace (msimbo, mashine ya kuandika)",
+          btn_markdown: "badilisha alama hadi markdown",
+          btn_remove_formatting: "Ondoa muundo wote",
+          btn_copy_all: "nakili yote",
+          btn_copy_formatted: "nakili maandishi yaliyoumbizwa",
+          editor_placeholder: "Andika hapa",
+          msg_formatting_removed: "muundo umeondolewa",
+          msg_copied: "imenakiliwa kwenye ubao wa kunakili",
+          msg_formatted_copied: "maandishi yaliyoumbizwa yamenakiliwa",
+          msg_copy_failed: "kunakili kumeshindwa",
+          help_keyboard_shortcuts: "Njia za mkato za kibodi:",
+          help_bold: "Nene",
+          help_italic: "Italiki",
+          help_link: "Kiungo",
+          help_code: "Msimbo",
+          help_headings: "Vichwa",
+          help_indentation: "Uingizaji:",
+          help_indent: "Weka indent",
+          help_unindent: "Ondoa indent",
+          help_links_title: "Viungo:",
+          help_creates_hyperlink: "huunda kiungo cha hyperlink",
+          help_type: "Andika",
+          help_to_autopair: "ili kuoanisha mabano kiotomatiki",
+          help_wraps_selection: "huzungushia uteuzi kwenye kiungo",
+          help_auto_lists: "Orodha za kiotomatiki:",
+          help_or: "au",
+          help_for_bullets: "kwa alama za risasi",
+          help_for_numbers: "kwa nambari",
+          help_for_checkboxes: "kwa masanduku ya kuangalia",
+          help_for_quotes: "kwa nukuu",
+          help_auto_pairing: "Kuoanisha kiotomatiki:",
+          help_auto_complete: "kukamilisha kiotomatiki",
+          help_press: "Bonyeza",
+          help_in_lists: "katika orodha ili kuendelea",
+          footer_open_source: "Chanzo huru na"
+        },
+        mr: {
+          page_subtitle: "खाजगी नोटपॅड",
+          meta_description: "स्क्रॅचपॅड म्हणून वापरण्यासाठी किमान गोपनीयता-प्रथम संपादक",
+          nav_subtitle: "नोटपॅड",
+          tagline_fast: "जलद",
+          tagline_private: "खाजगी",
+          tagline_calm: "शांत",
+          tooltip_fast: "त्वरित लोडिंग",
+          tooltip_private: "लॉगिंग नाही, कधीही नाही",
+          tooltip_calm: "उच्च फोकससाठी विचलितपणा मुक्त",
+          btn_font_sans: "सॅन्स-सेरिफ फॉन्ट (स्वच्छ, आधुनिक)",
+          btn_font_mono: "मोनोस्पेस फॉन्ट (कोड, टाइपरायटर)",
+          btn_markdown: "मार्कअपला मार्कडाउनमध्ये रूपांतरित करा",
+          btn_remove_formatting: "सर्व स्वरूपन काढा",
+          btn_copy_all: "सर्व कॉपी करा",
+          btn_copy_formatted: "स्वरूपित मजकूर कॉपी करा",
+          editor_placeholder: "येथे लिहा",
+          msg_formatting_removed: "स्वरूपन काढले",
+          msg_copied: "क्लिपबोर्डवर कॉपी केले",
+          msg_formatted_copied: "स्वरूपित मजकूर कॉपी केला",
+          msg_copy_failed: "कॉपी अयशस्वी",
+          help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
+          help_bold: "ठळक",
+          help_italic: "तिरकी",
+          help_link: "दुवा",
+          help_code: "कोड",
+          help_headings: "शीर्षके",
+          help_indentation: "इंडेंटेशन:",
+          help_indent: "इंडेंट",
+          help_unindent: "अनइंडेंट",
+          help_links_title: "दुवे:",
+          help_creates_hyperlink: "हायपरलिंक तयार करते",
+          help_type: "टाइप करा",
+          help_to_autopair: "ब्रॅकेट्स स्वयं-जोड्यासाठी",
+          help_wraps_selection: "निवडलेले दुव्यामध्ये गुंडाळते",
+          help_auto_lists: "स्वयं-यादी:",
+          help_or: "किंवा",
+          help_for_bullets: "बुलेटसाठी",
+          help_for_numbers: "संख्यांसाठी",
+          help_for_checkboxes: "चेकबॉक्ससाठी",
+          help_for_quotes: "उद्धरणांसाठी",
+          help_auto_pairing: "स्वयं-जोडणी:",
+          help_auto_complete: "स्वयं-पूर्ण",
+          help_press: "दाबा",
+          help_in_lists: "यादीमध्ये सुरू ठेवण्यासाठी",
+          footer_open_source: "ओपन सोर्स द्वारे"
+        },
+        te: {
+          page_subtitle: "ప్రైవేట్ నోట్‌ప్యాడ్",
+          meta_description: "స్క్రాచ్‌ప్యాడ్‌గా ఉపయోగం కోసం కనిష్ట గోప్యత-మొదటి సంపాదకి",
+          nav_subtitle: "నోట్‌ప్యాడ్",
+          tagline_fast: "వేగవంతమైన",
+          tagline_private: "ప్రైవేట్",
+          tagline_calm: "ప్రశాంతమైన",
+          tooltip_fast: "తక్షణ లోడింగ్",
+          tooltip_private: "లాగింగ్ లేదు, ఎప్పుడూ",
+          tooltip_calm: "అధిక ఫోకస్ కోసం పరధ్యానం లేని",
+          btn_font_sans: "సాన్స్-సెరిఫ్ ఫాంట్ (శుభ్రమైన, ఆధునిక)",
+          btn_font_mono: "మోనోస్పేస్ ఫాంట్ (కోడ్, టైప్‌రైటర్)",
+          btn_markdown: "మార్కప్‌ను మార్క్‌డౌన్‌గా మార్చండి",
+          btn_remove_formatting: "అన్ని ఫార్మాటింగ్‌ను తొలగించండి",
+          btn_copy_all: "అన్నీ కాపీ చేయండి",
+          btn_copy_formatted: "ఫార్మాట్ చేసిన టెక్స్ట్‌ను కాపీ చేయండి",
+          editor_placeholder: "ఇక్కడ వ్రాయండి",
+          msg_formatting_removed: "ఫార్మాటింగ్ తొలగించబడింది",
+          msg_copied: "క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
+          msg_formatted_copied: "ఫార్మాట్ చేసిన టెక్స్ట్ కాపీ చేయబడింది",
+          msg_copy_failed: "కాపీ విఫలమైంది",
+          help_keyboard_shortcuts: "కీబోర్డ్ షార్ట్‌కట్స్:",
+          help_bold: "బోల్డ్",
+          help_italic: "ఇటాలిక్",
+          help_link: "లింక్",
+          help_code: "కోడ్",
+          help_headings: "శీర్షికలు",
+          help_indentation: "ఇండెంటేషన్:",
+          help_indent: "ఇండెంట్",
+          help_unindent: "అనిండెంట్",
+          help_links_title: "లింక్లు:",
+          help_creates_hyperlink: "హైపర్‌లింక్‌ను సృష్టిస్తుంది",
+          help_type: "టైప్ చేయండి",
+          help_to_autopair: "బ్రాకెట్‌లను ఆటో-పెయిర్ చేయడానికి",
+          help_wraps_selection: "ఎంపికను లింక్‌లో చుట్టుతుంది",
+          help_auto_lists: "ఆటో-జాబితాలు:",
+          help_or: "లేదా",
+          help_for_bullets: "బుల్లెట్ల కోసం",
+          help_for_numbers: "సంఖ్యల కోసం",
+          help_for_checkboxes: "చెక్‌బాక్స్‌ల కోసం",
+          help_for_quotes: "కోట్స్ కోసం",
+          help_auto_pairing: "ఆటో-పెయిరింగ్:",
+          help_auto_complete: "ఆటో-పూర్తి",
+          help_press: "నొక్కండి",
+          help_in_lists: "కొనసాగించడానికి జాబితాలలో",
+          footer_open_source: "ఓపెన్ సోర్స్ ద్వారా"
+        },
+        ta: {
+          page_subtitle: "தனிப்பட்ட குறிப்பேடு",
+          meta_description: "ஸ்க்ராட்ச்பேடாக பயன்படுத்த குறைந்தபட்ச தனியுரிமை-முதல் எடிட்டர்",
+          nav_subtitle: "குறிப்பேடு",
+          tagline_fast: "வேகமான",
+          tagline_private: "தனிப்பட்ட",
+          tagline_calm: "அமைதியான",
+          tooltip_fast: "உடனடி ஏற்றுதல்",
+          tooltip_private: "பதிவு இல்லை, எப்போதும் இல்லை",
+          tooltip_calm: "உயர் கவனத்திற்கான கவனச்சிதறல் இல்லாத",
+          btn_font_sans: "சான்ஸ்-செரிஃப் எழுத்துரு (சுத்தமான, நவீன)",
+          btn_font_mono: "மோனோஸ்பேஸ் எழுத்துரு (குறியீடு, தட்டச்சுப்பொறி)",
+          btn_markdown: "மார்க்அப்பை மார்க்டவுனாக மாற்றவும்",
+          btn_remove_formatting: "அனைத்து வடிவமைப்பையும் அகற்று",
+          btn_copy_all: "அனைத்தையும் நகலெடு",
+          btn_copy_formatted: "வடிவமைக்கப்பட்ட உரையை நகலெடு",
+          editor_placeholder: "இங்கே எழுதவும்",
+          msg_formatting_removed: "வடிவமைப்பு அகற்றப்பட்டது",
+          msg_copied: "கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது",
+          msg_formatted_copied: "வடிவமைக்கப்பட்ட உரை நகலெடுக்கப்பட்டது",
+          msg_copy_failed: "நகலெடுத்தல் தோல்வியடைந்தது",
+          help_keyboard_shortcuts: "விசைப்பலகை குறுக்குவழிகள்:",
+          help_bold: "தடித்த",
+          help_italic: "சாய்வு",
+          help_link: "இணைப்பு",
+          help_code: "குறியீடு",
+          help_headings: "தலைப்புகள்",
+          help_indentation: "உள்தள்ளல்:",
+          help_indent: "உள்தள்ளு",
+          help_unindent: "உள்தள்ளலை நீக்கு",
+          help_links_title: "இணைப்புகள்:",
+          help_creates_hyperlink: "ஹைப்பர்லிங்க் உருவாக்குகிறது",
+          help_type: "தட்டச்சு செய்யவும்",
+          help_to_autopair: "அடைப்புக்குறிகளை தானாக இணைக்க",
+          help_wraps_selection: "தேர்வை இணைப்பில் சுற்றுகிறது",
+          help_auto_lists: "தானியங்கு பட்டியல்கள்:",
+          help_or: "அல்லது",
+          help_for_bullets: "புள்ளிகளுக்கு",
+          help_for_numbers: "எண்களுக்கு",
+          help_for_checkboxes: "தேர்வுப்பெட்டிகளுக்கு",
+          help_for_quotes: "மேற்கோள்களுக்கு",
+          help_auto_pairing: "தானியங்கு இணைத்தல்:",
+          help_auto_complete: "தானாக முடிக்கவும்",
+          help_press: "அழுத்தவும்",
+          help_in_lists: "தொடர பட்டியல்களில்",
+          footer_open_source: "திறந்த மூல"
+        },
+        gu: {
+          page_subtitle: "ખાનગી નોટપેડ",
+          meta_description: "સ્ક્રેચપેડ તરીકે ઉપયોગ માટે ન્યૂનતમ ગોપનીયતા-પ્રથમ સંપાદક",
+          nav_subtitle: "નોટપેડ",
+          tagline_fast: "ઝડપી",
+          tagline_private: "ખાનગી",
+          tagline_calm: "શાંત",
+          tooltip_fast: "તાત્કાલિક લોડિંગ",
+          tooltip_private: "લોગિંગ નહીં, ક્યારેય નહીં",
+          tooltip_calm: "ઉચ્ચ ફોકસ માટે વિક્ષેપ મુક્ત",
+          btn_font_sans: "સાન્સ-સેરિફ ફોન્ટ (સ્વચ્છ, આધુનિક)",
+          btn_font_mono: "મોનોસ્પેસ ફોન્ટ (કોડ, ટાઈપરાઈટર)",
+          btn_markdown: "માર્કઅપને માર્કડાઉનમાં રૂપાંતરિત કરો",
+          btn_remove_formatting: "બધું ફોર્મેટિંગ દૂર કરો",
+          btn_copy_all: "બધું કોપી કરો",
+          btn_copy_formatted: "ફોર્મેટ થયેલ ટેક્સ્ટ કોપી કરો",
+          editor_placeholder: "અહીં લખો",
+          msg_formatting_removed: "ફોર્મેટિંગ દૂર કર્યું",
+          msg_copied: "ક્લિપબોર્ડમાં કોપી કર્યું",
+          msg_formatted_copied: "ફોર્મેટ થયેલ ટેક્સ્ટ કોપી કર્યું",
+          msg_copy_failed: "કોપી નિષ્ફળ",
+          help_keyboard_shortcuts: "કીબોર્ડ શોર્ટકટ્સ:",
+          help_bold: "બોલ્ડ",
+          help_italic: "ઇટાલિક",
+          help_link: "લિંક",
+          help_code: "કોડ",
+          help_headings: "શીર્ષકો",
+          help_indentation: "ઇન્ડેન્ટેશન:",
+          help_indent: "ઇન્ડેન્ટ",
+          help_unindent: "અનઇન્ડેન્ટ",
+          help_links_title: "લિંક્સ:",
+          help_creates_hyperlink: "હાયપરલિંક બનાવે છે",
+          help_type: "ટાઇપ કરો",
+          help_to_autopair: "બ્રેકેટ્સને ઓટો-પેર કરવા માટે",
+          help_wraps_selection: "પસંદગીને લિંકમાં લપેટે છે",
+          help_auto_lists: "ઓટો-લિસ્ટ્સ:",
+          help_or: "અથવા",
+          help_for_bullets: "બુલેટ્સ માટે",
+          help_for_numbers: "નંબરો માટે",
+          help_for_checkboxes: "ચેકબોક્સ માટે",
+          help_for_quotes: "ક્વોટ્સ માટે",
+          help_auto_pairing: "ઓટો-પેરિંગ:",
+          help_auto_complete: "ઓટો-પૂર્ણ",
+          help_press: "દબાવો",
+          help_in_lists: "ચાલુ રાખવા માટે સૂચિમાં",
+          footer_open_source: "ઓપન સોર્સ દ્વારા"
+        },
+        fa: {
+          page_subtitle: "دفترچه یادداشت خصوصی",
+          meta_description: "ویرایشگر حداقلی با اولویت حریم خصوصی برای استفاده به عنوان یادداشت",
+          nav_subtitle: "دفترچه یادداشت",
+          tagline_fast: "سریع",
+          tagline_private: "خصوصی",
+          tagline_calm: "آرام",
+          tooltip_fast: "بارگذاری فوری",
+          tooltip_private: "بدون ثبت، هرگز",
+          tooltip_calm: "بدون حواس‌پرتی برای تمرکز بالا",
+          btn_font_sans: "فونت سن‌سریف (تمیز، مدرن)",
+          btn_font_mono: "فونت مونواسپیس (کد، ماشین تحریر)",
+          btn_markdown: "تبدیل نشانه‌گذاری به مارک‌داون",
+          btn_remove_formatting: "حذف همه قالب‌بندی",
+          btn_copy_all: "کپی همه",
+          btn_copy_formatted: "کپی متن قالب‌بندی شده",
+          editor_placeholder: "اینجا بنویسید",
+          msg_formatting_removed: "قالب‌بندی حذف شد",
+          msg_copied: "در کلیپ‌بورد کپی شد",
+          msg_formatted_copied: "متن قالب‌بندی شده کپی شد",
+          msg_copy_failed: "کپی ناموفق",
+          help_keyboard_shortcuts: "میانبرهای صفحه‌کلید:",
+          help_bold: "پررنگ",
+          help_italic: "کج",
+          help_link: "پیوند",
+          help_code: "کد",
+          help_headings: "سرفصل‌ها",
+          help_indentation: "تورفتگی:",
+          help_indent: "تورفتگی",
+          help_unindent: "حذف تورفتگی",
+          help_links_title: "پیوندها:",
+          help_creates_hyperlink: "ابرپیوند ایجاد می‌کند",
+          help_type: "تایپ کنید",
+          help_to_autopair: "برای جفت‌کردن خودکار پرانتزها",
+          help_wraps_selection: "انتخاب را در پیوند قرار می‌دهد",
+          help_auto_lists: "لیست‌های خودکار:",
+          help_or: "یا",
+          help_for_bullets: "برای نقطه‌ها",
+          help_for_numbers: "برای اعداد",
+          help_for_checkboxes: "برای چک‌باکس‌ها",
+          help_for_quotes: "برای نقل‌قول‌ها",
+          help_auto_pairing: "جفت‌کردن خودکار:",
+          help_auto_complete: "تکمیل خودکار",
+          help_press: "فشار دهید",
+          help_in_lists: "در لیست‌ها برای ادامه",
+          footer_open_source: "منبع باز توسط"
+        },
+        ps: {
+          page_subtitle: "ځانګړی نوټ پیډ",
+          meta_description: "د سکریچ پیډ په توګه کارولو لپاره لږترلږه د محرمیت - لومړی مدیر",
+          nav_subtitle: "نوټ پیډ",
+          tagline_fast: "ګړندی",
+          tagline_private: "ځانګړی",
+          tagline_calm: "آرام",
+          tooltip_fast: "ژر ډکول",
+          tooltip_private: "نوم لیکنه نشته، هیڅکله",
+          tooltip_calm: "د لوړې تمرکز لپاره د پام اړولو څخه خالی",
+          btn_font_sans: "سانس-سریف فونټ (پاک، عصری)",
+          btn_font_mono: "مونوسپیس فونټ (کوډ، ټایپ رایټر)",
+          btn_markdown: "نښه کول مارک ډاون ته واړوئ",
+          btn_remove_formatting: "ټول بڼه لرې کړئ",
+          btn_copy_all: "ټول کاپی کړئ",
+          btn_copy_formatted: "بڼه شوی متن کاپی کړئ",
+          editor_placeholder: "دلته ولیکئ",
+          msg_formatting_removed: "بڼه لرې شوه",
+          msg_copied: "کلپ بورډ ته کاپی شو",
+          msg_formatted_copied: "بڼه شوی متن کاپی شو",
+          msg_copy_failed: "کاپی ناکام شو",
+          help_keyboard_shortcuts: "د کیبورډ لنډې لارې:",
+          help_bold: "زوړ",
+          help_italic: "کجه",
+          help_link: "لینک",
+          help_code: "کوډ",
+          help_headings: "سرلیکونه",
+          help_indentation: "تورول:",
+          help_indent: "تورول",
+          help_unindent: "تورول لرې کول",
+          help_links_title: "لینکونه:",
+          help_creates_hyperlink: "هایپرلینک جوړوي",
+          help_type: "ټایپ کړئ",
+          help_to_autopair: "د خود جوړه کولو لپاره قوسونه",
+          help_wraps_selection: "انتخاب په لینک کې پوښي",
+          help_auto_lists: "خود لیستونه:",
+          help_or: "یا",
+          help_for_bullets: "د ګولیو لپاره",
+          help_for_numbers: "د شمیرو لپاره",
+          help_for_checkboxes: "د چیک بکسونو لپاره",
+          help_for_quotes: "د کوټونو لپاره",
+          help_auto_pairing: "خود جوړه کول:",
+          help_auto_complete: "خود بشپړول",
+          help_press: "فشار ورکړئ",
+          help_in_lists: "په لیستونو کې د دوام لپاره",
+          footer_open_source: "خلاص سرچینه"
+        },
+        kn: {
+          page_subtitle: "ಖಾಸಗಿ ನೋಟ್‌ಪ್ಯಾಡ್",
+          meta_description: "ಸ್ಕ್ರಾಚ್‌ಪ್ಯಾಡ್‌ನಂತೆ ಬಳಸಲು ಕನಿಷ್ಠ ಗೌಪ್ಯತೆ-ಮೊದಲ ಸಂಪಾದಕ",
+          nav_subtitle: "ನೋಟ್‌ಪ್ಯಾಡ್",
+          tagline_fast: "ವೇಗವಾದ",
+          tagline_private: "ಖಾಸಗಿ",
+          tagline_calm: "ಶಾಂತ",
+          tooltip_fast: "ತ್ವರಿತ ಲೋಡಿಂಗ್",
+          tooltip_private: "ಲಾಗಿಂಗ್ ಇಲ್ಲ, ಎಂದಿಗೂ",
+          tooltip_calm: "ಹೆಚ್ಚಿನ ಗಮನಕ್ಕಾಗಿ ವಿಚಲನ ಮುಕ್ತ",
+          btn_font_sans: "ಸಾನ್ಸ್-ಸೆರಿಫ್ ಫಾಂಟ್ (ಸ್ವಚ್ಛ, ಆಧುನಿಕ)",
+          btn_font_mono: "ಮೊನೊಸ್ಪೇಸ್ ಫಾಂಟ್ (ಕೋಡ್, ಟೈಪ್‌ರೈಟರ್)",
+          btn_markdown: "ಮಾರ್ಕಪ್ ಅನ್ನು ಮಾರ್ಕ್‌ಡೌನ್‌ಗೆ ಪರಿವರ್ತಿಸಿ",
+          btn_remove_formatting: "ಎಲ್ಲಾ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ತೆಗೆದುಹಾಕಿ",
+          btn_copy_all: "ಎಲ್ಲವನ್ನೂ ನಕಲಿಸಿ",
+          btn_copy_formatted: "ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯವನ್ನು ನಕಲಿಸಿ",
+          editor_placeholder: "ಇಲ್ಲಿ ಬರೆಯಿರಿ",
+          msg_formatting_removed: "ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ತೆಗೆದುಹಾಕಲಾಗಿದೆ",
+          msg_copied: "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
+          msg_formatted_copied: "ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯ ನಕಲಿಸಲಾಗಿದೆ",
+          msg_copy_failed: "ನಕಲು ವಿಫಲವಾಗಿದೆ",
+          help_keyboard_shortcuts: "ಕೀಬೋರ್ಡ್ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು:",
+          help_bold: "ದಪ್ಪ",
+          help_italic: "ಓರೆ",
+          help_link: "ಲಿಂಕ್",
+          help_code: "ಕೋಡ್",
+          help_headings: "ಶೀರ್ಷಿಕೆಗಳು",
+          help_indentation: "ಇಂಡೆಂಟೇಶನ್:",
+          help_indent: "ಇಂಡೆಂಟ್",
+          help_unindent: "ಅನ್‌ಇಂಡೆಂಟ್",
+          help_links_title: "ಲಿಂಕ್‌ಗಳು:",
+          help_creates_hyperlink: "ಹೈಪರ್‌ಲಿಂಕ್ ರಚಿಸುತ್ತದೆ",
+          help_type: "ಟೈಪ್ ಮಾಡಿ",
+          help_to_autopair: "ಬ್ರಾಕೆಟ್‌ಗಳನ್ನು ಸ್ವಯಂ-ಜೋಡಿಸಲು",
+          help_wraps_selection: "ಆಯ್ಕೆಯನ್ನು ಲಿಂಕ್‌ನಲ್ಲಿ ಸುತ್ತುತ್ತದೆ",
+          help_auto_lists: "ಸ್ವಯಂ-ಪಟ್ಟಿಗಳು:",
+          help_or: "ಅಥವಾ",
+          help_for_bullets: "ಬುಲೆಟ್‌ಗಳಿಗೆ",
+          help_for_numbers: "ಸಂಖ್ಯೆಗಳಿಗೆ",
+          help_for_checkboxes: "ಚೆಕ್‌ಬಾಕ್ಸ್‌ಗಳಿಗೆ",
+          help_for_quotes: "ಉದ್ಧರಣಗಳಿಗೆ",
+          help_auto_pairing: "ಸ್ವಯಂ-ಜೋಡಣೆ:",
+          help_auto_complete: "ಸ್ವಯಂ-ಪೂರ್ಣ",
+          help_press: "ಒತ್ತಿರಿ",
+          help_in_lists: "ಮುಂದುವರಿಸಲು ಪಟ್ಟಿಗಳಲ್ಲಿ",
+          footer_open_source: "ಓಪನ್ ಸೋರ್ಸ್ ಮೂಲಕ"
+        },
+        ml: {
+          page_subtitle: "സ്വകാര്യ നോട്ട്പാഡ്",
+          meta_description: "സ്ക്രാച്ച്പാഡായി ഉപയോഗിക്കുന്നതിന് ഏറ്റവും കുറഞ്ഞ സ്വകാര്യത-ആദ്യ എഡിറ്റർ",
+          nav_subtitle: "നോട്ട്പാഡ്",
+          tagline_fast: "വേഗമുള്ള",
+          tagline_private: "സ്വകാര്യം",
+          tagline_calm: "ശാന്തം",
+          tooltip_fast: "തൽക്ഷണ ലോഡിംഗ്",
+          tooltip_private: "ലോഗിംഗ് ഇല്ല, ഒരിക്കലും",
+          tooltip_calm: "ഉയർന്ന ഫോക്കസിനായി ശ്രദ്ധതിരിച്ചുവിടൽ രഹിതം",
+          btn_font_sans: "സാൻസ്-സെരിഫ് ഫോണ്ട് (വൃത്തിയുള്ള, ആധുനിക)",
+          btn_font_mono: "മോണോസ്‌പേസ് ഫോണ്ട് (കോഡ്, ടൈപ്പ്‌റൈറ്റർ)",
+          btn_markdown: "മാർക്ക്അപ്പ് മാർക്ക്ഡൗണായി പരിവർത്തനം ചെയ്യുക",
+          btn_remove_formatting: "എല്ലാ ഫോർമാറ്റിംഗും നീക്കം ചെയ്യുക",
+          btn_copy_all: "എല്ലാം പകർത്തുക",
+          btn_copy_formatted: "ഫോർമാറ്റ് ചെയ്ത ടെക്‌സ്റ്റ് പകർത്തുക",
+          editor_placeholder: "ഇവിടെ എഴുതുക",
+          msg_formatting_removed: "ഫോർമാറ്റിംഗ് നീക്കം ചെയ്തു",
+          msg_copied: "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
+          msg_formatted_copied: "ഫോർമാറ്റ് ചെയ്ത ടെക്‌സ്റ്റ് പകർത്തി",
+          msg_copy_failed: "പകർത്തൽ പരാജയപ്പെട്ടു",
+          help_keyboard_shortcuts: "കീബോർഡ് കുറുക്കുവഴികൾ:",
+          help_bold: "ബോൾഡ്",
+          help_italic: "ഇറ്റാലിക്",
+          help_link: "ലിങ്ക്",
+          help_code: "കോഡ്",
+          help_headings: "തലക്കെട്ടുകൾ",
+          help_indentation: "ഇൻഡെന്റേഷൻ:",
+          help_indent: "ഇൻഡെന്റ്",
+          help_unindent: "അൺഇൻഡെന്റ്",
+          help_links_title: "ലിങ്കുകൾ:",
+          help_creates_hyperlink: "ഹൈപ്പർലിങ്ക് സൃഷ്ടിക്കുന്നു",
+          help_type: "ടൈപ്പ് ചെയ്യുക",
+          help_to_autopair: "ബ്രാക്കറ്റുകൾ ഓട്ടോ-പെയർ ചെയ്യാൻ",
+          help_wraps_selection: "തിരഞ്ഞെടുക്കൽ ലിങ്കിൽ പൊതിയുന്നു",
+          help_auto_lists: "ഓട്ടോ-ലിസ്റ്റുകൾ:",
+          help_or: "അല്ലെങ്കിൽ",
+          help_for_bullets: "ബുള്ളറ്റുകൾക്ക്",
+          help_for_numbers: "നമ്പറുകൾക്ക്",
+          help_for_checkboxes: "ചെക്ക്ബോക്സുകൾക്ക്",
+          help_for_quotes: "ഉദ്ധരണികൾക്ക്",
+          help_auto_pairing: "ഓട്ടോ-പെയറിംഗ്:",
+          help_auto_complete: "ഓട്ടോ-പൂർത്തീകരണം",
+          help_press: "അമർത്തുക",
+          help_in_lists: "തുടരാൻ ലിസ്റ്റുകളിൽ",
+          footer_open_source: "ഓപ്പൺ സോഴ്‌സ്"
+        }
+      };
 
       // ===== DOM ELEMENT CACHE =====
       const DOM = {};
@@ -333,6 +1748,92 @@
         }
 
         element.focus();
+      }
+
+      // ===== INTERNATIONALIZATION =====
+
+      /**
+       * Get translation for a key in current language
+       * @param {string} key - Translation key
+       * @returns {string} Translated string or key if not found
+       */
+      function t(key) {
+        const lang = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
+        return lang[key] || TRANSLATIONS['en'][key] || key;
+      }
+
+      /**
+       * Apply translations to all elements with data-i18n attributes
+       */
+      function applyTranslations() {
+        const lang = currentLang;
+        const htmlEl = document.documentElement;
+
+        // Update html lang attribute
+        htmlEl.setAttribute('lang', lang);
+
+        // Update page title
+        const titleEl = document.querySelector('title[data-i18n-title]');
+        if (titleEl) {
+          document.title = `sQratch - ${t(titleEl.getAttribute('data-i18n-title'))}`;
+        }
+
+        // Update meta description
+        const metaDesc = document.querySelector('meta[data-i18n-content]');
+        if (metaDesc) {
+          metaDesc.setAttribute('content', t(metaDesc.getAttribute('data-i18n-content')));
+        }
+
+        // Update text content
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (key) el.textContent = t(key);
+        });
+
+        // Update title attributes (tooltips)
+        document.querySelectorAll('[data-i18n-title]:not(title)').forEach(el => {
+          const key = el.getAttribute('data-i18n-title');
+          if (key) el.setAttribute('title', t(key));
+        });
+
+        // Update placeholder attributes
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+          const key = el.getAttribute('data-i18n-placeholder');
+          if (key) el.setAttribute('data-placeholder', t(key));
+        });
+      }
+
+      /**
+       * Detect and set user's browser language
+       */
+      function detectLanguage() {
+        const browserLang = navigator.language || navigator.userLanguage;
+        const langCode = browserLang.split('-')[0]; // Get just the language code (e.g., 'en' from 'en-US')
+
+        // Check if we support this language
+        if (TRANSLATIONS[langCode]) {
+          currentLang = langCode;
+        } else {
+          currentLang = 'en'; // Fallback to English
+        }
+
+        // Update selector
+        const selector = document.getElementById('language-selector');
+        if (selector) {
+          selector.value = currentLang;
+        }
+      }
+
+      /**
+       * Change language and apply translations
+       * @param {string} lang - Language code
+       */
+      function changeLanguage(lang) {
+        currentLang = lang;
+        applyTranslations();
+
+        // Update URL hash
+        window.location.hash = lang;
       }
 
       // ===== MARKDOWN CONVERSION =====
@@ -692,7 +2193,7 @@
           // Restore cursor position to where it was
           restoreCursorPosition(DOM.editor, cursorPosition);
 
-          showPrompt('formatting removed');
+          showPrompt(t('msg_formatting_removed'));
         });
       }
 
@@ -710,10 +2211,10 @@
           }
 
           navigator.clipboard.writeText(text)
-            .then(() => showPrompt('copied to clipboard'))
+            .then(() => showPrompt(t('msg_copied')))
             .catch((err) => {
               console.error('Failed to copy text: ', err);
-              showPrompt('copy failed');
+              showPrompt(t('msg_copy_failed'));
             });
         });
 
@@ -731,14 +2232,14 @@
           const clipboardItem = new ClipboardItem({ 'text/html': blob });
 
           navigator.clipboard.write([clipboardItem])
-            .then(() => showPrompt('formatted text copied'))
+            .then(() => showPrompt(t('msg_formatted_copied')))
             .catch((err) => {
               // Fallback: copy as plain HTML text
               navigator.clipboard.writeText(html)
-                .then(() => showPrompt('formatted text copied'))
+                .then(() => showPrompt(t('msg_formatted_copied')))
                 .catch((err2) => {
                   console.error('Failed to copy HTML: ', err2);
-                  showPrompt('copy failed');
+                  showPrompt(t('msg_copy_failed'));
                 });
             });
         });
@@ -965,7 +2466,7 @@
         }
 
         // Auto-pairing for markdown syntax
-        el.addEventListener("beforeinput", function(event) {
+        DOM.editor.addEventListener("beforeinput", function(event) {
           if (!markdownMode) return;
 
           // Auto-pair * for bold/italic
@@ -1058,6 +2559,28 @@
        * Initialize all features when DOM is loaded
        */
       function initialize() {
+        // Initialize i18n first
+        // Priority: URL hash > browser detection (no hash means use browser preference)
+        const hashLang = window.location.hash.substring(1); // Remove the # symbol
+
+        if (hashLang && TRANSLATIONS[hashLang]) {
+          // Hash present: use it
+          currentLang = hashLang;
+        } else {
+          // No hash: always respect browser preference
+          detectLanguage();
+        }
+        applyTranslations();
+
+        // Set up language selector
+        const languageSelector = document.getElementById('language-selector');
+        if (languageSelector) {
+          languageSelector.value = currentLang;
+          languageSelector.addEventListener('change', (e) => {
+            changeLanguage(e.target.value);
+          });
+        }
+
         cacheDOMElements();
         initializeTaglineFade();
         initializeEditorInput();
@@ -1079,9 +2602,41 @@
     <div class="container-lg"><!-- top container, just under body -->
 
 
-      <nav>
-	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;">notepad</span>
-	<p id="tagline" class="text-muted"><small><span title="instant loading">fast</span> • <span title="no logging, ever">private</span> • <span title="distraction free for high focus">calm</span></small></p>
+      <nav style="position: relative;">
+	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;" data-i18n="nav_subtitle">notepad</span>
+	<p id="tagline" class="text-muted"><small><span data-i18n="tagline_fast" data-i18n-title="tooltip_fast" title="instant loading">fast</span> • <span data-i18n="tagline_private" data-i18n-title="tooltip_private" title="no logging, ever">private</span> • <span data-i18n="tagline_calm" data-i18n-title="tooltip_calm" title="distraction free for high focus">calm</span></small></p>
+	<select id="language-selector" style="position: absolute; top: 0; right: 0; font-size: 0.75em; color: #999; border: none; background: transparent; cursor: pointer; opacity: 0.3; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.3'">
+	  <option value="en">English</option>
+	  <option value="zh">中文</option>
+	  <option value="hi">हिन्दी</option>
+	  <option value="es">Español</option>
+	  <option value="fr">Français</option>
+	  <option value="ar">العربية</option>
+	  <option value="bn">বাংলা</option>
+	  <option value="ru">Русский</option>
+	  <option value="pt">Português</option>
+	  <option value="ur">اردو</option>
+	  <option value="id">Indonesia</option>
+	  <option value="de">Deutsch</option>
+	  <option value="ja">日本語</option>
+	  <option value="sw">Kiswahili</option>
+	  <option value="mr">मराठी</option>
+	  <option value="te">తెలుగు</option>
+	  <option value="tr">Türkçe</option>
+	  <option value="ta">தமிழ்</option>
+	  <option value="vi">Tiếng Việt</option>
+	  <option value="ko">한국어</option>
+	  <option value="it">Italiano</option>
+	  <option value="th">ไทย</option>
+	  <option value="gu">ગુજરાતી</option>
+	  <option value="fa">فارسی</option>
+	  <option value="pl">Polski</option>
+	  <option value="ps">پښتو</option>
+	  <option value="kn">ಕನ್ನಡ</option>
+	  <option value="ml">മലയാളം</option>
+	  <option value="uk">Українська</option>
+	  <option value="nl">Nederlands</option>
+	</select>
 	</nav>
 
       <!-- editor -->
@@ -1089,18 +2644,19 @@
 
         <div class="text-end" id="buttons">
           <div class="btn-group" role="group" aria-label="Basic outlined example">
-            <button type="button" class="btn btn-outline-secondary sans-serif font-active" data-font="sans-serif" title="Sans-serif font (clean, modern)">Aa</button>
-            <button type="button" class="btn btn-outline-secondary monospace" data-font="monospace" title="Monospace font (code, typewriter)">Aa</button>
+            <button type="button" class="btn btn-outline-secondary sans-serif font-active" data-font="sans-serif" data-i18n-title="btn_font_sans" title="Sans-serif font (clean, modern)">Aa</button>
+            <button type="button" class="btn btn-outline-secondary monospace" data-font="monospace" data-i18n-title="btn_font_mono" title="Monospace font (code, typewriter)">Aa</button>
           </div>
-          <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" title="convert markup to markdown">M↓</button>
-          <button type="button" class="btn btn-outline-secondary" id="remove-formatting" title="Remove all formatting">⌫</button>
-          <button type="button" class="btn btn-outline-secondary" id="copy-all" title="copy all" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
+          <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" data-i18n-title="btn_markdown" title="convert markup to markdown">M↓</button>
+          <button type="button" class="btn btn-outline-secondary" id="remove-formatting" data-i18n-title="btn_remove_formatting" title="Remove all formatting">⌫</button>
+          <button type="button" class="btn btn-outline-secondary" id="copy-all" data-i18n-title="btn_copy_all" title="copy all" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
       </div>
 
         <article
           class="editor sans-serif"
           contenteditable
           data-placeholder="Write here"
+          data-i18n-placeholder="editor_placeholder"
           id="mcguffin"
           autofocus
           ></article>
@@ -1109,40 +2665,40 @@
             <p id="counter"></p>
           </div>
           <div id="preview-controls">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" data-i18n-title="btn_copy_formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
           </div>
           <div id="markdown-preview"></div>
           <div id="markdown-help">
             <div class="help-section">
-              <strong>Keyboard Shortcuts:</strong>
-              <kbd>Ctrl/Cmd+B</kbd> Bold •
-              <kbd>Ctrl/Cmd+I</kbd> Italic •
-              <kbd>Ctrl/Cmd+K</kbd> Link •
-              <kbd>Ctrl/Cmd+`</kbd> Code •
-              <kbd>Ctrl/Cmd+1-6</kbd> Headings
+              <strong data-i18n="help_keyboard_shortcuts">Keyboard Shortcuts:</strong>
+              <kbd>Ctrl/Cmd+B</kbd> <span data-i18n="help_bold">Bold</span> •
+              <kbd>Ctrl/Cmd+I</kbd> <span data-i18n="help_italic">Italic</span> •
+              <kbd>Ctrl/Cmd+K</kbd> <span data-i18n="help_link">Link</span> •
+              <kbd>Ctrl/Cmd+`</kbd> <span data-i18n="help_code">Code</span> •
+              <kbd>Ctrl/Cmd+1-6</kbd> <span data-i18n="help_headings">Headings</span>
             </div>
             <div class="help-section">
-              <strong>Indentation:</strong>
-              <kbd>Tab</kbd> Indent •
-              <kbd>Shift+Tab</kbd> Unindent
+              <strong data-i18n="help_indentation">Indentation:</strong>
+              <kbd>Tab</kbd> <span data-i18n="help_indent">Indent</span> •
+              <kbd>Shift+Tab</kbd> <span data-i18n="help_unindent">Unindent</span>
             </div>
             <div class="help-section">
-              <strong>Links:</strong>
-              <code>[text](url)</code> creates a hyperlink •
-              Type <code>[</code> to auto-pair brackets •
-              <kbd>Ctrl/Cmd+K</kbd> wraps selection in link
+              <strong data-i18n="help_links_title">Links:</strong>
+              <code>[text](url)</code> <span data-i18n="help_creates_hyperlink">creates a hyperlink</span> •
+              <span data-i18n="help_type">Type</span> <code>[</code> <span data-i18n="help_to_autopair">to auto-pair brackets</span> •
+              <kbd>Ctrl/Cmd+K</kbd> <span data-i18n="help_wraps_selection">wraps selection in link</span>
             </div>
             <div class="help-section">
-              <strong>Auto-Lists:</strong>
-              Type <code>* </code> or <code>- </code> for bullets •
-              <code>1. </code> for numbers •
-              <code>- [ ] </code> for checkboxes •
-              <code>> </code> for quotes
+              <strong data-i18n="help_auto_lists">Auto-Lists:</strong>
+              <span data-i18n="help_type">Type</span> <code>* </code> <span data-i18n="help_or">or</span> <code>- </code> <span data-i18n="help_for_bullets">for bullets</span> •
+              <code>1. </code> <span data-i18n="help_for_numbers">for numbers</span> •
+              <code>- [ ] </code> <span data-i18n="help_for_checkboxes">for checkboxes</span> •
+              <code>> </code> <span data-i18n="help_for_quotes">for quotes</span>
             </div>
             <div class="help-section">
-              <strong>Auto-Pairing:</strong>
-              <code>**</code> <code>`</code> <code>[</code> auto-complete •
-              Press <kbd>Enter</kbd> in lists to continue
+              <strong data-i18n="help_auto_pairing">Auto-Pairing:</strong>
+              <code>**</code> <code>`</code> <code>[</code> <span data-i18n="help_auto_complete">auto-complete</span> •
+              <span data-i18n="help_press">Press</span> <kbd>Enter</kbd> <span data-i18n="help_in_lists">in lists to continue</span>
             </div>
           </div>
         </div><!-- article container -->
@@ -1152,7 +2708,7 @@
       </div>
 
       <footer>
-        <a href="https://github.com/lucasgonze/sqratch">Open source by Lucas Gonze <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: text-bottom;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+        <a href="https://github.com/lucasgonze/sqratch"><span data-i18n="footer_open_source">Open source by</span> Lucas Gonze <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: text-bottom;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
       </footer>
 
       <script src="/bootstrap-5.3.2-dist/js/bootstrap.bundle.min.js"></script>

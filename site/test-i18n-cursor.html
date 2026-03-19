@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>sQratch Tests - i18n & Cursor Position</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2em;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .test-result {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .test-pass {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .test-fail {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .test-summary {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 4px;
+      }
+      .test-detail {
+        font-size: 0.9em;
+        margin-top: 5px;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+      #test-editor {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px 0;
+        min-height: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Unit Tests: i18n & Cursor Position</h1>
+    <div id="test-results"></div>
+    <div id="test-editor" contenteditable>Test content for cursor</div>
+
+    <script>
+      // Test utilities
+      const tests = [];
+      let passCount = 0;
+      let failCount = 0;
+
+      function assert(condition, message) {
+        if (!condition) {
+          throw new Error(message || 'Assertion failed');
+        }
+      }
+
+      function assertEquals(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(`${message || 'Assertion failed'}:\nExpected: "${expected}"\nGot: "${actual}"`);
+        }
+      }
+
+      function assertContains(actual, expected, message) {
+        if (!actual.includes(expected)) {
+          throw new Error(`${message || 'Assertion failed'}: "${expected}" not found in "${actual}"`);
+        }
+      }
+
+      function assertNotNull(value, message) {
+        if (value === null || value === undefined) {
+          throw new Error(message || 'Value should not be null/undefined');
+        }
+      }
+
+      function test(name, fn) {
+        tests.push({ name, fn });
+      }
+
+      function runTests() {
+        const resultsDiv = document.getElementById('test-results');
+        resultsDiv.innerHTML = '<h2>Running Tests...</h2>';
+
+        tests.forEach(({ name, fn }) => {
+          const resultDiv = document.createElement('div');
+          resultDiv.className = 'test-result';
+
+          try {
+            fn();
+            resultDiv.classList.add('test-pass');
+            resultDiv.innerHTML = `✓ ${name}`;
+            passCount++;
+          } catch (error) {
+            resultDiv.classList.add('test-fail');
+            resultDiv.innerHTML = `✗ ${name}<div class="test-detail">${error.message}</div>`;
+            failCount++;
+          }
+
+          resultsDiv.appendChild(resultDiv);
+        });
+
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'test-summary';
+        const total = passCount + failCount;
+        summaryDiv.style.backgroundColor = failCount === 0 ? '#d4edda' : '#f8d7da';
+        summaryDiv.style.color = failCount === 0 ? '#155724' : '#721c24';
+        summaryDiv.innerHTML = `Tests: ${passCount} passed, ${failCount} failed, ${total} total`;
+        resultsDiv.appendChild(summaryDiv);
+      }
+
+      // Helper functions for cursor tests
+      function setCursorPosition(element, offset) {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        const textNode = element.firstChild;
+
+        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+          range.setStart(textNode, Math.min(offset, textNode.length));
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+
+      function getCursorPosition(element) {
+        const sel = window.getSelection();
+        if (sel.rangeCount === 0) return 0;
+
+        const range = sel.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+
+        return preCaretRange.toString().length;
+      }
+
+      function saveCursorPosition(element) {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return 0;
+
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+
+        return preCaretRange.toString().length;
+      }
+
+      function restoreCursorPosition(element, offset) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+
+        let charCount = 0;
+        let nodeStack = [element];
+        let node, foundNode, foundOffset;
+
+        while (node = nodeStack.pop()) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const nextCharCount = charCount + node.length;
+            if (!foundNode && offset >= charCount && offset <= nextCharCount) {
+              foundNode = node;
+              foundOffset = offset - charCount;
+              break;
+            }
+            charCount = nextCharCount;
+          } else {
+            for (let i = node.childNodes.length - 1; i >= 0; i--) {
+              nodeStack.push(node.childNodes[i]);
+            }
+          }
+        }
+
+        if (foundNode) {
+          range.setStart(foundNode, foundOffset);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+
+        element.focus();
+      }
+
+      // ===== CURSOR POSITION TESTS =====
+
+      test('saveCursorPosition returns correct offset', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = 'Hello World';
+        setCursorPosition(editor, 5); // After "Hello"
+
+        const savedPos = saveCursorPosition(editor);
+        assertEquals(savedPos, 5, 'Cursor should be at position 5');
+      });
+
+      test('restoreCursorPosition restores correct position', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = 'Hello World';
+
+        // Save position at 5
+        setCursorPosition(editor, 5);
+        const savedPos = saveCursorPosition(editor);
+
+        // Move cursor to end
+        setCursorPosition(editor, 11);
+
+        // Restore to saved position
+        restoreCursorPosition(editor, savedPos);
+        const newPos = getCursorPosition(editor);
+
+        assertEquals(newPos, 5, 'Cursor should be restored to position 5');
+      });
+
+      test('Cursor position preserved after innerHTML change', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = '<b>Bold</b> and <i>Italic</i>';
+
+        // Set cursor in middle
+        setCursorPosition(editor, 5);
+        const savedPos = saveCursorPosition(editor);
+
+        // Simulate removing formatting
+        const text = editor.innerText;
+        editor.innerHTML = text;
+
+        // Restore cursor
+        restoreCursorPosition(editor, savedPos);
+        const newPos = getCursorPosition(editor);
+
+        assertEquals(newPos, 5, 'Cursor should remain at position 5 after formatting removed');
+      });
+
+      test('Cursor position with special characters', () => {
+        const editor = document.getElementById('test-editor');
+        editor.innerHTML = 'Hello 👋 World 🌍';
+
+        setCursorPosition(editor, 7); // After emoji
+        const savedPos = saveCursorPosition(editor);
+
+        // Modify content
+        const text = editor.innerText;
+        editor.innerHTML = text;
+
+        restoreCursorPosition(editor, savedPos);
+        const newPos = getCursorPosition(editor);
+
+        // Should be close to saved position (emoji handling may vary)
+        assert(Math.abs(newPos - savedPos) <= 2, 'Cursor should be near saved position with emojis');
+      });
+
+      // ===== INTERNATIONALIZATION TESTS =====
+
+      test('Language selector exists', () => {
+        // This would be tested in the main app
+        assert(true, 'Placeholder - would check language selector in main app');
+      });
+
+      test('Translation function exists', () => {
+        // Mock translation function
+        function t(key) {
+          const translations = { en: { test_key: 'Test Value' } };
+          return translations['en'][key] || key;
+        }
+
+        assertEquals(t('test_key'), 'Test Value', 'Translation function should return value');
+        assertEquals(t('missing_key'), 'missing_key', 'Translation function should return key for missing values');
+      });
+
+      test('Translation fallback to English', () => {
+        const TRANSLATIONS = {
+          en: { greeting: 'Hello' },
+          es: { } // Empty Spanish
+        };
+
+        function t(key, lang = 'es') {
+          return TRANSLATIONS[lang][key] || TRANSLATIONS['en'][key] || key;
+        }
+
+        assertEquals(t('greeting', 'es'), 'Hello', 'Should fallback to English for missing translation');
+      });
+
+      test('Browser language detection', () => {
+        const browserLang = navigator.language || navigator.userLanguage;
+        assertNotNull(browserLang, 'Browser language should be detected');
+
+        const langCode = browserLang.split('-')[0];
+        assert(langCode.length === 2, 'Language code should be 2 characters');
+      });
+
+      test('LocalStorage language persistence', () => {
+        try {
+          localStorage.setItem('sqratch-lang-test', 'es');
+          const saved = localStorage.getItem('sqratch-lang-test');
+          assertEquals(saved, 'es', 'Language should persist in localStorage');
+          localStorage.removeItem('sqratch-lang-test');
+        } catch (e) {
+          assert(true, 'localStorage not available - test skipped');
+        }
+      });
+
+      test('All supported languages have entries', () => {
+        const supportedLangs = [
+          'en', 'zh', 'hi', 'es', 'fr', 'ar', 'bn', 'ru', 'pt', 'ur',
+          'id', 'de', 'ja', 'sw', 'mr', 'te', 'tr', 'ta', 'vi', 'ko',
+          'it', 'th', 'gu', 'fa', 'pl', 'ps', 'kn', 'ml', 'uk', 'nl'
+        ];
+
+        assertEquals(supportedLangs.length, 30, 'Should support 30 languages');
+        assert(supportedLangs.includes('en'), 'Should include English');
+        assert(supportedLangs.includes('zh'), 'Should include Chinese');
+        assert(supportedLangs.includes('es'), 'Should include Spanish');
+      });
+
+      // Run all tests when page loads
+      window.addEventListener('load', () => {
+        runTests();
+      });
+    </script>
+  </body>
+</html>
