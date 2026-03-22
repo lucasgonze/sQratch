@@ -162,9 +162,20 @@
         border-color: #999 !important;
       }
 
+      /* Markdown preview label */
+      #markdown-preview-label {
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #markdown-preview-label.active {
+        display: block !important;
+      }
+
       /* Markdown preview */
       #markdown-preview {
-        margin-top: 10px;
+        margin-top: 0;
         padding: 1em;
         border: 1px solid #ddd;
         background-color: white;
@@ -259,7 +270,7 @@
       const MAX_CONSECUTIVE_BREAKS = 2;
 
       // ===== STATE =====
-      let markdownMode = false;
+      let markdownMode = true;  // Default to markdown mode
       let editor = null;
       let characterCount = 0;
       let currentLang = 'en';
@@ -1693,6 +1704,7 @@
         DOM.formattingMessage = document.getElementById('formatting-message');
         DOM.markdownBtn = document.getElementById('convert-to-markdown');
         DOM.markdownPreview = document.getElementById('markdown-preview');
+        DOM.markdownPreviewLabel = document.getElementById('markdown-preview-label');
         DOM.markdownHelp = document.getElementById('markdown-help');
         DOM.previewControls = document.getElementById('preview-controls');
         DOM.removeFormattingBtn = document.getElementById('remove-formatting');
@@ -2195,6 +2207,7 @@
             // Activate markdown mode
             DOM.markdownBtn.classList.add('btn-markdown-active');
             DOM.markdownPreview.classList.add('active');
+            DOM.markdownPreviewLabel.classList.add('active');
             DOM.previewControls.classList.add('active');
 
             // Save cursor position before modifying content
@@ -2215,6 +2228,7 @@
             // Deactivate markdown mode
             DOM.markdownBtn.classList.remove('btn-markdown-active');
             DOM.markdownPreview.classList.remove('active');
+            DOM.markdownPreviewLabel.classList.remove('active');
             DOM.previewControls.classList.remove('active');
             DOM.markdownHelp.classList.remove('active');
             DOM.toggleHelpBtn.classList.remove('btn-markdown-active');
@@ -2313,6 +2327,30 @@
        * Initialize markdown editor keyboard handlers
        */
       function initializeMarkdownKeyboard() {
+        // Handle paste events to convert HTML to markdown
+        DOM.editor.addEventListener("paste", (event) => {
+          if (!markdownMode) return;
+
+          // Get clipboard data
+          const clipboardData = event.clipboardData || window.clipboardData;
+          const htmlData = clipboardData.getData('text/html');
+
+          // If there's HTML data, convert it to markdown
+          if (htmlData && htmlData.trim()) {
+            event.preventDefault();
+
+            // Convert HTML to markdown
+            const markdown = htmlToMarkdown(htmlData);
+
+            // Insert the markdown text
+            document.execCommand('insertText', false, markdown);
+
+            // Update preview
+            const text = DOM.editor.innerText;
+            DOM.markdownPreview.innerHTML = renderMarkdown(text);
+          }
+        });
+
         DOM.editor.addEventListener("keydown", (event) => {
           if (!markdownMode) return;
 
@@ -2655,6 +2693,12 @@
         initializeClipboardButtons();
         initializeMarkdownKeyboard();
 
+        // Enable markdown mode by default
+        DOM.markdownBtn.classList.add('btn-markdown-active');
+        DOM.markdownPreview.classList.add('active');
+        DOM.markdownPreviewLabel.classList.add('active');
+        DOM.previewControls.classList.add('active');
+
         // Ensure cursor is visible on page load
         DOM.editor.focus();
       }
@@ -2734,6 +2778,7 @@
             <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-help" title="show/hide help">?</button>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" data-i18n-title="btn_copy_formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
           </div>
+          <div id="markdown-preview-label" style="font-size: 0.75em; color: #aaa; margin-top: 10px; margin-bottom: 5px; display: none;">Preview</div>
           <div id="markdown-preview"></div>
           <div id="markdown-help">
             <div class="help-section">
