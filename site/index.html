@@ -47,17 +47,18 @@
       }
 
       #preview-controls {
-        text-align: right;
+        display: none;
+        justify-content: space-between;
+        align-items: center;
         margin-top: 10px;
         margin-bottom: 5px;
-        display: none;
         max-width: 700px;
         margin-left: auto;
         margin-right: auto;
       }
 
       #preview-controls.active {
-        display: block;
+        display: flex;
       }
 
       article.editor {
@@ -162,22 +163,15 @@
         border-color: #999 !important;
       }
 
-      /* Markdown preview label */
+      /* Markdown preview label (now inside preview-controls) */
       #markdown-preview-label {
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      #markdown-preview-label.active {
-        display: block !important;
+        /* No additional styling needed - handled by parent flexbox */
       }
 
       /* Markdown preview */
       #markdown-preview {
         margin-top: 0;
         padding: 1em;
-        border: 1px solid #ddd;
         background-color: white;
         min-height: 100px;
         display: none;
@@ -281,7 +275,7 @@
           page_subtitle: "private notepad",
           meta_description: "minimalist privacy-first editor for use as a scratchpad",
           nav_subtitle: "notepad",
-          tagline_fast: "fast",
+          tagline_fast: "instant",
           tagline_private: "private",
           tagline_calm: "calm",
           tooltip_fast: "instant loading",
@@ -328,7 +322,7 @@
           page_subtitle: "bloc de notas privado",
           meta_description: "editor minimalista centrado en la privacidad para usar como borrador",
           nav_subtitle: "bloc de notas",
-          tagline_fast: "rápido",
+          tagline_fast: "instantáneo",
           tagline_private: "privado",
           tagline_calm: "tranquilo",
           tooltip_fast: "carga instantánea",
@@ -375,7 +369,7 @@
           page_subtitle: "私人记事本",
           meta_description: "简约的隐私优先编辑器，用作便签本",
           nav_subtitle: "记事本",
-          tagline_fast: "快速",
+          tagline_fast: "即时",
           tagline_private: "私密",
           tagline_calm: "平静",
           tooltip_fast: "即时加载",
@@ -422,7 +416,7 @@
           page_subtitle: "निजी नोटपैड",
           meta_description: "स्क्रैचपैड के रूप में उपयोग के लिए न्यूनतम गोपनीयता-प्रथम संपादक",
           nav_subtitle: "नोटपैड",
-          tagline_fast: "तेज़",
+          tagline_fast: "तुरंत",
           tagline_private: "निजी",
           tagline_calm: "शांत",
           tooltip_fast: "तुरंत लोडिंग",
@@ -469,7 +463,7 @@
           page_subtitle: "bloc-notes privé",
           meta_description: "éditeur minimaliste axé sur la confidentialité pour une utilisation comme bloc-notes",
           nav_subtitle: "bloc-notes",
-          tagline_fast: "rapide",
+          tagline_fast: "instantané",
           tagline_private: "privé",
           tagline_calm: "calme",
           tooltip_fast: "chargement instantané",
@@ -516,7 +510,7 @@
           page_subtitle: "مفكرة خاصة",
           meta_description: "محرر بسيط يركز على الخصوصية للاستخدام كمفكرة",
           nav_subtitle: "مفكرة",
-          tagline_fast: "سريع",
+          tagline_fast: "فوري",
           tagline_private: "خاص",
           tagline_calm: "هادئ",
           tooltip_fast: "تحميل فوري",
@@ -563,7 +557,7 @@
           page_subtitle: "ব্যক্তিগত নোটপ্যাড",
           meta_description: "স্ক্র্যাচপ্যাড হিসাবে ব্যবহারের জন্য ন্যূনতম গোপনীয়তা-প্রথম সম্পাদক",
           nav_subtitle: "নোটপ্যাড",
-          tagline_fast: "দ্রুত",
+          tagline_fast: "তাৎক্ষণিক",
           tagline_private: "ব্যক্তিগত",
           tagline_calm: "শান্ত",
           tooltip_fast: "তাৎক্ষণিক লোডিং",
@@ -610,7 +604,7 @@
           page_subtitle: "личный блокнот",
           meta_description: "минималистичный редактор с приоритетом конфиденциальности для использования в качестве блокнота",
           nav_subtitle: "блокнот",
-          tagline_fast: "быстро",
+          tagline_fast: "мгновенно",
           tagline_private: "приватно",
           tagline_calm: "спокойно",
           tooltip_fast: "мгновенная загрузка",
@@ -657,7 +651,7 @@
           page_subtitle: "bloco de notas privado",
           meta_description: "editor minimalista com foco na privacidade para uso como rascunho",
           nav_subtitle: "bloco de notas",
-          tagline_fast: "rápido",
+          tagline_fast: "instantáneo",
           tagline_private: "privado",
           tagline_calm: "calmo",
           tooltip_fast: "carregamento instantâneo",
@@ -704,7 +698,7 @@
           page_subtitle: "privater Notizblock",
           meta_description: "minimalistischer, datenschutzorientierter Editor zur Verwendung als Notizblock",
           nav_subtitle: "Notizblock",
-          tagline_fast: "schnell",
+          tagline_fast: "sofort",
           tagline_private: "privat",
           tagline_calm: "ruhig",
           tooltip_fast: "sofortiges Laden",
@@ -751,7 +745,7 @@
           page_subtitle: "プライベートメモ帳",
           meta_description: "スクラッチパッドとして使用するための最小限のプライバシー優先エディタ",
           nav_subtitle: "メモ帳",
-          tagline_fast: "高速",
+          tagline_fast: "即座",
           tagline_private: "プライベート",
           tagline_calm: "静か",
           tooltip_fast: "即座に読み込み",
@@ -798,7 +792,7 @@
           page_subtitle: "개인 메모장",
           meta_description: "스크래치패드로 사용하기 위한 미니멀한 개인정보 보호 우선 에디터",
           nav_subtitle: "메모장",
-          tagline_fast: "빠름",
+          tagline_fast: "즉시",
           tagline_private: "비공개",
           tagline_calm: "조용함",
           tooltip_fast: "즉시 로딩",
@@ -845,7 +839,7 @@
           page_subtitle: "blocco note privato",
           meta_description: "editor minimalista incentrato sulla privacy da utilizzare come blocco appunti",
           nav_subtitle: "blocco note",
-          tagline_fast: "veloce",
+          tagline_fast: "istantaneo",
           tagline_private: "privato",
           tagline_calm: "calmo",
           tooltip_fast: "caricamento istantaneo",
@@ -892,7 +886,7 @@
           page_subtitle: "özel not defteri",
           meta_description: "taslak olarak kullanmak için minimalist gizlilik odaklı düzenleyici",
           nav_subtitle: "not defteri",
-          tagline_fast: "hızlı",
+          tagline_fast: "anında",
           tagline_private: "özel",
           tagline_calm: "sakin",
           tooltip_fast: "anında yükleme",
@@ -939,7 +933,7 @@
           page_subtitle: "prywatny notatnik",
           meta_description: "minimalistyczny edytor zorientowany na prywatność do użytku jako notatnik",
           nav_subtitle: "notatnik",
-          tagline_fast: "szybki",
+          tagline_fast: "natychmiastowy",
           tagline_private: "prywatny",
           tagline_calm: "spokojny",
           tooltip_fast: "natychmiastowe ładowanie",
@@ -986,7 +980,7 @@
           page_subtitle: "приватний блокнот",
           meta_description: "мінімалістичний редактор з пріоритетом конфіденційності для використання як чернетка",
           nav_subtitle: "блокнот",
-          tagline_fast: "швидко",
+          tagline_fast: "миттєво",
           tagline_private: "приватно",
           tagline_calm: "спокійно",
           tooltip_fast: "миттєве завантаження",
@@ -1033,7 +1027,7 @@
           page_subtitle: "sổ ghi chú riêng tư",
           meta_description: "trình soạn thảo tối giản ưu tiên quyền riêng tư để sử dụng làm nháp",
           nav_subtitle: "sổ ghi chú",
-          tagline_fast: "nhanh",
+          tagline_fast: "tức thì",
           tagline_private: "riêng tư",
           tagline_calm: "yên tĩnh",
           tooltip_fast: "tải tức thì",
@@ -1080,7 +1074,7 @@
           page_subtitle: "สมุดบันทึกส่วนตัว",
           meta_description: "โปรแกรมแก้ไขที่เน้นความเป็นส่วนตัวแบบมินิมัลสำหรับใช้เป็นร่าง",
           nav_subtitle: "สมุดบันทึก",
-          tagline_fast: "รวดเร็ว",
+          tagline_fast: "ทันที",
           tagline_private: "ส่วนตัว",
           tagline_calm: "สงบ",
           tooltip_fast: "โหลดทันที",
@@ -1127,7 +1121,7 @@
           page_subtitle: "notepad pribadi",
           meta_description: "editor minimalis yang mengutamakan privasi untuk digunakan sebagai scratchpad",
           nav_subtitle: "notepad",
-          tagline_fast: "cepat",
+          tagline_fast: "instan",
           tagline_private: "pribadi",
           tagline_calm: "tenang",
           tooltip_fast: "loading instan",
@@ -1174,7 +1168,7 @@
           page_subtitle: "privé notitieblok",
           meta_description: "minimalistische privacy-first editor voor gebruik als kladblok",
           nav_subtitle: "notitieblok",
-          tagline_fast: "snel",
+          tagline_fast: "direct",
           tagline_private: "privé",
           tagline_calm: "rustig",
           tooltip_fast: "instant laden",
@@ -1221,7 +1215,7 @@
           page_subtitle: "نجی نوٹ پیڈ",
           meta_description: "سکریچ پیڈ کے طور پر استعمال کے لیے کم سے کم رازداری پہلے ایڈیٹر",
           nav_subtitle: "نوٹ پیڈ",
-          tagline_fast: "تیز",
+          tagline_fast: "فوری",
           tagline_private: "نجی",
           tagline_calm: "پرسکون",
           tooltip_fast: "فوری لوڈنگ",
@@ -1268,7 +1262,7 @@
           page_subtitle: "kumbukumbu binafsi",
           meta_description: "hariri ya kidogo inayotanguliza faragha kwa matumizi kama scratchpad",
           nav_subtitle: "kumbukumbu",
-          tagline_fast: "haraka",
+          tagline_fast: "papo hapo",
           tagline_private: "binafsi",
           tagline_calm: "tulivu",
           tooltip_fast: "kupakia papo hapo",
@@ -1315,7 +1309,7 @@
           page_subtitle: "खाजगी नोटपॅड",
           meta_description: "स्क्रॅचपॅड म्हणून वापरण्यासाठी किमान गोपनीयता-प्रथम संपादक",
           nav_subtitle: "नोटपॅड",
-          tagline_fast: "जलद",
+          tagline_fast: "तत्काळ",
           tagline_private: "खाजगी",
           tagline_calm: "शांत",
           tooltip_fast: "त्वरित लोडिंग",
@@ -1362,7 +1356,7 @@
           page_subtitle: "ప్రైవేట్ నోట్‌ప్యాడ్",
           meta_description: "స్క్రాచ్‌ప్యాడ్‌గా ఉపయోగం కోసం కనిష్ట గోప్యత-మొదటి సంపాదకి",
           nav_subtitle: "నోట్‌ప్యాడ్",
-          tagline_fast: "వేగవంతమైన",
+          tagline_fast: "తక్షణ",
           tagline_private: "ప్రైవేట్",
           tagline_calm: "ప్రశాంతమైన",
           tooltip_fast: "తక్షణ లోడింగ్",
@@ -1409,7 +1403,7 @@
           page_subtitle: "தனிப்பட்ட குறிப்பேடு",
           meta_description: "ஸ்க்ராட்ச்பேடாக பயன்படுத்த குறைந்தபட்ச தனியுரிமை-முதல் எடிட்டர்",
           nav_subtitle: "குறிப்பேடு",
-          tagline_fast: "வேகமான",
+          tagline_fast: "உடனடி",
           tagline_private: "தனிப்பட்ட",
           tagline_calm: "அமைதியான",
           tooltip_fast: "உடனடி ஏற்றுதல்",
@@ -1456,7 +1450,7 @@
           page_subtitle: "ખાનગી નોટપેડ",
           meta_description: "સ્ક્રેચપેડ તરીકે ઉપયોગ માટે ન્યૂનતમ ગોપનીયતા-પ્રથમ સંપાદક",
           nav_subtitle: "નોટપેડ",
-          tagline_fast: "ઝડપી",
+          tagline_fast: "તાત્કાલિક",
           tagline_private: "ખાનગી",
           tagline_calm: "શાંત",
           tooltip_fast: "તાત્કાલિક લોડિંગ",
@@ -1503,7 +1497,7 @@
           page_subtitle: "دفترچه یادداشت خصوصی",
           meta_description: "ویرایشگر حداقلی با اولویت حریم خصوصی برای استفاده به عنوان یادداشت",
           nav_subtitle: "دفترچه یادداشت",
-          tagline_fast: "سریع",
+          tagline_fast: "فوری",
           tagline_private: "خصوصی",
           tagline_calm: "آرام",
           tooltip_fast: "بارگذاری فوری",
@@ -1550,7 +1544,7 @@
           page_subtitle: "ځانګړی نوټ پیډ",
           meta_description: "د سکریچ پیډ په توګه کارولو لپاره لږترلږه د محرمیت - لومړی مدیر",
           nav_subtitle: "نوټ پیډ",
-          tagline_fast: "ګړندی",
+          tagline_fast: "فوری",
           tagline_private: "ځانګړی",
           tagline_calm: "آرام",
           tooltip_fast: "ژر ډکول",
@@ -1597,7 +1591,7 @@
           page_subtitle: "ಖಾಸಗಿ ನೋಟ್‌ಪ್ಯಾಡ್",
           meta_description: "ಸ್ಕ್ರಾಚ್‌ಪ್ಯಾಡ್‌ನಂತೆ ಬಳಸಲು ಕನಿಷ್ಠ ಗೌಪ್ಯತೆ-ಮೊದಲ ಸಂಪಾದಕ",
           nav_subtitle: "ನೋಟ್‌ಪ್ಯಾಡ್",
-          tagline_fast: "ವೇಗವಾದ",
+          tagline_fast: "ತತ್ಕ್ಷಣ",
           tagline_private: "ಖಾಸಗಿ",
           tagline_calm: "ಶಾಂತ",
           tooltip_fast: "ತ್ವರಿತ ಲೋಡಿಂಗ್",
@@ -1644,7 +1638,7 @@
           page_subtitle: "സ്വകാര്യ നോട്ട്പാഡ്",
           meta_description: "സ്ക്രാച്ച്പാഡായി ഉപയോഗിക്കുന്നതിന് ഏറ്റവും കുറഞ്ഞ സ്വകാര്യത-ആദ്യ എഡിറ്റർ",
           nav_subtitle: "നോട്ട്പാഡ്",
-          tagline_fast: "വേഗമുള്ള",
+          tagline_fast: "തൽക്ഷണം",
           tagline_private: "സ്വകാര്യം",
           tagline_calm: "ശാന്തം",
           tooltip_fast: "തൽക്ഷണ ലോഡിംഗ്",
@@ -1704,7 +1698,6 @@
         DOM.formattingMessage = document.getElementById('formatting-message');
         DOM.markdownBtn = document.getElementById('convert-to-markdown');
         DOM.markdownPreview = document.getElementById('markdown-preview');
-        DOM.markdownPreviewLabel = document.getElementById('markdown-preview-label');
         DOM.markdownHelp = document.getElementById('markdown-help');
         DOM.previewControls = document.getElementById('preview-controls');
         DOM.removeFormattingBtn = document.getElementById('remove-formatting');
@@ -2175,6 +2168,15 @@
           if (markdownMode) {
             const text = DOM.editor.innerText;
             DOM.markdownPreview.innerHTML = renderMarkdown(text);
+
+            // Show/hide preview area based on content
+            if (characterCount > 0) {
+              DOM.markdownPreview.classList.add('active');
+              DOM.previewControls.classList.add('active');
+            } else {
+              DOM.markdownPreview.classList.remove('active');
+              DOM.previewControls.classList.remove('active');
+            }
           }
         });
       }
@@ -2206,9 +2208,6 @@
           if (markdownMode) {
             // Activate markdown mode
             DOM.markdownBtn.classList.add('btn-markdown-active');
-            DOM.markdownPreview.classList.add('active');
-            DOM.markdownPreviewLabel.classList.add('active');
-            DOM.previewControls.classList.add('active');
 
             // Save cursor position before modifying content
             const cursorPosition = saveCursorPosition(DOM.editor);
@@ -2218,9 +2217,14 @@
             const markdown = htmlToMarkdown(html).trim();
             DOM.editor.innerHTML = markdown.replace(/\n/g, '<br>');
 
-            // Show preview
+            // Show preview and controls only if there's content
             const text = DOM.editor.innerText;
             DOM.markdownPreview.innerHTML = renderMarkdown(text);
+
+            if (text.trim().length > 0) {
+              DOM.markdownPreview.classList.add('active');
+              DOM.previewControls.classList.add('active');
+            }
 
             // Restore cursor position to where it was
             restoreCursorPosition(DOM.editor, cursorPosition);
@@ -2228,7 +2232,6 @@
             // Deactivate markdown mode
             DOM.markdownBtn.classList.remove('btn-markdown-active');
             DOM.markdownPreview.classList.remove('active');
-            DOM.markdownPreviewLabel.classList.remove('active');
             DOM.previewControls.classList.remove('active');
             DOM.markdownHelp.classList.remove('active');
             DOM.toggleHelpBtn.classList.remove('btn-markdown-active');
@@ -2348,6 +2351,12 @@
             // Update preview
             const text = DOM.editor.innerText;
             DOM.markdownPreview.innerHTML = renderMarkdown(text);
+
+            // Show preview if there's content
+            if (text.trim().length > 0) {
+              DOM.markdownPreview.classList.add('active');
+              DOM.previewControls.classList.add('active');
+            }
           }
         });
 
@@ -2693,11 +2702,8 @@
         initializeClipboardButtons();
         initializeMarkdownKeyboard();
 
-        // Enable markdown mode by default
+        // Enable markdown mode by default (preview area will show when content is added)
         DOM.markdownBtn.classList.add('btn-markdown-active');
-        DOM.markdownPreview.classList.add('active');
-        DOM.markdownPreviewLabel.classList.add('active');
-        DOM.previewControls.classList.add('active');
 
         // Ensure cursor is visible on page load
         DOM.editor.focus();
@@ -2716,7 +2722,7 @@
 
       <nav style="position: relative;">
 	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;" data-i18n="nav_subtitle">notepad</span>
-	<p id="tagline" class="text-muted"><small><span data-i18n="tagline_fast" data-i18n-title="tooltip_fast" title="instant loading">fast</span> • <span data-i18n="tagline_private" data-i18n-title="tooltip_private" title="no logging, ever">private</span> • <span data-i18n="tagline_calm" data-i18n-title="tooltip_calm" title="distraction free for high focus">calm</span></small></p>
+	<p id="tagline" class="text-muted"><small><span data-i18n="tagline_calm" data-i18n-title="tooltip_calm" title="distraction free for high focus">calm</span> • <span data-i18n="tagline_private" data-i18n-title="tooltip_private" title="no logging, ever">private</span> • <span data-i18n="tagline_fast" data-i18n-title="tooltip_fast" title="instant loading">instant</span></small></p>
 	<select id="language-selector" style="position: absolute; top: 0; right: 0; font-size: 0.75em; color: #666; border: none; background: transparent; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; text-align-last: right;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
 	  <option value="en">🌐</option>
 	  <option value="zh">中文</option>
@@ -2775,10 +2781,12 @@
             <p id="counter"></p>
           </div>
           <div id="preview-controls">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-help" title="show/hide help">?</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" data-i18n-title="btn_copy_formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
+            <div id="markdown-preview-label" style="font-size: 0.75em; color: #aaa;">Preview</div>
+            <div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-help" title="show/hide help">?</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" data-i18n-title="btn_copy_formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
+            </div>
           </div>
-          <div id="markdown-preview-label" style="font-size: 0.75em; color: #aaa; margin-top: 10px; margin-bottom: 5px; display: none;">Preview</div>
           <div id="markdown-preview"></div>
           <div id="markdown-help">
             <div class="help-section">
