@@ -20,6 +20,13 @@
         padding: 1em;
         text-align: left;
       }
+
+      nav {
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
       article.editor, article.sans-serif, article.serif, article.monospace {
 	margin-top: 10px;
         margin-right: 0;
@@ -144,13 +151,15 @@
       /* Markdown mode active button */
       .btn-markdown-active {
         font-weight: bold;
-        background-color: #0d6efd;
-        color: white;
+        background-color: #f0f0f0 !important;
+        border-color: #999 !important;
       }
 
       /* Active font button */
       .font-active {
         font-weight: bold;
+        background-color: #f0f0f0 !important;
+        border-color: #999 !important;
       }
 
       /* Markdown preview */
@@ -1689,6 +1698,7 @@
         DOM.removeFormattingBtn = document.getElementById('remove-formatting');
         DOM.copyAllBtn = document.getElementById('copy-all');
         DOM.copyFormattedBtn = document.getElementById('copy-formatted');
+        DOM.toggleHelpBtn = document.getElementById('toggle-help');
         DOM.buttons = document.querySelector('#buttons');
         DOM.fontButtons = document.querySelectorAll('[data-font]');
       }
@@ -2185,7 +2195,6 @@
             // Activate markdown mode
             DOM.markdownBtn.classList.add('btn-markdown-active');
             DOM.markdownPreview.classList.add('active');
-            DOM.markdownHelp.classList.add('active');
             DOM.previewControls.classList.add('active');
 
             // Save cursor position before modifying content
@@ -2206,8 +2215,28 @@
             // Deactivate markdown mode
             DOM.markdownBtn.classList.remove('btn-markdown-active');
             DOM.markdownPreview.classList.remove('active');
-            DOM.markdownHelp.classList.remove('active');
             DOM.previewControls.classList.remove('active');
+            DOM.markdownHelp.classList.remove('active');
+            DOM.toggleHelpBtn.classList.remove('btn-markdown-active');
+          }
+        });
+      }
+
+      /**
+       * Initialize help toggle button
+       */
+      function initializeHelpToggle() {
+        DOM.toggleHelpBtn.addEventListener("click", () => {
+          // Only allow help toggle when in markdown mode
+          if (!markdownMode) return;
+
+          const isActive = DOM.markdownHelp.classList.contains('active');
+          if (isActive) {
+            DOM.markdownHelp.classList.remove('active');
+            DOM.toggleHelpBtn.classList.remove('btn-markdown-active');
+          } else {
+            DOM.markdownHelp.classList.add('active');
+            DOM.toggleHelpBtn.classList.add('btn-markdown-active');
           }
         });
       }
@@ -2621,9 +2650,13 @@
         initializeEditorInput();
         initializeFontButtons();
         initializeMarkdownToggle();
+        initializeHelpToggle();
         initializeRemoveFormatting();
         initializeClipboardButtons();
         initializeMarkdownKeyboard();
+
+        // Ensure cursor is visible on page load
+        DOM.editor.focus();
       }
 
       // Initialize when page loads
@@ -2640,8 +2673,8 @@
       <nav style="position: relative;">
 	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;" data-i18n="nav_subtitle">notepad</span>
 	<p id="tagline" class="text-muted"><small><span data-i18n="tagline_fast" data-i18n-title="tooltip_fast" title="instant loading">fast</span> • <span data-i18n="tagline_private" data-i18n-title="tooltip_private" title="no logging, ever">private</span> • <span data-i18n="tagline_calm" data-i18n-title="tooltip_calm" title="distraction free for high focus">calm</span></small></p>
-	<select id="language-selector" style="position: absolute; top: 0; right: 0; font-size: 0.75em; color: #999; border: none; background: transparent; cursor: pointer; opacity: 0.3; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.3'">
-	  <option value="en">English</option>
+	<select id="language-selector" style="position: absolute; top: 0; right: 0; font-size: 0.75em; color: #666; border: none; background: transparent; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; text-align-last: right;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+	  <option value="en">🌐</option>
 	  <option value="zh">中文</option>
 	  <option value="hi">हिन्दी</option>
 	  <option value="es">Español</option>
@@ -2690,8 +2723,6 @@
         <article
           class="editor sans-serif"
           contenteditable
-          data-placeholder="Write here"
-          data-i18n-placeholder="editor_placeholder"
           id="mcguffin"
           autofocus
           ></article>
@@ -2700,6 +2731,7 @@
             <p id="counter"></p>
           </div>
           <div id="preview-controls">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-help" title="show/hide help">?</button>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" data-i18n-title="btn_copy_formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
           </div>
           <div id="markdown-preview"></div>
