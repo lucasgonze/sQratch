@@ -25,10 +25,15 @@
         margin-right: 0;
         margin-bottom: 7px;
         padding: 1em;
-        padding-right: 0;
 
 	/* to raise the priority of this control */
 	background-color: #f5f5f5;
+      }
+
+      article.editor {
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
       }
       p#counter {
         text-align: right;
@@ -39,6 +44,9 @@
         margin-top: 10px;
         margin-bottom: 5px;
         display: none;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       #preview-controls.active {
@@ -46,8 +54,8 @@
       }
 
       article.editor {
-        box-shadow: 2px 2px;
-        border: 1px solid black;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
         outline: none;
       }
 
@@ -59,6 +67,27 @@
       *.sans-serif { font-family: sans-serif; }
       *.serif { font-family: serif; }
       *.monospace { font-family: monospace; }
+
+      /* Buttons aligned to right edge of editor */
+      #buttons {
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0;
+      }
+
+      /* Ensure container doesn't interfere with button visibility */
+      .container {
+        max-width: none;
+        padding: 0;
+      }
+
+      /* Counter container match editor width */
+      article.editor + div {
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
 
       /* Tagline fade */
       #tagline {
@@ -132,6 +161,9 @@
         background-color: white;
         min-height: 100px;
         display: none;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       #markdown-preview.active {
@@ -166,6 +198,9 @@
         display: none;
         line-height: 1.6;
         opacity: 0.85;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       #markdown-help.active {
