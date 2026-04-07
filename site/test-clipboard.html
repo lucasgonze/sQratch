@@ -78,6 +78,12 @@
       .monospace {
         font-family: monospace;
       }
+      /* Markdown mode active button */
+      .btn-markdown-active {
+        font-weight: bold;
+        background-color: #f0f0f0 !important;
+        border-color: #999 !important;
+      }
     </style>
   </head>
   <body>
@@ -177,11 +183,16 @@
           if (markdownMode) {
             markdownPreview.style.display = 'block';
             previewControls.style.display = 'block';
+            markdownBtn.classList.add('btn-markdown-active');
           } else {
             markdownPreview.style.display = 'none';
             previewControls.style.display = 'none';
+            markdownBtn.classList.remove('btn-markdown-active');
           }
         });
+
+        // Expose markdownMode for testing
+        window.testMarkdownMode = () => markdownMode;
 
         // Remove formatting
         removeFormattingBtn.addEventListener('click', () => {
@@ -532,6 +543,30 @@
         // Click to hide
         markdownBtn.click();
         assertEquals(window.getComputedStyle(preview).display, 'none', 'Preview should be hidden after second click');
+      });
+
+      test('Markdown button state stays in sync with markdown mode', () => {
+        const markdownBtn = document.getElementById('convert-to-markdown');
+
+        // Initial state: markdown mode should be off, button should not be active
+        const initialMode = window.testMarkdownMode();
+        const initialHasClass = markdownBtn.classList.contains('btn-markdown-active');
+        assertEquals(initialMode, false, 'Markdown mode should start as false');
+        assertEquals(initialHasClass, false, 'Button should not have active class initially');
+
+        // After first click: markdown mode on, button should be active
+        markdownBtn.click();
+        const modeAfterFirstClick = window.testMarkdownMode();
+        const hasClassAfterFirstClick = markdownBtn.classList.contains('btn-markdown-active');
+        assertEquals(modeAfterFirstClick, true, 'Markdown mode should be true after click');
+        assertEquals(hasClassAfterFirstClick, true, 'Button should have active class when mode is on');
+
+        // After second click: markdown mode off, button should not be active
+        markdownBtn.click();
+        const modeAfterSecondClick = window.testMarkdownMode();
+        const hasClassAfterSecondClick = markdownBtn.classList.contains('btn-markdown-active');
+        assertEquals(modeAfterSecondClick, false, 'Markdown mode should be false after second click');
+        assertEquals(hasClassAfterSecondClick, false, 'Button should not have active class when mode is off');
       });
 
       test('Remove formatting clears all formatting', () => {

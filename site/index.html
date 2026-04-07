@@ -264,7 +264,7 @@
       const MAX_CONSECUTIVE_BREAKS = 2;
 
       // ===== STATE =====
-      let markdownMode = true;  // Default to markdown mode
+      let markdownMode = false;  // Default to markdown mode
       let editor = null;
       let characterCount = 0;
       let currentLang = 'en';
@@ -2702,8 +2702,10 @@
         initializeClipboardButtons();
         initializeMarkdownKeyboard();
 
-        // Enable markdown mode by default (preview area will show when content is added)
-        DOM.markdownBtn.classList.add('btn-markdown-active');
+        // Set button state based on markdown mode
+        if (markdownMode) {
+          DOM.markdownBtn.classList.add('btn-markdown-active');
+        }
 
         // Ensure cursor is visible on page load
         DOM.editor.focus();
