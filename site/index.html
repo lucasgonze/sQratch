@@ -2,13 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title data-i18n-title="page_subtitle">sQratch - private notepad</title>
+    <title>Copy Clean</title>
     <meta name="description" content="minimalist privacy-first editor for use as a scratchpad" data-i18n-content="meta_description">
 
     <!--To ensure proper rendering and touch zooming for all devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <meta property="og:title" content="sQratch">
+    <meta property="og:title" content="Copy Clean">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sQratch.us">
 
@@ -252,6 +252,27 @@
         font-family: monospace;
         color: #888;
       }
+
+      /* === FORMAT CLEANER MODE === */
+      /* Hide markdown and font UI elements for cleaner mode */
+      #convert-to-markdown,
+      .btn-group[role="group"],
+      #markdown-preview,
+      #markdown-help,
+      #preview-controls,
+      #toggle-help {
+        display: none !important;
+      }
+
+      #copy-all {
+        display: inline-block;
+      }
+
+      /* Make placeholder more prominent for paste instruction */
+      [data-placeholder]:empty:before {
+        font-size: 1.2em;
+        opacity: 0.6;
+      }
     </style>
 
     <script type="text/javascript">
@@ -272,26 +293,29 @@
       // ===== TRANSLATIONS =====
       const TRANSLATIONS = {
         en: {
-          page_subtitle: "private notepad",
-          meta_description: "minimalist privacy-first editor for use as a scratchpad",
-          nav_subtitle: "notepad",
-          tagline_fast: "instant",
-          tagline_private: "private",
-          tagline_calm: "calm",
-          tooltip_fast: "instant loading",
-          tooltip_private: "no logging, ever",
-          tooltip_calm: "distraction free for high focus",
+          page_subtitle: "format cleaner",
+          meta_description: "instant formatting cleaner - paste formatted text and get clean plain text",
+          nav_subtitle: "format cleaner",
+          tagline_paste: "paste",
+          tagline_clean: "clean",
+          tagline_copy: "copy",
+          tooltip_paste: "paste formatted text",
+          tooltip_clean: "automatically strips formatting",
+          tooltip_copy: "instantly copies to clipboard",
           btn_font_sans: "Sans-serif font (clean, modern)",
           btn_font_mono: "Monospace font (code, typewriter)",
           btn_markdown: "convert markup to markdown",
           btn_remove_formatting: "Remove all formatting",
           btn_copy_all: "copy all",
           btn_copy_formatted: "copy formatted text",
-          editor_placeholder: "Write here",
+          editor_placeholder: "Paste formatted text to clean it up",
           msg_formatting_removed: "formatting removed",
           msg_copied: "copied to clipboard",
           msg_formatted_copied: "formatted text copied",
           msg_copy_failed: "copy failed",
+          msg_cleaned_and_copied: "Cleaned up",
+          msg_images_not_supported: "Images not supported - paste text only",
+          tagline_text: "Formatting in, plain text out",
           help_keyboard_shortcuts: "Keyboard Shortcuts:",
           help_bold: "Bold",
           help_italic: "Italic",
@@ -339,6 +363,15 @@
           msg_copied: "copiado al portapapeles",
           msg_formatted_copied: "texto formateado copiado",
           msg_copy_failed: "copia fallida",
+          tagline_paste: "pegar",
+          tagline_clean: "limpiar",
+          tagline_copy: "copiar",
+          tooltip_paste: "pega texto con formato",
+          tooltip_clean: "elimina el formato automáticamente",
+          tooltip_copy: "copia instantáneamente al portapapeles",
+          msg_cleaned_and_copied: "Limpiado",
+          msg_images_not_supported: "Imágenes no compatibles - pega solo texto",
+          tagline_text: "Formato de entrada, texto sin formato de salida",
           help_keyboard_shortcuts: "Atajos de teclado:",
           help_bold: "Negrita",
           help_italic: "Cursiva",
@@ -386,6 +419,15 @@
           msg_copied: "已复制到剪贴板",
           msg_formatted_copied: "格式化文本已复制",
           msg_copy_failed: "复制失败",
+          tagline_paste: "粘贴",
+          tagline_clean: "清理",
+          tagline_copy: "复制",
+          tooltip_paste: "粘贴带格式的文字",
+          tooltip_clean: "自动去除格式",
+          tooltip_copy: "立即复制到剪贴板",
+          msg_cleaned_and_copied: "已清理",
+          msg_images_not_supported: "不支持图片 - 请仅粘贴文字",
+          tagline_text: "格式输入，纯文本输出",
           help_keyboard_shortcuts: "键盘快捷键：",
           help_bold: "粗体",
           help_italic: "斜体",
@@ -433,6 +475,15 @@
           msg_copied: "क्लिपबोर्ड पर कॉपी किया गया",
           msg_formatted_copied: "फ़ॉर्मेट किया हुआ टेक्स्ट कॉपी किया गया",
           msg_copy_failed: "कॉपी विफल",
+          tagline_paste: "पेस्ट",
+          tagline_clean: "साफ करें",
+          tagline_copy: "कॉपी",
+          tooltip_paste: "फ़ॉर्मेटेड टेक्स्ट पेस्ट करें",
+          tooltip_clean: "स्वचालित रूप से फ़ॉर्मेटिंग हटाता है",
+          tooltip_copy: "तुरंत क्लिपबोर्ड में कॉपी करता है",
+          msg_cleaned_and_copied: "साफ किया",
+          msg_images_not_supported: "छवियां समर्थित नहीं हैं - केवल टेक्स्ट पेस्ट करें",
+          tagline_text: "फ़ॉर्मेटिंग इन, सादा टेक्स्ट आउट",
           help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
           help_bold: "बोल्ड",
           help_italic: "इटैलिक",
@@ -480,6 +531,15 @@
           msg_copied: "copié dans le presse-papiers",
           msg_formatted_copied: "texte formaté copié",
           msg_copy_failed: "échec de la copie",
+          tagline_paste: "coller",
+          tagline_clean: "nettoyer",
+          tagline_copy: "copier",
+          tooltip_paste: "collez du texte formaté",
+          tooltip_clean: "supprime automatiquement la mise en forme",
+          tooltip_copy: "copie instantanément dans le presse-papiers",
+          msg_cleaned_and_copied: "Nettoyé",
+          msg_images_not_supported: "Images non prises en charge - collez du texte uniquement",
+          tagline_text: "Mise en forme en entrée, texte brut en sortie",
           help_keyboard_shortcuts: "Raccourcis clavier:",
           help_bold: "Gras",
           help_italic: "Italique",
@@ -527,6 +587,15 @@
           msg_copied: "تم النسخ إلى الحافظة",
           msg_formatted_copied: "تم نسخ النص المنسق",
           msg_copy_failed: "فشل النسخ",
+          tagline_paste: "لصق",
+          tagline_clean: "تنظيف",
+          tagline_copy: "نسخ",
+          tooltip_paste: "الصق نصاً منسقاً",
+          tooltip_clean: "يزيل التنسيق تلقائياً",
+          tooltip_copy: "ينسخ إلى الحافظة فوراً",
+          msg_cleaned_and_copied: "تم التنظيف",
+          msg_images_not_supported: "الصور غير مدعومة - الصق النص فقط",
+          tagline_text: "التنسيق داخل، نص عادي خارج",
           help_keyboard_shortcuts: "اختصارات لوحة المفاتيح:",
           help_bold: "غامق",
           help_italic: "مائل",
@@ -574,6 +643,15 @@
           msg_copied: "ক্লিপবোর্ডে কপি করা হয়েছে",
           msg_formatted_copied: "ফরম্যাট করা টেক্সট কপি করা হয়েছে",
           msg_copy_failed: "কপি ব্যর্থ",
+          tagline_paste: "পেস্ট",
+          tagline_clean: "পরিষ্কার",
+          tagline_copy: "কপি",
+          tooltip_paste: "ফরম্যাটেড টেক্সট পেস্ট করুন",
+          tooltip_clean: "স্বয়ংক্রিয়ভাবে ফরম্যাটিং সরিয়ে দেয়",
+          tooltip_copy: "তাৎক্ষণিকভাবে ক্লিপবোর্ডে কপি করে",
+          msg_cleaned_and_copied: "পরিষ্কার হয়েছে",
+          msg_images_not_supported: "ছবি সমর্থিত নয় - শুধুমাত্র টেক্সট পেস্ট করুন",
+          tagline_text: "ফরম্যাটিং ইন, সাধারণ টেক্সট আউট",
           help_keyboard_shortcuts: "কীবোর্ড শর্টকাট:",
           help_bold: "বোল্ড",
           help_italic: "ইটালিক",
@@ -621,6 +699,15 @@
           msg_copied: "скопировано в буфер обмена",
           msg_formatted_copied: "форматированный текст скопирован",
           msg_copy_failed: "ошибка копирования",
+          tagline_paste: "вставить",
+          tagline_clean: "очистить",
+          tagline_copy: "копировать",
+          tooltip_paste: "вставить форматированный текст",
+          tooltip_clean: "автоматически удаляет форматирование",
+          tooltip_copy: "мгновенно копирует в буфер обмена",
+          msg_cleaned_and_copied: "Очищено",
+          msg_images_not_supported: "Изображения не поддерживаются - вставьте только текст",
+          tagline_text: "Форматирование на входе, простой текст на выходе",
           help_keyboard_shortcuts: "Горячие клавиши:",
           help_bold: "Жирный",
           help_italic: "Курсив",
@@ -668,6 +755,15 @@
           msg_copied: "copiado para a área de transferência",
           msg_formatted_copied: "texto formatado copiado",
           msg_copy_failed: "falha ao copiar",
+          tagline_paste: "colar",
+          tagline_clean: "limpar",
+          tagline_copy: "copiar",
+          tooltip_paste: "colar texto formatado",
+          tooltip_clean: "remove formatação automaticamente",
+          tooltip_copy: "copia instantaneamente para a área de transferência",
+          msg_cleaned_and_copied: "Limpo",
+          msg_images_not_supported: "Imagens não suportadas - cole apenas texto",
+          tagline_text: "Formatação na entrada, texto simples na saída",
           help_keyboard_shortcuts: "Atalhos de teclado:",
           help_bold: "Negrito",
           help_italic: "Itálico",
@@ -715,6 +811,15 @@
           msg_copied: "in die Zwischenablage kopiert",
           msg_formatted_copied: "formatierter Text kopiert",
           msg_copy_failed: "Kopieren fehlgeschlagen",
+          tagline_paste: "einfügen",
+          tagline_clean: "bereinigen",
+          tagline_copy: "kopieren",
+          tooltip_paste: "formatierten Text einfügen",
+          tooltip_clean: "entfernt automatisch Formatierungen",
+          tooltip_copy: "kopiert sofort in die Zwischenablage",
+          msg_cleaned_and_copied: "Bereinigt",
+          msg_images_not_supported: "Bilder werden nicht unterstützt - nur Text einfügen",
+          tagline_text: "Formatierung rein, Klartext raus",
           help_keyboard_shortcuts: "Tastenkombinationen:",
           help_bold: "Fett",
           help_italic: "Kursiv",
@@ -762,6 +867,15 @@
           msg_copied: "クリップボードにコピーしました",
           msg_formatted_copied: "書式付きテキストをコピーしました",
           msg_copy_failed: "コピー失敗",
+          tagline_paste: "貼り付け",
+          tagline_clean: "クリーン",
+          tagline_copy: "コピー",
+          tooltip_paste: "書式付きテキストを貼り付ける",
+          tooltip_clean: "自動的に書式を削除します",
+          tooltip_copy: "すぐにクリップボードにコピーします",
+          msg_cleaned_and_copied: "クリーンアップ完了",
+          msg_images_not_supported: "画像はサポートされていません - テキストのみ貼り付けてください",
+          tagline_text: "書式入力、プレーンテキスト出力",
           help_keyboard_shortcuts: "キーボードショートカット：",
           help_bold: "太字",
           help_italic: "斜体",
@@ -809,6 +923,15 @@
           msg_copied: "클립보드에 복사됨",
           msg_formatted_copied: "서식이 있는 텍스트가 복사됨",
           msg_copy_failed: "복사 실패",
+          tagline_paste: "붙여넣기",
+          tagline_clean: "정리",
+          tagline_copy: "복사",
+          tooltip_paste: "서식 있는 텍스트 붙여넣기",
+          tooltip_clean: "서식을 자동으로 제거합니다",
+          tooltip_copy: "즉시 클립보드에 복사합니다",
+          msg_cleaned_and_copied: "정리 완료",
+          msg_images_not_supported: "이미지는 지원되지 않습니다 - 텍스트만 붙여넣기",
+          tagline_text: "서식 입력, 일반 텍스트 출력",
           help_keyboard_shortcuts: "키보드 단축키:",
           help_bold: "굵게",
           help_italic: "기울임",
@@ -856,6 +979,15 @@
           msg_copied: "copiato negli appunti",
           msg_formatted_copied: "testo formattato copiato",
           msg_copy_failed: "copia fallita",
+          tagline_paste: "incolla",
+          tagline_clean: "pulisci",
+          tagline_copy: "copia",
+          tooltip_paste: "incolla testo formattato",
+          tooltip_clean: "rimuove automaticamente la formattazione",
+          tooltip_copy: "copia immediatamente negli appunti",
+          msg_cleaned_and_copied: "Pulito",
+          msg_images_not_supported: "Immagini non supportate - incolla solo testo",
+          tagline_text: "Formattazione in entrata, testo normale in uscita",
           help_keyboard_shortcuts: "Scorciatoie da tastiera:",
           help_bold: "Grassetto",
           help_italic: "Corsivo",
@@ -903,6 +1035,15 @@
           msg_copied: "panoya kopyalandı",
           msg_formatted_copied: "biçimlendirilmiş metin kopyalandı",
           msg_copy_failed: "kopyalama başarısız",
+          tagline_paste: "yapıştır",
+          tagline_clean: "temizle",
+          tagline_copy: "kopyala",
+          tooltip_paste: "biçimlendirilmiş metin yapıştır",
+          tooltip_clean: "biçimlendirmeyi otomatik olarak kaldırır",
+          tooltip_copy: "anında panoya kopyalar",
+          msg_cleaned_and_copied: "Temizlendi",
+          msg_images_not_supported: "Resimler desteklenmiyor - yalnızca metin yapıştırın",
+          tagline_text: "Biçimlendirme giriyor, düz metin çıkıyor",
           help_keyboard_shortcuts: "Klavye Kısayolları:",
           help_bold: "Kalın",
           help_italic: "İtalik",
@@ -950,6 +1091,15 @@
           msg_copied: "skopiowano do schowka",
           msg_formatted_copied: "sformatowany tekst skopiowany",
           msg_copy_failed: "kopiowanie nie powiodło się",
+          tagline_paste: "wklej",
+          tagline_clean: "wyczyść",
+          tagline_copy: "kopiuj",
+          tooltip_paste: "wklej sformatowany tekst",
+          tooltip_clean: "automatycznie usuwa formatowanie",
+          tooltip_copy: "natychmiast kopiuje do schowka",
+          msg_cleaned_and_copied: "Wyczyszczono",
+          msg_images_not_supported: "Obrazy nie są obsługiwane - wklej tylko tekst",
+          tagline_text: "Formatowanie na wejściu, czysty tekst na wyjściu",
           help_keyboard_shortcuts: "Skróty klawiszowe:",
           help_bold: "Pogrubienie",
           help_italic: "Kursywa",
@@ -997,6 +1147,15 @@
           msg_copied: "скопійовано в буфер обміну",
           msg_formatted_copied: "форматований текст скопійовано",
           msg_copy_failed: "помилка копіювання",
+          tagline_paste: "вставити",
+          tagline_clean: "очистити",
+          tagline_copy: "копіювати",
+          tooltip_paste: "вставити відформатований текст",
+          tooltip_clean: "автоматично видаляє форматування",
+          tooltip_copy: "миттєво копіює в буфер обміну",
+          msg_cleaned_and_copied: "Очищено",
+          msg_images_not_supported: "Зображення не підтримуються - вставте лише текст",
+          tagline_text: "Форматування на вході, простий текст на виході",
           help_keyboard_shortcuts: "Гарячі клавіші:",
           help_bold: "Жирний",
           help_italic: "Курсив",
@@ -1044,6 +1203,15 @@
           msg_copied: "đã sao chép vào clipboard",
           msg_formatted_copied: "văn bản có định dạng đã được sao chép",
           msg_copy_failed: "sao chép thất bại",
+          tagline_paste: "dán",
+          tagline_clean: "làm sạch",
+          tagline_copy: "sao chép",
+          tooltip_paste: "dán văn bản có định dạng",
+          tooltip_clean: "tự động xóa định dạng",
+          tooltip_copy: "sao chép ngay vào bộ nhớ tạm",
+          msg_cleaned_and_copied: "Đã làm sạch",
+          msg_images_not_supported: "Không hỗ trợ hình ảnh - chỉ dán văn bản",
+          tagline_text: "Định dạng vào, văn bản thuần ra",
           help_keyboard_shortcuts: "Phím tắt:",
           help_bold: "Đậm",
           help_italic: "Nghiêng",
@@ -1091,6 +1259,15 @@
           msg_copied: "คัดลอกไปยังคลิปบอร์ดแล้ว",
           msg_formatted_copied: "คัดลอกข้อความที่มีรูปแบบแล้ว",
           msg_copy_failed: "คัดลอกล้มเหลว",
+          tagline_paste: "วาง",
+          tagline_clean: "ทำความสะอาด",
+          tagline_copy: "คัดลอก",
+          tooltip_paste: "วางข้อความที่มีการจัดรูปแบบ",
+          tooltip_clean: "ลบการจัดรูปแบบโดยอัตโนมัติ",
+          tooltip_copy: "คัดลอกไปยังคลิปบอร์ดทันที",
+          msg_cleaned_and_copied: "ทำความสะอาดแล้ว",
+          msg_images_not_supported: "ไม่รองรับรูปภาพ - วางเฉพาะข้อความ",
+          tagline_text: "ฟอร์แมตเข้า ข้อความธรรมดาออก",
           help_keyboard_shortcuts: "แป้นพิมพ์ลัด:",
           help_bold: "ตัวหนา",
           help_italic: "ตัวเอียง",
@@ -1138,6 +1315,15 @@
           msg_copied: "disalin ke clipboard",
           msg_formatted_copied: "teks berformat disalin",
           msg_copy_failed: "gagal menyalin",
+          tagline_paste: "tempel",
+          tagline_clean: "bersihkan",
+          tagline_copy: "salin",
+          tooltip_paste: "tempel teks berformat",
+          tooltip_clean: "menghapus pemformatan secara otomatis",
+          tooltip_copy: "langsung menyalin ke papan klip",
+          msg_cleaned_and_copied: "Dibersihkan",
+          msg_images_not_supported: "Gambar tidak didukung - tempel teks saja",
+          tagline_text: "Format masuk, teks biasa keluar",
           help_keyboard_shortcuts: "Pintasan Keyboard:",
           help_bold: "Tebal",
           help_italic: "Miring",
@@ -1185,6 +1371,15 @@
           msg_copied: "gekopieerd naar klembord",
           msg_formatted_copied: "opgemaakte tekst gekopieerd",
           msg_copy_failed: "kopiëren mislukt",
+          tagline_paste: "plakken",
+          tagline_clean: "opschonen",
+          tagline_copy: "kopiëren",
+          tooltip_paste: "opgemaakte tekst plakken",
+          tooltip_clean: "verwijdert automatisch opmaak",
+          tooltip_copy: "kopieert direct naar klembord",
+          msg_cleaned_and_copied: "Opgeschoond",
+          msg_images_not_supported: "Afbeeldingen worden niet ondersteund - plak alleen tekst",
+          tagline_text: "Opmaak in, platte tekst uit",
           help_keyboard_shortcuts: "Sneltoetsen:",
           help_bold: "Vet",
           help_italic: "Cursief",
@@ -1232,6 +1427,15 @@
           msg_copied: "کلپ بورڈ میں کاپی کیا گیا",
           msg_formatted_copied: "فارمیٹ شدہ متن کاپی کیا گیا",
           msg_copy_failed: "کاپی ناکام",
+          tagline_paste: "پیسٹ",
+          tagline_clean: "صاف",
+          tagline_copy: "کاپی",
+          tooltip_paste: "فارمیٹ شدہ متن پیسٹ کریں",
+          tooltip_clean: "خود بخود فارمیٹنگ ہٹاتا ہے",
+          tooltip_copy: "فوری طور پر کلپ بورڈ میں کاپی کرتا ہے",
+          msg_cleaned_and_copied: "صاف ہو گیا",
+          msg_images_not_supported: "تصاویر معاون نہیں - صرف متن پیسٹ کریں",
+          tagline_text: "فارمیٹنگ ان، سادہ متن آؤٹ",
           help_keyboard_shortcuts: "کی بورڈ شارٹ کٹس:",
           help_bold: "بولڈ",
           help_italic: "ترچھا",
@@ -1279,6 +1483,15 @@
           msg_copied: "imenakiliwa kwenye ubao wa kunakili",
           msg_formatted_copied: "maandishi yaliyoumbizwa yamenakiliwa",
           msg_copy_failed: "kunakili kumeshindwa",
+          tagline_paste: "bandika",
+          tagline_clean: "safisha",
+          tagline_copy: "nakili",
+          tooltip_paste: "bandika maandishi yenye uumbizaji",
+          tooltip_clean: "huondoa uumbizaji kiotomatiki",
+          tooltip_copy: "hunakili haraka kwenye ubao wa kunakili",
+          msg_cleaned_and_copied: "Imesafishwa",
+          msg_images_not_supported: "Picha hazitumiki - bandika maandishi tu",
+          tagline_text: "Uumbizaji ndani, maandishi wazi nje",
           help_keyboard_shortcuts: "Njia za mkato za kibodi:",
           help_bold: "Nene",
           help_italic: "Italiki",
@@ -1326,6 +1539,15 @@
           msg_copied: "क्लिपबोर्डवर कॉपी केले",
           msg_formatted_copied: "स्वरूपित मजकूर कॉपी केला",
           msg_copy_failed: "कॉपी अयशस्वी",
+          tagline_paste: "पेस्ट",
+          tagline_clean: "स्वच्छ",
+          tagline_copy: "कॉपी",
+          tooltip_paste: "स्वरूपित मजकूर पेस्ट करा",
+          tooltip_clean: "आपोआप स्वरूपण काढते",
+          tooltip_copy: "क्लिपबोर्डवर त्वरित कॉपी करते",
+          msg_cleaned_and_copied: "स्वच्छ केले",
+          msg_images_not_supported: "प्रतिमा समर्थित नाहीत - फक्त मजकूर पेस्ट करा",
+          tagline_text: "फॉर्मेटिंग आत, साधा मजकूर बाहेर",
           help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
           help_bold: "ठळक",
           help_italic: "तिरकी",
@@ -1373,6 +1595,15 @@
           msg_copied: "క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
           msg_formatted_copied: "ఫార్మాట్ చేసిన టెక్స్ట్ కాపీ చేయబడింది",
           msg_copy_failed: "కాపీ విఫలమైంది",
+          tagline_paste: "పేస్ట్",
+          tagline_clean: "శుభ్రం",
+          tagline_copy: "కాపీ",
+          tooltip_paste: "ఫార్మాట్ చేసిన టెక్స్ట్ పేస్ట్ చేయండి",
+          tooltip_clean: "స్వయంచాలకంగా ఫార్మాటింగ్ తొలగిస్తుంది",
+          tooltip_copy: "వెంటనే క్లిప్‌బోర్డ్‌కు కాపీ చేస్తుంది",
+          msg_cleaned_and_copied: "శుభ్రం చేయబడింది",
+          msg_images_not_supported: "చిత్రాలు మద్దతు లేదు - టెక్స్ట్ మాత్రమే పేస్ట్ చేయండి",
+          tagline_text: "ఫార్మాటింగ్ లో, సాదా వచనం బయటకు",
           help_keyboard_shortcuts: "కీబోర్డ్ షార్ట్‌కట్స్:",
           help_bold: "బోల్డ్",
           help_italic: "ఇటాలిక్",
@@ -1420,6 +1651,15 @@
           msg_copied: "கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது",
           msg_formatted_copied: "வடிவமைக்கப்பட்ட உரை நகலெடுக்கப்பட்டது",
           msg_copy_failed: "நகலெடுத்தல் தோல்வியடைந்தது",
+          tagline_paste: "ஒட்டு",
+          tagline_clean: "சுத்தம்",
+          tagline_copy: "நகல்",
+          tooltip_paste: "வடிவமைக்கப்பட்ட உரையை ஒட்டுங்கள்",
+          tooltip_clean: "தானாக வடிவமைப்பை நீக்குகிறது",
+          tooltip_copy: "உடனடியாக கிளிப்போர்டில் நகலெடுக்கிறது",
+          msg_cleaned_and_copied: "சுத்தம் செய்யப்பட்டது",
+          msg_images_not_supported: "படங்கள் ஆதரிக்கப்படவில்லை - உரை மட்டும் ஒட்டுங்கள்",
+          tagline_text: "வடிவமைப்பு உள்ளே, சாதா உரை வெளியே",
           help_keyboard_shortcuts: "விசைப்பலகை குறுக்குவழிகள்:",
           help_bold: "தடித்த",
           help_italic: "சாய்வு",
@@ -1467,6 +1707,15 @@
           msg_copied: "ક્લિપબોર્ડમાં કોપી કર્યું",
           msg_formatted_copied: "ફોર્મેટ થયેલ ટેક્સ્ટ કોપી કર્યું",
           msg_copy_failed: "કોપી નિષ્ફળ",
+          tagline_paste: "પેસ્ટ",
+          tagline_clean: "સાફ",
+          tagline_copy: "કૉપિ",
+          tooltip_paste: "ફોર્મેટ કરેલ ટેક્સ્ટ પેસ્ટ કરો",
+          tooltip_clean: "આપોઆપ ફોર્મેટિંગ દૂર કરે છે",
+          tooltip_copy: "ક્લિપબોર્ડ પર તરત કૉપિ કરે છે",
+          msg_cleaned_and_copied: "સાફ કર્યું",
+          msg_images_not_supported: "છબીઓ સમર્થિત નથી - ફક્ત ટેક્સ્ટ પેસ્ટ કરો",
+          tagline_text: "ફૉર્મેટિંગ અંદર, સાદો ટેક્સ્ટ બહાર",
           help_keyboard_shortcuts: "કીબોર્ડ શોર્ટકટ્સ:",
           help_bold: "બોલ્ડ",
           help_italic: "ઇટાલિક",
@@ -1514,6 +1763,15 @@
           msg_copied: "در کلیپ‌بورد کپی شد",
           msg_formatted_copied: "متن قالب‌بندی شده کپی شد",
           msg_copy_failed: "کپی ناموفق",
+          tagline_paste: "چسباندن",
+          tagline_clean: "پاکسازی",
+          tagline_copy: "کپی",
+          tooltip_paste: "متن قالب‌بندی‌شده را بچسبانید",
+          tooltip_clean: "قالب‌بندی را به طور خودکار حذف می‌کند",
+          tooltip_copy: "فوری در کلیپ‌بورد کپی می‌کند",
+          msg_cleaned_and_copied: "پاکسازی شد",
+          msg_images_not_supported: "تصاویر پشتیبانی نمی‌شوند - فقط متن بچسبانید",
+          tagline_text: "قالب‌بندی داخل، متن ساده خارج",
           help_keyboard_shortcuts: "میانبرهای صفحه‌کلید:",
           help_bold: "پررنگ",
           help_italic: "کج",
@@ -1561,6 +1819,15 @@
           msg_copied: "کلپ بورډ ته کاپی شو",
           msg_formatted_copied: "بڼه شوی متن کاپی شو",
           msg_copy_failed: "کاپی ناکام شو",
+          tagline_paste: "پیسټ",
+          tagline_clean: "پاکول",
+          tagline_copy: "کاپي",
+          tooltip_paste: "فارمیټ شوی متن پیسټ کړئ",
+          tooltip_clean: "د فارمیټ اتوماتیک لرې کول",
+          tooltip_copy: "فوري کلپبورډ ته کاپي کوي",
+          msg_cleaned_and_copied: "پاک شو",
+          msg_images_not_supported: "انځورونه ملاتړ نه کیږي - یوازې متن پیسټ کړئ",
+          tagline_text: "فارمیټینګ دننه، ساده متن بهر",
           help_keyboard_shortcuts: "د کیبورډ لنډې لارې:",
           help_bold: "زوړ",
           help_italic: "کجه",
@@ -1608,6 +1875,15 @@
           msg_copied: "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
           msg_formatted_copied: "ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯ ನಕಲಿಸಲಾಗಿದೆ",
           msg_copy_failed: "ನಕಲು ವಿಫಲವಾಗಿದೆ",
+          tagline_paste: "ಅಂಟಿಸು",
+          tagline_clean: "ಶುಚಿ",
+          tagline_copy: "ನಕಲು",
+          tooltip_paste: "ಸ್ವರೂಪಿತ ಪಠ್ಯ ಅಂಟಿಸಿ",
+          tooltip_clean: "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸ್ವರೂಪಣೆ ತೆಗೆಯುತ್ತದೆ",
+          tooltip_copy: "ತಕ್ಷಣ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸುತ್ತದೆ",
+          msg_cleaned_and_copied: "ಶುಚಿಗೊಳಿಸಲಾಗಿದೆ",
+          msg_images_not_supported: "ಚಿತ್ರಗಳು ಬೆಂಬಲಿತವಲ್ಲ - ಕೇವಲ ಪಠ್ಯ ಅಂಟಿಸಿ",
+          tagline_text: "ಫಾರ್ಮಾಟಿಂಗ್ ಒಳಗೆ, ಸರಳ ಪಠ್ಯ ಹೊರಗೆ",
           help_keyboard_shortcuts: "ಕೀಬೋರ್ಡ್ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು:",
           help_bold: "ದಪ್ಪ",
           help_italic: "ಓರೆ",
@@ -1655,6 +1931,15 @@
           msg_copied: "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
           msg_formatted_copied: "ഫോർമാറ്റ് ചെയ്ത ടെക്‌സ്റ്റ് പകർത്തി",
           msg_copy_failed: "പകർത്തൽ പരാജയപ്പെട്ടു",
+          tagline_paste: "ഒട്ടിക്കുക",
+          tagline_clean: "ശുദ്ധം",
+          tagline_copy: "പകർപ്പ്",
+          tooltip_paste: "ഫോർമാറ്റ് ചെയ്ത ടെക്സ്റ്റ് ഒട്ടിക്കുക",
+          tooltip_clean: "ഫോർമാറ്റിംഗ് സ്വയം നീക്കം ചെയ്യുന്നു",
+          tooltip_copy: "ഉടൻ ക്ലിപ്‌ബോർഡിലേക്ക് പകർത്തുന്നു",
+          msg_cleaned_and_copied: "ശുദ്ധമാക്കി",
+          msg_images_not_supported: "ചിത്രങ്ങൾ പിന്തുണക്കുന്നില്ല - ടെക്സ്റ്റ് മാത്രം ഒട്ടിക്കുക",
+          tagline_text: "ഫോർമാറ്റിംഗ് ഉള്ളിൽ, സാദാ ടെക്സ്റ്റ് പുറത്ത്",
           help_keyboard_shortcuts: "കീബോർഡ് കുറുക്കുവഴികൾ:",
           help_bold: "ബോൾഡ്",
           help_italic: "ഇറ്റാലിക്",
@@ -1825,7 +2110,7 @@
         // Update page title
         const titleEl = document.querySelector('title[data-i18n-title]');
         if (titleEl) {
-          document.title = `sQratch - ${t(titleEl.getAttribute('data-i18n-title'))}`;
+          document.title = 'Copy Clean';
         }
 
         // Update meta description
@@ -2154,6 +2439,103 @@
         setTimeout(() => {
           DOM.tagline.classList.add('fade-out');
         }, TIMING.TAGLINE_FADE_DELAY);
+      }
+
+      const BLOCK_ELEMENTS = new Set([
+        'ADDRESS','ARTICLE','ASIDE','BLOCKQUOTE','DD','DIV','DL','DT',
+        'FIGCAPTION','FIGURE','FOOTER','H1','H2','H3','H4','H5','H6',
+        'HEADER','HR','LI','MAIN','NAV','OL','P','PRE','SECTION',
+        'SUMMARY','TABLE','TD','TH','TR','UL',
+      ]);
+
+      function extractPlainText(node) {
+        if (node.nodeType === 3) return node.textContent; // TEXT_NODE
+        if (node.nodeName === 'BR') return '\n';
+        let text = '';
+        for (const child of node.childNodes) {
+          if (BLOCK_ELEMENTS.has(child.nodeName) && text.length > 0 && !text.endsWith('\n')) {
+            text += '\n';
+          }
+          text += extractPlainText(child);
+        }
+        if (BLOCK_ELEMENTS.has(node.nodeName)) text += '\n';
+        return text;
+      }
+
+      /**
+       * Strip formatting from a raw string (HTML or plain text) and write the
+       * result into the editor + clipboard.  Returns a promise that resolves
+       * when the clipboard write is complete (or immediately for the fallback).
+       */
+      function cleanAndCopyText(rawContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(rawContent, 'text/html');
+        const cleanedText = extractPlainText(doc.body).replace(/\n{3,}/g, '\n\n').trim();
+
+        DOM.editor.innerHTML = '';
+        cleanedText.split('\n').forEach((line, i) => {
+          if (i > 0) DOM.editor.appendChild(document.createElement('br'));
+          if (line) DOM.editor.appendChild(document.createTextNode(line));
+        });
+
+        characterCount = cleanedText.trim().length;
+        DOM.counter.textContent = characterCount;
+
+        // Show toast immediately — cleaning always succeeds.
+        showPrompt(t('msg_cleaned_and_copied'));
+
+        // Copy to clipboard best-effort; browser may deny during paste events
+        // on some platforms.  Failure is silent — the copy-all button still works.
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(cleanedText).catch(() => {});
+        } else {
+          const textarea = document.createElement('textarea');
+          textarea.value = cleanedText;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try { document.execCommand('copy'); } catch (_) {}
+          document.body.removeChild(textarea);
+        }
+
+        return Promise.resolve();
+      }
+
+      /**
+      /**
+       * Initialize auto-clean-paste functionality
+       * Automatically removes formatting from pasted content and copies to clipboard
+       */
+      function initializeAutoCleanPaste() {
+        // Use capture phase to run before markdown handler
+        DOM.editor.addEventListener("paste", (event) => {
+          event.preventDefault();
+          event.stopImmediatePropagation(); // Prevent other paste handlers
+
+          const clipboardData = event.clipboardData || window.clipboardData;
+
+          if (!clipboardData) return;
+
+          // Check for images (reject them)
+          const items = clipboardData.items;
+          if (items) {
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].type.indexOf('image') !== -1) {
+                showPrompt(t('msg_images_not_supported'));
+                return;
+              }
+            }
+          }
+
+          const rawContent = clipboardData.getData('text/html') ||
+                             clipboardData.getData('text/plain');
+
+          if (!rawContent || rawContent.trim() === '') return;
+
+          cleanAndCopyText(rawContent);
+          DOM.editor.focus();
+        }, { capture: true }); // Run in capture phase!
       }
 
       /**
@@ -2693,16 +3075,20 @@
         }
 
         cacheDOMElements();
+
+        // Initialize auto-clean-paste FIRST (before other handlers)
+        initializeAutoCleanPaste();
+
         initializeTaglineFade();
         initializeEditorInput();
         initializeFontButtons();
-        initializeMarkdownToggle();
-        initializeHelpToggle();
-        initializeRemoveFormatting();
+        // initializeMarkdownToggle();  // DISABLED: UI hidden for cleaner mode
+        // initializeHelpToggle();  // DISABLED: Help UI hidden
         initializeClipboardButtons();
-        initializeMarkdownKeyboard();
+        // initializeMarkdownKeyboard();  // DISABLED: Conflicts with auto-clean paste
 
         // Set button state based on markdown mode
+        // (Markdown UI is hidden, but keep this for potential future restoration)
         if (markdownMode) {
           DOM.markdownBtn.classList.add('btn-markdown-active');
         }
@@ -2723,8 +3109,8 @@
 
 
       <nav style="position: relative;">
-	sQratch <span style="font-size: 0.8em; font-weight: 300; color: #999;" data-i18n="nav_subtitle">notepad</span>
-	<p id="tagline" class="text-muted"><small><span data-i18n="tagline_calm" data-i18n-title="tooltip_calm" title="distraction free for high focus">calm</span> • <span data-i18n="tagline_private" data-i18n-title="tooltip_private" title="no logging, ever">private</span> • <span data-i18n="tagline_fast" data-i18n-title="tooltip_fast" title="instant loading">instant</span></small></p>
+	Copy Clean
+	<p id="tagline" class="text-muted"><small data-i18n="tagline_text">Formatting in, plain text out</small></p>
 	<select id="language-selector" style="position: absolute; top: 0; right: 0; font-size: 0.75em; color: #666; border: none; background: transparent; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; text-align-last: right;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
 	  <option value="en">🌐</option>
 	  <option value="zh">中文</option>
@@ -2768,7 +3154,6 @@
             <button type="button" class="btn btn-outline-secondary monospace" data-font="monospace" data-i18n-title="btn_font_mono" title="Monospace font (code, typewriter)">Aa</button>
           </div>
           <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" data-i18n-title="btn_markdown" title="convert markup to markdown">M↓</button>
-          <button type="button" class="btn btn-outline-secondary" id="remove-formatting" data-i18n-title="btn_remove_formatting" title="Remove all formatting">⌫</button>
           <button type="button" class="btn btn-outline-secondary" id="copy-all" data-i18n-title="btn_copy_all" title="copy all" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
       </div>
 
@@ -2777,6 +3162,7 @@
           contenteditable
           id="mcguffin"
           autofocus
+          data-i18n-placeholder="editor_placeholder"
           ></article>
           <div style="overflow: auto;">
             <span id="formatting-message"></span>
