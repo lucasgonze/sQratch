@@ -1,4 +1,3 @@
-Planck Scratchpad
 Copyright 2023 Lucas Gonze <lucas@gonze.com>
 
 The Initial Developer of some parts of this software is H5BP (https://h5bp.org)

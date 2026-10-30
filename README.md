@@ -1,73 +1,14 @@
-# sQratch scratchpad
+# sQratch Cleaner
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-Sometimes you need a quick no-frills editor to compose text to be used elsewhere, like in a DM, a commit message, or a Mastodon post. Existing tools aren't great:
+Sometimes you need to strip formatting from text. Like, you copied something out of a web page and need to edit it in a word processor and there are fonts and bolding and tables and all kinds of annoying goop. This repo is a web page that insta-cleans text.
 
-- The gist editor in Github gives up PII to Microsoft and takes too long to load
-- CLI editors like Emacs and vi require you to open a console window
-- A full word processor like Word or GDocs takes forever to start up and has zero privacy
-- Composing an email draft distracts you with your inbox. Ditto a Slack, Discord, whatever editor. Too much distraction.
-
-The app I'm building in this project:
-
-- Has zero privacy loss. There are no cookies and no logs.
-- Starts up superfast.
-- Gets you right into the edit box with no extra steps
-- Helps you focus instead of distracting you.
-
-Demo: https://sQratch.us
-
-## Features
-
-### Core Editing
-- **Instant-load editor** - No delays, start writing immediately
-- **Character counter** - Track your text length in real-time
-- **Font options** - Switch between sans-serif and monospace fonts
-- **Remove formatting** - Strip all formatting while preserving line breaks
-- **Copy to clipboard** - One-click copy of your text
-
-### Markdown Support
-- **Full markdown editor mode** with live preview
-- **HTML to Markdown conversion** - Paste formatted text and convert to markdown
-- **Markdown to HTML rendering** - See your formatted output in real-time
-- **Extended markdown syntax** support:
-  - Headings (H1-H6)
-  - Bold, italic, strikethrough
-  - Inline code and code blocks
-  - Links and images
-  - Ordered and unordered lists (with nesting)
-  - Checkbox lists
-  - Tables
-  - Blockquotes
-  - Horizontal rules
-
-### Markdown Editor Productivity
-- **Keyboard shortcuts**:
-  - `Ctrl+B` - Bold
-  - `Ctrl+I` - Italic
-  - `Ctrl+K` - Link
-  - `Ctrl+` ` - Code
-  - `Ctrl+1-6` - Headings
-  - `Tab` / `Shift+Tab` - Indent/unindent
-- **Auto-pairing** - Automatic closing of `**`, `` ` ``, `[]`
-- **Auto-list continuation** - Press Enter to continue lists automatically
-- **Smart indentation** - Maintains indentation for nested lists
-
-### Privacy & Performance
-- **Zero tracking** - No cookies, no logs, no analytics
-- **Client-side only** - All processing happens in your browser
-- **No server storage** - Your text never leaves your device
-- **Instant loading** - Static HTML/CSS/JS only
-- **Works offline** - No network required after initial load
-
-### User Experience
-- **Distraction-free** - Minimal, calm interface
-- **Responsive design** - Works on desktop and mobile
-- **Keyboard-friendly** - Full keyboard navigation support
-- **Copy formatted HTML** - Export your markdown as formatted HTML
-- **Smart line breaks** - Preserves formatting without excessive spacing
+1. Copy some formatted text to clipboard
+2. Go to [sQratch.us](https://sqratch.us), where this app is hosted
+3. Go to wherever you want to use the cleaned-up text
+4. Paste
 
 ## Installation
 
