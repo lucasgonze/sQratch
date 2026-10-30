@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#262626"/>
+  <!-- plain "T": the text, with nothing else attached -->
+  <path d="M15 16h34v10H37v24H27V26H15z" fill="#fff"/>
+  <!-- the one accent: a caret, like a cursor in plain text -->
+  <rect x="43" y="40" width="6" height="10" rx="1.5" fill="#ff6b4a"/>
+</svg>
