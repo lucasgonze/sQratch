@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#262626"/>
-  <!-- plain "T": the text, with nothing else attached -->
-  <path d="M15 16h34v10H37v24H27V26H15z" fill="#fff"/>
-  <!-- the one accent: a caret, like a cursor in plain text -->
-  <rect x="43" y="40" width="6" height="10" rx="1.5" fill="#ff6b4a"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#1f2a44"/>
+  <!-- the "square" of sqratch: a clean page -->
+  <rect x="14" y="14" width="36" height="36" rx="6" fill="#ffffff"/>
+  <!-- the "scratch": one bold diagonal stroke that wipes the formatting off -->
+  <path d="M10 54 L54 10" stroke="#ffb020" stroke-width="7" stroke-linecap="round"/>
 </svg>
