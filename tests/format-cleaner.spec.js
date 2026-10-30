@@ -142,11 +142,22 @@ test.describe('manual paste', () => {
     expect(count).toBe('5');
   });
 
-  test('shows "cleaned up" message after paste', async ({ page }) => {
+  test('shows "cleaned & copied" once the clipboard write succeeds', async ({ page }) => {
+    await page.evaluate(() => {
+      navigator.clipboard.writeText = () => Promise.resolve();
+    });
     await paste(page, { plain: 'some text' });
-    // Message text is set synchronously; CSS animation may have started but textContent stays
-    const msg = await promptText(page);
-    expect(msg).toMatch(/cleaned up/i);
+    await expect(page.locator('#formatting-message')).toHaveText(/cleaned & copied/i);
+  });
+
+  test('reports failure and selects the text when the clipboard write is denied', async ({ page }) => {
+    await page.evaluate(() => {
+      navigator.clipboard.writeText = () => Promise.reject(new Error('denied'));
+    });
+    await paste(page, { plain: 'some text' });
+    await expect(page.locator('#formatting-message')).toHaveText(/ctrl\/cmd\+c/i);
+    const selected = await page.evaluate(() => window.getSelection().toString());
+    expect(selected).toBe('some text');
   });
 
   test('shows "images not supported" when image is pasted', async ({ page }) => {
@@ -212,30 +223,12 @@ test.describe('newline handling', () => {
 });
 
 // ─── copy-all button ─────────────────────────────────────────────────────────
+// Button removed — paste already copies the cleaned text.
 
-test.describe('copy-all button', () => {
-  test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
-
-  test('copies editor content to clipboard', async ({ page }) => {
-    // Clear clipboard → reload for clean editor, then paste and copy
+test.describe('copy-all button absent', () => {
+  test('copy-all button does not exist in the DOM', async ({ page }) => {
     await page.goto('/');
-    await page.evaluate(() => navigator.clipboard.writeText(''));
-    await page.reload();
-    await paste(page, { plain: 'clipboard content' });
-    await page.locator('#copy-all').click();
-    const clip = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clip).toBe('clipboard content');
-  });
-
-  test('does not copy when editor is empty', async ({ page }) => {
-    // Clear clipboard → reload so editor is empty, then seed sentinel
-    await page.goto('/');
-    await page.evaluate(() => navigator.clipboard.writeText(''));
-    await page.reload();
-    await page.evaluate(() => navigator.clipboard.writeText('sentinel'));
-    await page.locator('#copy-all').click();
-    const clip = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clip).toBe('sentinel'); // unchanged
+    await expect(page.locator('#copy-all')).toHaveCount(0);
   });
 });
 

@@ -61,10 +61,15 @@
         display: flex;
       }
 
+      /* Output area: styled as static text, not an input field */
       article.editor {
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #ddd;
+        border: none;
+        border-left: 3px solid #ddd;
+        box-shadow: none;
         outline: none;
+        background-color: #fafafa;
+        cursor: default;
+        caret-color: transparent;
       }
 
       [data-placeholder]:empty:before{
@@ -91,7 +96,7 @@
       }
 
       /* Counter container match editor width */
-      article.editor + div {
+      .editor-wrap + div {
         max-width: 700px;
         margin-left: auto;
         margin-right: auto;
@@ -131,13 +136,24 @@
       }
 
       /* Formatting removed message */
+      /* Wraps editor + toast so the toast can anchor to the editor's top-left */
+      .editor-wrap {
+        position: relative;
+        padding-top: 1.6em; /* reserved band so the toast never overlaps the tagline */
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
       #formatting-message {
-        display: inline-block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
         color: #999;
         font-size: 0.9em;
         opacity: 0;
         transition: opacity 10s ease-out;
-        float: left;
       }
 
       #formatting-message.show {
@@ -264,10 +280,6 @@
         display: none !important;
       }
 
-      #copy-all {
-        display: inline-block;
-      }
-
       /* Make placeholder more prominent for paste instruction */
       [data-placeholder]:empty:before {
         font-size: 1.2em;
@@ -313,7 +325,8 @@
           msg_copied: "copied to clipboard",
           msg_formatted_copied: "formatted text copied",
           msg_copy_failed: "copy failed",
-          msg_cleaned_and_copied: "Cleaned up",
+          msg_cleaned_and_copied: "Cleaned & copied",
+          msg_cleaned_copy_failed: "Cleaned. Press Ctrl/Cmd+C to copy",
           msg_images_not_supported: "Images not supported - paste text only",
           tagline_text: "Formatting in, plain text out",
           help_keyboard_shortcuts: "Keyboard Shortcuts:",
@@ -369,7 +382,8 @@
           tooltip_paste: "pega texto con formato",
           tooltip_clean: "elimina el formato automáticamente",
           tooltip_copy: "copia instantáneamente al portapapeles",
-          msg_cleaned_and_copied: "Limpiado",
+          msg_cleaned_and_copied: "Limpiado y copiado",
+          msg_cleaned_copy_failed: "Limpiado. Pulsa Ctrl/Cmd+C para copiar",
           msg_images_not_supported: "Imágenes no compatibles - pega solo texto",
           tagline_text: "Formato de entrada, texto sin formato de salida",
           help_keyboard_shortcuts: "Atajos de teclado:",
@@ -425,7 +439,8 @@
           tooltip_paste: "粘贴带格式的文字",
           tooltip_clean: "自动去除格式",
           tooltip_copy: "立即复制到剪贴板",
-          msg_cleaned_and_copied: "已清理",
+          msg_cleaned_and_copied: "已清理并复制",
+          msg_cleaned_copy_failed: "已清理。按 Ctrl/Cmd+C 复制",
           msg_images_not_supported: "不支持图片 - 请仅粘贴文字",
           tagline_text: "格式输入，纯文本输出",
           help_keyboard_shortcuts: "键盘快捷键：",
@@ -481,7 +496,8 @@
           tooltip_paste: "फ़ॉर्मेटेड टेक्स्ट पेस्ट करें",
           tooltip_clean: "स्वचालित रूप से फ़ॉर्मेटिंग हटाता है",
           tooltip_copy: "तुरंत क्लिपबोर्ड में कॉपी करता है",
-          msg_cleaned_and_copied: "साफ किया",
+          msg_cleaned_and_copied: "साफ किया और कॉपी किया",
+          msg_cleaned_copy_failed: "साफ किया। कॉपी करने के लिए Ctrl/Cmd+C दबाएं",
           msg_images_not_supported: "छवियां समर्थित नहीं हैं - केवल टेक्स्ट पेस्ट करें",
           tagline_text: "फ़ॉर्मेटिंग इन, सादा टेक्स्ट आउट",
           help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
@@ -537,7 +553,8 @@
           tooltip_paste: "collez du texte formaté",
           tooltip_clean: "supprime automatiquement la mise en forme",
           tooltip_copy: "copie instantanément dans le presse-papiers",
-          msg_cleaned_and_copied: "Nettoyé",
+          msg_cleaned_and_copied: "Nettoyé et copié",
+          msg_cleaned_copy_failed: "Nettoyé. Appuyez sur Ctrl/Cmd+C pour copier",
           msg_images_not_supported: "Images non prises en charge - collez du texte uniquement",
           tagline_text: "Mise en forme en entrée, texte brut en sortie",
           help_keyboard_shortcuts: "Raccourcis clavier:",
@@ -593,7 +610,8 @@
           tooltip_paste: "الصق نصاً منسقاً",
           tooltip_clean: "يزيل التنسيق تلقائياً",
           tooltip_copy: "ينسخ إلى الحافظة فوراً",
-          msg_cleaned_and_copied: "تم التنظيف",
+          msg_cleaned_and_copied: "تم التنظيف والنسخ",
+          msg_cleaned_copy_failed: "تم التنظيف. اضغط Ctrl/Cmd+C للنسخ",
           msg_images_not_supported: "الصور غير مدعومة - الصق النص فقط",
           tagline_text: "التنسيق داخل، نص عادي خارج",
           help_keyboard_shortcuts: "اختصارات لوحة المفاتيح:",
@@ -649,7 +667,8 @@
           tooltip_paste: "ফরম্যাটেড টেক্সট পেস্ট করুন",
           tooltip_clean: "স্বয়ংক্রিয়ভাবে ফরম্যাটিং সরিয়ে দেয়",
           tooltip_copy: "তাৎক্ষণিকভাবে ক্লিপবোর্ডে কপি করে",
-          msg_cleaned_and_copied: "পরিষ্কার হয়েছে",
+          msg_cleaned_and_copied: "পরিষ্কার ও কপি হয়েছে",
+          msg_cleaned_copy_failed: "পরিষ্কার হয়েছে। কপি করতে Ctrl/Cmd+C চাপুন",
           msg_images_not_supported: "ছবি সমর্থিত নয় - শুধুমাত্র টেক্সট পেস্ট করুন",
           tagline_text: "ফরম্যাটিং ইন, সাধারণ টেক্সট আউট",
           help_keyboard_shortcuts: "কীবোর্ড শর্টকাট:",
@@ -705,7 +724,8 @@
           tooltip_paste: "вставить форматированный текст",
           tooltip_clean: "автоматически удаляет форматирование",
           tooltip_copy: "мгновенно копирует в буфер обмена",
-          msg_cleaned_and_copied: "Очищено",
+          msg_cleaned_and_copied: "Очищено и скопировано",
+          msg_cleaned_copy_failed: "Очищено. Нажмите Ctrl/Cmd+C, чтобы скопировать",
           msg_images_not_supported: "Изображения не поддерживаются - вставьте только текст",
           tagline_text: "Форматирование на входе, простой текст на выходе",
           help_keyboard_shortcuts: "Горячие клавиши:",
@@ -761,7 +781,8 @@
           tooltip_paste: "colar texto formatado",
           tooltip_clean: "remove formatação automaticamente",
           tooltip_copy: "copia instantaneamente para a área de transferência",
-          msg_cleaned_and_copied: "Limpo",
+          msg_cleaned_and_copied: "Limpo e copiado",
+          msg_cleaned_copy_failed: "Limpo. Pressione Ctrl/Cmd+C para copiar",
           msg_images_not_supported: "Imagens não suportadas - cole apenas texto",
           tagline_text: "Formatação na entrada, texto simples na saída",
           help_keyboard_shortcuts: "Atalhos de teclado:",
@@ -817,7 +838,8 @@
           tooltip_paste: "formatierten Text einfügen",
           tooltip_clean: "entfernt automatisch Formatierungen",
           tooltip_copy: "kopiert sofort in die Zwischenablage",
-          msg_cleaned_and_copied: "Bereinigt",
+          msg_cleaned_and_copied: "Bereinigt und kopiert",
+          msg_cleaned_copy_failed: "Bereinigt. Zum Kopieren Strg/Cmd+C drücken",
           msg_images_not_supported: "Bilder werden nicht unterstützt - nur Text einfügen",
           tagline_text: "Formatierung rein, Klartext raus",
           help_keyboard_shortcuts: "Tastenkombinationen:",
@@ -873,7 +895,8 @@
           tooltip_paste: "書式付きテキストを貼り付ける",
           tooltip_clean: "自動的に書式を削除します",
           tooltip_copy: "すぐにクリップボードにコピーします",
-          msg_cleaned_and_copied: "クリーンアップ完了",
+          msg_cleaned_and_copied: "クリーンアップしてコピーしました",
+          msg_cleaned_copy_failed: "クリーンアップ完了。Ctrl/Cmd+C でコピーしてください",
           msg_images_not_supported: "画像はサポートされていません - テキストのみ貼り付けてください",
           tagline_text: "書式入力、プレーンテキスト出力",
           help_keyboard_shortcuts: "キーボードショートカット：",
@@ -929,7 +952,8 @@
           tooltip_paste: "서식 있는 텍스트 붙여넣기",
           tooltip_clean: "서식을 자동으로 제거합니다",
           tooltip_copy: "즉시 클립보드에 복사합니다",
-          msg_cleaned_and_copied: "정리 완료",
+          msg_cleaned_and_copied: "정리 및 복사 완료",
+          msg_cleaned_copy_failed: "정리 완료. Ctrl/Cmd+C를 눌러 복사하세요",
           msg_images_not_supported: "이미지는 지원되지 않습니다 - 텍스트만 붙여넣기",
           tagline_text: "서식 입력, 일반 텍스트 출력",
           help_keyboard_shortcuts: "키보드 단축키:",
@@ -985,7 +1009,8 @@
           tooltip_paste: "incolla testo formattato",
           tooltip_clean: "rimuove automaticamente la formattazione",
           tooltip_copy: "copia immediatamente negli appunti",
-          msg_cleaned_and_copied: "Pulito",
+          msg_cleaned_and_copied: "Pulito e copiato",
+          msg_cleaned_copy_failed: "Pulito. Premi Ctrl/Cmd+C per copiare",
           msg_images_not_supported: "Immagini non supportate - incolla solo testo",
           tagline_text: "Formattazione in entrata, testo normale in uscita",
           help_keyboard_shortcuts: "Scorciatoie da tastiera:",
@@ -1041,7 +1066,8 @@
           tooltip_paste: "biçimlendirilmiş metin yapıştır",
           tooltip_clean: "biçimlendirmeyi otomatik olarak kaldırır",
           tooltip_copy: "anında panoya kopyalar",
-          msg_cleaned_and_copied: "Temizlendi",
+          msg_cleaned_and_copied: "Temizlendi ve kopyalandı",
+          msg_cleaned_copy_failed: "Temizlendi. Kopyalamak için Ctrl/Cmd+C tuşlarına basın",
           msg_images_not_supported: "Resimler desteklenmiyor - yalnızca metin yapıştırın",
           tagline_text: "Biçimlendirme giriyor, düz metin çıkıyor",
           help_keyboard_shortcuts: "Klavye Kısayolları:",
@@ -1097,7 +1123,8 @@
           tooltip_paste: "wklej sformatowany tekst",
           tooltip_clean: "automatycznie usuwa formatowanie",
           tooltip_copy: "natychmiast kopiuje do schowka",
-          msg_cleaned_and_copied: "Wyczyszczono",
+          msg_cleaned_and_copied: "Wyczyszczono i skopiowano",
+          msg_cleaned_copy_failed: "Wyczyszczono. Naciśnij Ctrl/Cmd+C, aby skopiować",
           msg_images_not_supported: "Obrazy nie są obsługiwane - wklej tylko tekst",
           tagline_text: "Formatowanie na wejściu, czysty tekst na wyjściu",
           help_keyboard_shortcuts: "Skróty klawiszowe:",
@@ -1153,7 +1180,8 @@
           tooltip_paste: "вставити відформатований текст",
           tooltip_clean: "автоматично видаляє форматування",
           tooltip_copy: "миттєво копіює в буфер обміну",
-          msg_cleaned_and_copied: "Очищено",
+          msg_cleaned_and_copied: "Очищено та скопійовано",
+          msg_cleaned_copy_failed: "Очищено. Натисніть Ctrl/Cmd+C, щоб скопіювати",
           msg_images_not_supported: "Зображення не підтримуються - вставте лише текст",
           tagline_text: "Форматування на вході, простий текст на виході",
           help_keyboard_shortcuts: "Гарячі клавіші:",
@@ -1209,7 +1237,8 @@
           tooltip_paste: "dán văn bản có định dạng",
           tooltip_clean: "tự động xóa định dạng",
           tooltip_copy: "sao chép ngay vào bộ nhớ tạm",
-          msg_cleaned_and_copied: "Đã làm sạch",
+          msg_cleaned_and_copied: "Đã làm sạch và sao chép",
+          msg_cleaned_copy_failed: "Đã làm sạch. Nhấn Ctrl/Cmd+C để sao chép",
           msg_images_not_supported: "Không hỗ trợ hình ảnh - chỉ dán văn bản",
           tagline_text: "Định dạng vào, văn bản thuần ra",
           help_keyboard_shortcuts: "Phím tắt:",
@@ -1265,7 +1294,8 @@
           tooltip_paste: "วางข้อความที่มีการจัดรูปแบบ",
           tooltip_clean: "ลบการจัดรูปแบบโดยอัตโนมัติ",
           tooltip_copy: "คัดลอกไปยังคลิปบอร์ดทันที",
-          msg_cleaned_and_copied: "ทำความสะอาดแล้ว",
+          msg_cleaned_and_copied: "ทำความสะอาดและคัดลอกแล้ว",
+          msg_cleaned_copy_failed: "ทำความสะอาดแล้ว กด Ctrl/Cmd+C เพื่อคัดลอก",
           msg_images_not_supported: "ไม่รองรับรูปภาพ - วางเฉพาะข้อความ",
           tagline_text: "ฟอร์แมตเข้า ข้อความธรรมดาออก",
           help_keyboard_shortcuts: "แป้นพิมพ์ลัด:",
@@ -1321,7 +1351,8 @@
           tooltip_paste: "tempel teks berformat",
           tooltip_clean: "menghapus pemformatan secara otomatis",
           tooltip_copy: "langsung menyalin ke papan klip",
-          msg_cleaned_and_copied: "Dibersihkan",
+          msg_cleaned_and_copied: "Dibersihkan & disalin",
+          msg_cleaned_copy_failed: "Dibersihkan. Tekan Ctrl/Cmd+C untuk menyalin",
           msg_images_not_supported: "Gambar tidak didukung - tempel teks saja",
           tagline_text: "Format masuk, teks biasa keluar",
           help_keyboard_shortcuts: "Pintasan Keyboard:",
@@ -1377,7 +1408,8 @@
           tooltip_paste: "opgemaakte tekst plakken",
           tooltip_clean: "verwijdert automatisch opmaak",
           tooltip_copy: "kopieert direct naar klembord",
-          msg_cleaned_and_copied: "Opgeschoond",
+          msg_cleaned_and_copied: "Opgeschoond en gekopieerd",
+          msg_cleaned_copy_failed: "Opgeschoond. Druk op Ctrl/Cmd+C om te kopiëren",
           msg_images_not_supported: "Afbeeldingen worden niet ondersteund - plak alleen tekst",
           tagline_text: "Opmaak in, platte tekst uit",
           help_keyboard_shortcuts: "Sneltoetsen:",
@@ -1433,7 +1465,8 @@
           tooltip_paste: "فارمیٹ شدہ متن پیسٹ کریں",
           tooltip_clean: "خود بخود فارمیٹنگ ہٹاتا ہے",
           tooltip_copy: "فوری طور پر کلپ بورڈ میں کاپی کرتا ہے",
-          msg_cleaned_and_copied: "صاف ہو گیا",
+          msg_cleaned_and_copied: "صاف ہو گیا اور کاپی ہو گیا",
+          msg_cleaned_copy_failed: "صاف ہو گیا۔ کاپی کرنے کے لیے Ctrl/Cmd+C دبائیں",
           msg_images_not_supported: "تصاویر معاون نہیں - صرف متن پیسٹ کریں",
           tagline_text: "فارمیٹنگ ان، سادہ متن آؤٹ",
           help_keyboard_shortcuts: "کی بورڈ شارٹ کٹس:",
@@ -1489,7 +1522,8 @@
           tooltip_paste: "bandika maandishi yenye uumbizaji",
           tooltip_clean: "huondoa uumbizaji kiotomatiki",
           tooltip_copy: "hunakili haraka kwenye ubao wa kunakili",
-          msg_cleaned_and_copied: "Imesafishwa",
+          msg_cleaned_and_copied: "Imesafishwa na kunakiliwa",
+          msg_cleaned_copy_failed: "Imesafishwa. Bonyeza Ctrl/Cmd+C kunakili",
           msg_images_not_supported: "Picha hazitumiki - bandika maandishi tu",
           tagline_text: "Uumbizaji ndani, maandishi wazi nje",
           help_keyboard_shortcuts: "Njia za mkato za kibodi:",
@@ -1545,7 +1579,8 @@
           tooltip_paste: "स्वरूपित मजकूर पेस्ट करा",
           tooltip_clean: "आपोआप स्वरूपण काढते",
           tooltip_copy: "क्लिपबोर्डवर त्वरित कॉपी करते",
-          msg_cleaned_and_copied: "स्वच्छ केले",
+          msg_cleaned_and_copied: "स्वच्छ केले आणि कॉपी केले",
+          msg_cleaned_copy_failed: "स्वच्छ केले. कॉपी करण्यासाठी Ctrl/Cmd+C दाबा",
           msg_images_not_supported: "प्रतिमा समर्थित नाहीत - फक्त मजकूर पेस्ट करा",
           tagline_text: "फॉर्मेटिंग आत, साधा मजकूर बाहेर",
           help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
@@ -1601,7 +1636,8 @@
           tooltip_paste: "ఫార్మాట్ చేసిన టెక్స్ట్ పేస్ట్ చేయండి",
           tooltip_clean: "స్వయంచాలకంగా ఫార్మాటింగ్ తొలగిస్తుంది",
           tooltip_copy: "వెంటనే క్లిప్‌బోర్డ్‌కు కాపీ చేస్తుంది",
-          msg_cleaned_and_copied: "శుభ్రం చేయబడింది",
+          msg_cleaned_and_copied: "శుభ్రం చేసి కాపీ చేయబడింది",
+          msg_cleaned_copy_failed: "శుభ్రం చేయబడింది. కాపీ చేయడానికి Ctrl/Cmd+C నొక్కండి",
           msg_images_not_supported: "చిత్రాలు మద్దతు లేదు - టెక్స్ట్ మాత్రమే పేస్ట్ చేయండి",
           tagline_text: "ఫార్మాటింగ్ లో, సాదా వచనం బయటకు",
           help_keyboard_shortcuts: "కీబోర్డ్ షార్ట్‌కట్స్:",
@@ -1657,7 +1693,8 @@
           tooltip_paste: "வடிவமைக்கப்பட்ட உரையை ஒட்டுங்கள்",
           tooltip_clean: "தானாக வடிவமைப்பை நீக்குகிறது",
           tooltip_copy: "உடனடியாக கிளிப்போர்டில் நகலெடுக்கிறது",
-          msg_cleaned_and_copied: "சுத்தம் செய்யப்பட்டது",
+          msg_cleaned_and_copied: "சுத்தம் செய்து நகலெடுக்கப்பட்டது",
+          msg_cleaned_copy_failed: "சுத்தம் செய்யப்பட்டது. நகலெடுக்க Ctrl/Cmd+C அழுத்தவும்",
           msg_images_not_supported: "படங்கள் ஆதரிக்கப்படவில்லை - உரை மட்டும் ஒட்டுங்கள்",
           tagline_text: "வடிவமைப்பு உள்ளே, சாதா உரை வெளியே",
           help_keyboard_shortcuts: "விசைப்பலகை குறுக்குவழிகள்:",
@@ -1713,7 +1750,8 @@
           tooltip_paste: "ફોર્મેટ કરેલ ટેક્સ્ટ પેસ્ટ કરો",
           tooltip_clean: "આપોઆપ ફોર્મેટિંગ દૂર કરે છે",
           tooltip_copy: "ક્લિપબોર્ડ પર તરત કૉપિ કરે છે",
-          msg_cleaned_and_copied: "સાફ કર્યું",
+          msg_cleaned_and_copied: "સાફ કર્યું અને કોપી કર્યું",
+          msg_cleaned_copy_failed: "સાફ કર્યું. કોપી કરવા Ctrl/Cmd+C દબાવો",
           msg_images_not_supported: "છબીઓ સમર્થિત નથી - ફક્ત ટેક્સ્ટ પેસ્ટ કરો",
           tagline_text: "ફૉર્મેટિંગ અંદર, સાદો ટેક્સ્ટ બહાર",
           help_keyboard_shortcuts: "કીબોર્ડ શોર્ટકટ્સ:",
@@ -1769,7 +1807,8 @@
           tooltip_paste: "متن قالب‌بندی‌شده را بچسبانید",
           tooltip_clean: "قالب‌بندی را به طور خودکار حذف می‌کند",
           tooltip_copy: "فوری در کلیپ‌بورد کپی می‌کند",
-          msg_cleaned_and_copied: "پاکسازی شد",
+          msg_cleaned_and_copied: "پاکسازی و کپی شد",
+          msg_cleaned_copy_failed: "پاکسازی شد. برای کپی Ctrl/Cmd+C را بزنید",
           msg_images_not_supported: "تصاویر پشتیبانی نمی‌شوند - فقط متن بچسبانید",
           tagline_text: "قالب‌بندی داخل، متن ساده خارج",
           help_keyboard_shortcuts: "میانبرهای صفحه‌کلید:",
@@ -1825,7 +1864,8 @@
           tooltip_paste: "فارمیټ شوی متن پیسټ کړئ",
           tooltip_clean: "د فارمیټ اتوماتیک لرې کول",
           tooltip_copy: "فوري کلپبورډ ته کاپي کوي",
-          msg_cleaned_and_copied: "پاک شو",
+          msg_cleaned_and_copied: "پاک شو او کاپي شو",
+          msg_cleaned_copy_failed: "پاک شو. د کاپي لپاره Ctrl/Cmd+C ووهئ",
           msg_images_not_supported: "انځورونه ملاتړ نه کیږي - یوازې متن پیسټ کړئ",
           tagline_text: "فارمیټینګ دننه، ساده متن بهر",
           help_keyboard_shortcuts: "د کیبورډ لنډې لارې:",
@@ -1881,7 +1921,8 @@
           tooltip_paste: "ಸ್ವರೂಪಿತ ಪಠ್ಯ ಅಂಟಿಸಿ",
           tooltip_clean: "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸ್ವರೂಪಣೆ ತೆಗೆಯುತ್ತದೆ",
           tooltip_copy: "ತಕ್ಷಣ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸುತ್ತದೆ",
-          msg_cleaned_and_copied: "ಶುಚಿಗೊಳಿಸಲಾಗಿದೆ",
+          msg_cleaned_and_copied: "ಶುಚಿಗೊಳಿಸಿ ನಕಲಿಸಲಾಗಿದೆ",
+          msg_cleaned_copy_failed: "ಶುಚಿಗೊಳಿಸಲಾಗಿದೆ. ನಕಲಿಸಲು Ctrl/Cmd+C ಒತ್ತಿ",
           msg_images_not_supported: "ಚಿತ್ರಗಳು ಬೆಂಬಲಿತವಲ್ಲ - ಕೇವಲ ಪಠ್ಯ ಅಂಟಿಸಿ",
           tagline_text: "ಫಾರ್ಮಾಟಿಂಗ್ ಒಳಗೆ, ಸರಳ ಪಠ್ಯ ಹೊರಗೆ",
           help_keyboard_shortcuts: "ಕೀಬೋರ್ಡ್ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು:",
@@ -1937,7 +1978,8 @@
           tooltip_paste: "ഫോർമാറ്റ് ചെയ്ത ടെക്സ്റ്റ് ഒട്ടിക്കുക",
           tooltip_clean: "ഫോർമാറ്റിംഗ് സ്വയം നീക്കം ചെയ്യുന്നു",
           tooltip_copy: "ഉടൻ ക്ലിപ്‌ബോർഡിലേക്ക് പകർത്തുന്നു",
-          msg_cleaned_and_copied: "ശുദ്ധമാക്കി",
+          msg_cleaned_and_copied: "ശുദ്ധമാക്കി, പകർത്തി",
+          msg_cleaned_copy_failed: "ശുദ്ധമാക്കി. പകർത്താൻ Ctrl/Cmd+C അമർത്തുക",
           msg_images_not_supported: "ചിത്രങ്ങൾ പിന്തുണക്കുന്നില്ല - ടെക്സ്റ്റ് മാത്രം ഒട്ടിക്കുക",
           tagline_text: "ഫോർമാറ്റിംഗ് ഉള്ളിൽ, സാദാ ടെക്സ്റ്റ് പുറത്ത്",
           help_keyboard_shortcuts: "കീബോർഡ് കുറുക്കുവഴികൾ:",
@@ -1986,8 +2028,6 @@
         DOM.markdownHelp = document.getElementById('markdown-help');
         DOM.previewControls = document.getElementById('preview-controls');
         DOM.removeFormattingBtn = document.getElementById('remove-formatting');
-        DOM.copyAllBtn = document.getElementById('copy-all');
-        DOM.copyFormattedBtn = document.getElementById('copy-formatted');
         DOM.toggleHelpBtn = document.getElementById('toggle-help');
         DOM.buttons = document.querySelector('#buttons');
         DOM.fontButtons = document.querySelectorAll('[data-font]');
@@ -2463,6 +2503,37 @@
       }
 
       /**
+       * Write text to the clipboard. Resolves true on success, false on failure.
+       * @param {string} text
+       * @returns {Promise<boolean>}
+       */
+      function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text).then(() => true, () => false);
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(textarea);
+        return Promise.resolve(ok);
+      }
+
+      /** Select everything in the editor so the user can copy it manually. */
+      function selectEditorContents() {
+        DOM.editor.focus();
+        const range = document.createRange();
+        range.selectNodeContents(DOM.editor);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      /**
        * Strip formatting from a raw string (HTML or plain text) and write the
        * result into the editor + clipboard.  Returns a promise that resolves
        * when the clipboard write is complete (or immediately for the fallback).
@@ -2481,28 +2552,20 @@
         characterCount = cleanedText.trim().length;
         DOM.counter.textContent = characterCount;
 
-        // Show toast immediately — cleaning always succeeds.
-        showPrompt(t('msg_cleaned_and_copied'));
-
-        // Copy to clipboard best-effort; browser may deny during paste events
-        // on some platforms.  Failure is silent — the copy-all button still works.
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(cleanedText).catch(() => {});
-        } else {
-          const textarea = document.createElement('textarea');
-          textarea.value = cleanedText;
-          textarea.style.position = 'fixed';
-          textarea.style.opacity = '0';
-          document.body.appendChild(textarea);
-          textarea.select();
-          try { document.execCommand('copy'); } catch (_) {}
-          document.body.removeChild(textarea);
-        }
-
-        return Promise.resolve();
+        // Report the real outcome: the clipboard write can be denied (no user
+        // gesture, permissions policy), so only claim "copied" once it succeeds.
+        const copied = copyToClipboard(cleanedText);
+        return copied.then((ok) => {
+          if (ok) {
+            showPrompt(t('msg_cleaned_and_copied'));
+          } else {
+            // Copy failed: select the text so Ctrl/Cmd+C finishes the job.
+            selectEditorContents();
+            showPrompt(t('msg_cleaned_copy_failed'));
+          }
+        });
       }
 
-      /**
       /**
        * Initialize auto-clean-paste functionality
        * Automatically removes formatting from pasted content and copies to clipboard
@@ -2536,6 +2599,59 @@
           cleanAndCopyText(rawContent);
           DOM.editor.focus();
         }, { capture: true }); // Run in capture phase!
+      }
+
+      /**
+       * Read the clipboard without a manual paste. Browsers require a user
+       * gesture (and, in Chrome, a one-time permission grant), so this runs on
+       * the first click/keypress and, once permitted, whenever the tab regains focus.
+       */
+      function initializeAutoClipboardRead() {
+        if (!navigator.clipboard || !navigator.clipboard.read) return;
+
+        let seen = new Set();
+        let reading = false;
+
+        async function readClipboard() {
+          if (reading || !document.hasFocus()) return;
+          reading = true;
+          try {
+            const clipItems = await navigator.clipboard.read();
+            let raw = '';
+            for (const item of clipItems) {
+              if (item.types.includes('text/html')) {
+                raw = await (await item.getType('text/html')).text();
+              } else if (item.types.includes('text/plain')) {
+                raw = await (await item.getType('text/plain')).text();
+              } else if (item.types.some((type) => type.startsWith('image/'))) {
+                showPrompt(t('msg_images_not_supported'));
+                return;
+              }
+              if (raw) break;
+            }
+            if (!raw.trim() || seen.has(raw)) return;
+            cleanAndCopyText(raw);
+            // The clipboard now holds our cleaned text; don't re-clean it on next focus
+            seen = new Set([raw, DOM.editor.innerText.trim()]);
+          } catch (_) {
+            // Permission denied or no gesture yet; manual paste still works
+          } finally {
+            reading = false;
+          }
+        }
+
+        const onFirstGesture = () => {
+          readClipboard();
+        };
+        document.addEventListener('pointerdown', onFirstGesture, { once: true });
+        document.addEventListener('keydown', onFirstGesture, { once: true });
+
+        navigator.permissions?.query({ name: 'clipboard-read' }).then((status) => {
+          if (status.state === 'granted') readClipboard();
+          window.addEventListener('focus', () => {
+            if (status.state === 'granted') readClipboard();
+          });
+        }).catch(() => {});
       }
 
       /**
@@ -2657,54 +2773,6 @@
           restoreCursorPosition(DOM.editor, cursorPosition);
 
           showPrompt(t('msg_formatting_removed'));
-        });
-      }
-
-      /**
-       * Initialize copy to clipboard buttons
-       */
-      function initializeClipboardButtons() {
-        // Copy all text button
-        DOM.copyAllBtn.addEventListener("click", () => {
-          const text = DOM.editor.innerText;
-
-          // Don't copy if there's no content
-          if (!text || text.trim().length === 0) {
-            return;
-          }
-
-          navigator.clipboard.writeText(text)
-            .then(() => showPrompt(t('msg_copied')))
-            .catch((err) => {
-              console.error('Failed to copy text: ', err);
-              showPrompt(t('msg_copy_failed'));
-            });
-        });
-
-        // Copy formatted HTML button
-        DOM.copyFormattedBtn.addEventListener("click", () => {
-          const html = DOM.markdownPreview.innerHTML;
-
-          // Don't copy if there's no content
-          if (!html || html.trim().length === 0) {
-            return;
-          }
-
-          // Create a clipboard item with HTML
-          const blob = new Blob([html], { type: 'text/html' });
-          const clipboardItem = new ClipboardItem({ 'text/html': blob });
-
-          navigator.clipboard.write([clipboardItem])
-            .then(() => showPrompt(t('msg_formatted_copied')))
-            .catch((err) => {
-              // Fallback: copy as plain HTML text
-              navigator.clipboard.writeText(html)
-                .then(() => showPrompt(t('msg_formatted_copied')))
-                .catch((err2) => {
-                  console.error('Failed to copy HTML: ', err2);
-                  showPrompt(t('msg_copy_failed'));
-                });
-            });
         });
       }
 
@@ -3078,13 +3146,13 @@
 
         // Initialize auto-clean-paste FIRST (before other handlers)
         initializeAutoCleanPaste();
+        initializeAutoClipboardRead();
 
         initializeTaglineFade();
         initializeEditorInput();
         initializeFontButtons();
         // initializeMarkdownToggle();  // DISABLED: UI hidden for cleaner mode
         // initializeHelpToggle();  // DISABLED: Help UI hidden
-        initializeClipboardButtons();
         // initializeMarkdownKeyboard();  // DISABLED: Conflicts with auto-clean paste
 
         // Set button state based on markdown mode
@@ -3154,9 +3222,10 @@
             <button type="button" class="btn btn-outline-secondary monospace" data-font="monospace" data-i18n-title="btn_font_mono" title="Monospace font (code, typewriter)">Aa</button>
           </div>
           <button type="button" class="btn btn-outline-secondary" id="convert-to-markdown" data-i18n-title="btn_markdown" title="convert markup to markdown">M↓</button>
-          <button type="button" class="btn btn-outline-secondary" id="copy-all" data-i18n-title="btn_copy_all" title="copy all" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
       </div>
 
+        <div class="editor-wrap">
+        <span id="formatting-message"></span>
         <article
           class="editor sans-serif"
           contenteditable
@@ -3164,15 +3233,14 @@
           autofocus
           data-i18n-placeholder="editor_placeholder"
           ></article>
+        </div>
           <div style="overflow: auto;">
-            <span id="formatting-message"></span>
             <p id="counter"></p>
           </div>
           <div id="preview-controls">
             <div id="markdown-preview-label" style="font-size: 0.75em; color: #aaa;">Preview</div>
             <div>
               <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-help" title="show/hide help">?</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-formatted" data-i18n-title="btn_copy_formatted" title="copy formatted text" style="line-height: 1;"><span style="font-size: 1.6em; vertical-align: middle;">⎘</span></button>
             </div>
           </div>
           <div id="markdown-preview"></div>
