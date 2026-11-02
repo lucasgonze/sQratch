@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Copy formatted text. Paste it clean.</title>
+    <title>Paste Without Formatting</title>
     <meta name="description" content="minimalist privacy-first editor for use as a scratchpad" data-i18n-content="meta_description">
 
     <!--To ensure proper rendering and touch zooming for all devices -->
@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
 
-    <meta property="og:title" content="Copy formatted text. Paste it clean.">
+    <meta property="og:title" content="Paste Without Formatting">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sQratch.us">
 
@@ -47,9 +47,6 @@
         margin-left: auto;
         margin-right: auto;
       }
-      p#counter {
-        text-align: right;
-      }
 
       #preview-controls {
         display: none;
@@ -66,15 +63,20 @@
         display: flex;
       }
 
-      /* Output area: styled as static text, not an input field */
+      /* Output area: flat, minimal styling, but still plainly editable (I-beam + caret) */
       article.editor {
         border: none;
         border-left: 3px solid #ddd;
         box-shadow: none;
         outline: none;
         background-color: #fafafa;
-        cursor: default;
+        cursor: text;
+      }
+
+      /* Initial state: the box shows the how-it-works table, so no caret or I-beam until text arrives */
+      article.editor:empty {
         caret-color: transparent;
+        cursor: default;
       }
 
       [data-placeholder]:empty:before{
@@ -223,67 +225,12 @@
       #markdown-preview ul, #markdown-preview ol { margin: 0.5em 0; padding-left: 2em; }
       #markdown-preview hr { border: none; border-top: 2px solid #ddd; margin: 1em 0; }
 
-      /* Markdown help */
-      #markdown-help {
-        margin-top: 10px;
-        padding: 0.75em;
-        font-size: 0.75em;
-        color: #aaa;
-        background-color: #fcfcfc;
-        border: 1px solid #f0f0f0;
-        border-radius: 3px;
-        display: none;
-        line-height: 1.6;
-        opacity: 0.85;
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      #markdown-help.active {
-        display: block;
-      }
-
-      #markdown-help h4 {
-        margin: 0 0 0.5em 0;
-        font-size: 1em;
-        color: #999;
-        font-weight: normal;
-      }
-
-      #markdown-help .help-section {
-        margin-bottom: 0.75em;
-      }
-
-      #markdown-help .help-section:last-child {
-        margin-bottom: 0;
-      }
-
-      #markdown-help kbd {
-        background-color: #fafafa;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        padding: 1px 4px;
-        font-family: monospace;
-        font-size: 0.9em;
-        color: #777;
-      }
-
-      #markdown-help code {
-        background-color: #fafafa;
-        padding: 1px 3px;
-        font-family: monospace;
-        color: #888;
-      }
-
       /* === FORMAT CLEANER MODE === */
       /* Hide markdown and font UI elements for cleaner mode */
       #convert-to-markdown,
       .btn-group[role="group"],
       #markdown-preview,
-      #markdown-help,
-      #preview-controls,
-      #toggle-help {
+      #preview-controls {
         display: none !important;
       }
 
@@ -361,9 +308,14 @@
         color: #666;
       }
 
-      /* Deliberately busy rich text (no underline or link-blue, so it doesn't invite a click) */
+      /* Deliberately busy rich text (no underline or link-blue, so it doesn't invite a click).
+         Selectable on purpose: it's the sample to copy and paste back to see it cleaned. */
       .howto .sample-styled {
         white-space: nowrap;
+        pointer-events: auto;
+        user-select: text;
+        -webkit-user-select: text;
+        cursor: text;
       }
 
       .howto .s-a {
@@ -380,16 +332,11 @@
       }
 
       .howto .s-c {
-        font-variant: small-caps;
-        letter-spacing: 0.05em;
         color: #5b2c83;
         background: #fff1a8;
         padding: 0 0.25em;
-      }
-
-      .howto .s-d {
+        font-size: 0.8em;       /* the superscript (<sup>) word */
         font-weight: bold;
-        color: #d35400;
       }
 
       @media (max-width: 480px) {
@@ -398,7 +345,6 @@
         }
 
         .howto .s-c {
-          letter-spacing: 0;
           padding: 0 0.1em;
         }
       }
@@ -413,1836 +359,602 @@
 
       const MAX_CONSECUTIVE_BREAKS = 2;
 
+      // ===== DEBUG =====
+      // TEMP: console tracing to diagnose the clipboard flow. Set DEBUG to false to silence.
+      const DEBUG = false;
+      function debugLog(...args) {
+        if (DEBUG) console.log('[copyclean]', ...args);
+      }
+      function describeError(err) {
+        return err && err.name ? `${err.name}: ${err.message}` : String(err);
+      }
+      function debugEnv() {
+        const ua = navigator.userActivation;
+        return {
+          secureContext: window.isSecureContext,
+          clipboardRead: !!(navigator.clipboard && navigator.clipboard.read),
+          permissionsApi: !!navigator.permissions,
+          hasFocus: document.hasFocus(),
+          visibility: document.visibilityState,
+          userActivation: ua ? { isActive: ua.isActive, hasBeenActive: ua.hasBeenActive } : 'unsupported',
+        };
+      }
+
       // ===== STATE =====
       let markdownMode = false;  // Default to markdown mode
       let editor = null;
-      let characterCount = 0;
       let currentLang = 'en';
 
       // ===== TRANSLATIONS =====
       const TRANSLATIONS = {
         en: {
-          page_subtitle: "format cleaner",
           meta_description: "instant formatting cleaner - paste formatted text and get clean plain text",
-          nav_subtitle: "format cleaner",
-          tagline_paste: "paste",
-          tagline_clean: "clean",
-          tagline_copy: "copy",
-          tooltip_paste: "paste formatted text",
-          tooltip_clean: "automatically strips formatting",
-          tooltip_copy: "instantly copies to clipboard",
           btn_font_sans: "Sans-serif font (clean, modern)",
           btn_font_mono: "Monospace font (code, typewriter)",
           btn_markdown: "convert markup to markdown",
-          btn_remove_formatting: "Remove all formatting",
-          btn_copy_all: "copy all",
-          btn_copy_formatted: "copy formatted text",
           howto_step1: "Copy formatted text from anywhere.",
           howto_step2_auto: "Open this page. Your clipboard is cleaned automatically.",
           howto_step2_click: "Open this page and paste.",
           howto_step2_paste: "Clipboard access is blocked. Paste here instead.",
           howto_step3: "Paste the clean text wherever you need it.",
           msg_formatting_removed: "formatting removed",
-          msg_copied: "copied to clipboard",
-          msg_formatted_copied: "formatted text copied",
-          msg_copy_failed: "copy failed",
           msg_cleaned_and_copied: "Cleaned & copied",
           msg_cleaned_copy_failed: "Cleaned. Press Ctrl/Cmd+C to copy",
           msg_images_not_supported: "Images not supported - paste text only",
           tagline_text: "Copy formatted text. Paste it clean.",
-          help_keyboard_shortcuts: "Keyboard Shortcuts:",
-          help_bold: "Bold",
-          help_italic: "Italic",
-          help_link: "Link",
-          help_code: "Code",
-          help_headings: "Headings",
-          help_indentation: "Indentation:",
-          help_indent: "Indent",
-          help_unindent: "Unindent",
-          help_links_title: "Links:",
-          help_creates_hyperlink: "creates a hyperlink",
-          help_type: "Type",
-          help_to_autopair: "to auto-pair brackets",
-          help_wraps_selection: "wraps selection in link",
-          help_auto_lists: "Auto-Lists:",
-          help_or: "or",
-          help_for_bullets: "for bullets",
-          help_for_numbers: "for numbers",
-          help_for_checkboxes: "for checkboxes",
-          help_for_quotes: "for quotes",
-          help_auto_pairing: "Auto-Pairing:",
-          help_auto_complete: "auto-complete",
-          help_press: "Press",
-          help_in_lists: "in lists to continue",
+          page_title: "Paste Without Formatting",
+          aria_paste: "Paste",
           footer_open_source: "Open source by"
         },
         es: {
-          page_subtitle: "bloc de notas privado",
           meta_description: "editor minimalista centrado en la privacidad para usar como borrador",
-          nav_subtitle: "bloc de notas",
-          tagline_fast: "instantáneo",
-          tagline_private: "privado",
-          tagline_calm: "tranquilo",
-          tooltip_fast: "carga instantánea",
-          tooltip_private: "sin registro, nunca",
-          tooltip_calm: "libre de distracciones para alta concentración",
           btn_font_sans: "Fuente Sans-serif (limpia, moderna)",
           btn_font_mono: "Fuente monoespaciada (código, máquina de escribir)",
           btn_markdown: "convertir marcado a markdown",
-          btn_remove_formatting: "Eliminar todo el formato",
-          btn_copy_all: "copiar todo",
-          btn_copy_formatted: "copiar texto formateado",
           howto_step1: "Copia texto con formato desde cualquier lugar.",
           howto_step2_auto: "Abre esta página. Tu portapapeles se limpia automáticamente.",
           howto_step2_click: "Abre esta página y pega.",
           howto_step2_paste: "El acceso al portapapeles está bloqueado. Pega aquí.",
           howto_step3: "Pega el texto limpio donde lo necesites.",
           msg_formatting_removed: "formato eliminado",
-          msg_copied: "copiado al portapapeles",
-          msg_formatted_copied: "texto formateado copiado",
-          msg_copy_failed: "copia fallida",
-          tagline_paste: "pegar",
-          tagline_clean: "limpiar",
-          tagline_copy: "copiar",
-          tooltip_paste: "pega texto con formato",
-          tooltip_clean: "elimina el formato automáticamente",
-          tooltip_copy: "copia instantáneamente al portapapeles",
           msg_cleaned_and_copied: "Limpiado y copiado",
           msg_cleaned_copy_failed: "Limpiado. Pulsa Ctrl/Cmd+C para copiar",
           msg_images_not_supported: "Imágenes no compatibles - pega solo texto",
           tagline_text: "Copia texto con formato. Pégalo limpio.",
-          help_keyboard_shortcuts: "Atajos de teclado:",
-          help_bold: "Negrita",
-          help_italic: "Cursiva",
-          help_link: "Enlace",
-          help_code: "Código",
-          help_headings: "Encabezados",
-          help_indentation: "Sangría:",
-          help_indent: "Indentar",
-          help_unindent: "Desindentar",
-          help_links_title: "Enlaces:",
-          help_creates_hyperlink: "crea un hipervínculo",
-          help_type: "Escribe",
-          help_to_autopair: "para emparejar corchetes automáticamente",
-          help_wraps_selection: "envuelve la selección en enlace",
-          help_auto_lists: "Listas automáticas:",
-          help_or: "o",
-          help_for_bullets: "para viñetas",
-          help_for_numbers: "para números",
-          help_for_checkboxes: "para casillas de verificación",
-          help_for_quotes: "para citas",
-          help_auto_pairing: "Emparejamiento automático:",
-          help_auto_complete: "autocompletar",
-          help_press: "Presiona",
-          help_in_lists: "en listas para continuar",
+          page_title: "Pegar sin formato",
+          aria_paste: "Pegar",
           footer_open_source: "Código abierto por"
         },
         zh: {
-          page_subtitle: "私人记事本",
           meta_description: "简约的隐私优先编辑器，用作便签本",
-          nav_subtitle: "记事本",
-          tagline_fast: "即时",
-          tagline_private: "私密",
-          tagline_calm: "平静",
-          tooltip_fast: "即时加载",
-          tooltip_private: "永不记录",
-          tooltip_calm: "无干扰，高专注",
           btn_font_sans: "无衬线字体（简洁、现代）",
           btn_font_mono: "等宽字体（代码、打字机）",
           btn_markdown: "将标记转换为markdown",
-          btn_remove_formatting: "删除所有格式",
-          btn_copy_all: "全部复制",
-          btn_copy_formatted: "复制格式化文本",
           howto_step1: "从任何地方复制带格式的文字。",
           howto_step2_auto: "打开本页，剪贴板会自动清理。",
           howto_step2_click: "打开本页，然后粘贴。",
           howto_step2_paste: "剪贴板访问已被阻止。请改为在此粘贴。",
           howto_step3: "将干净的文字粘贴到需要的地方。",
           msg_formatting_removed: "格式已删除",
-          msg_copied: "已复制到剪贴板",
-          msg_formatted_copied: "格式化文本已复制",
-          msg_copy_failed: "复制失败",
-          tagline_paste: "粘贴",
-          tagline_clean: "清理",
-          tagline_copy: "复制",
-          tooltip_paste: "粘贴带格式的文字",
-          tooltip_clean: "自动去除格式",
-          tooltip_copy: "立即复制到剪贴板",
           msg_cleaned_and_copied: "已清理并复制",
           msg_cleaned_copy_failed: "已清理。按 Ctrl/Cmd+C 复制",
           msg_images_not_supported: "不支持图片 - 请仅粘贴文字",
           tagline_text: "复制带格式的文字，粘贴为干净文本。",
-          help_keyboard_shortcuts: "键盘快捷键：",
-          help_bold: "粗体",
-          help_italic: "斜体",
-          help_link: "链接",
-          help_code: "代码",
-          help_headings: "标题",
-          help_indentation: "缩进：",
-          help_indent: "增加缩进",
-          help_unindent: "减少缩进",
-          help_links_title: "链接：",
-          help_creates_hyperlink: "创建超链接",
-          help_type: "输入",
-          help_to_autopair: "自动配对括号",
-          help_wraps_selection: "将选择包裹在链接中",
-          help_auto_lists: "自动列表：",
-          help_or: "或",
-          help_for_bullets: "用于项目符号",
-          help_for_numbers: "用于编号",
-          help_for_checkboxes: "用于复选框",
-          help_for_quotes: "用于引用",
-          help_auto_pairing: "自动配对：",
-          help_auto_complete: "自动完成",
-          help_press: "按",
-          help_in_lists: "在列表中继续",
+          page_title: "无格式粘贴",
+          aria_paste: "粘贴",
           footer_open_source: "开源作者"
         },
         hi: {
-          page_subtitle: "निजी नोटपैड",
           meta_description: "स्क्रैचपैड के रूप में उपयोग के लिए न्यूनतम गोपनीयता-प्रथम संपादक",
-          nav_subtitle: "नोटपैड",
-          tagline_fast: "तुरंत",
-          tagline_private: "निजी",
-          tagline_calm: "शांत",
-          tooltip_fast: "तुरंत लोडिंग",
-          tooltip_private: "कभी लॉग नहीं",
-          tooltip_calm: "उच्च फोकस के लिए विघ्न मुक्त",
           btn_font_sans: "सेंस-सेरिफ़ फ़ॉन्ट (साफ, आधुनिक)",
           btn_font_mono: "मोनोस्पेस फ़ॉन्ट (कोड, टाइपराइटर)",
           btn_markdown: "मार्कअप को मार्कडाउन में बदलें",
-          btn_remove_formatting: "सभी फ़ॉर्मेटिंग हटाएं",
-          btn_copy_all: "सब कॉपी करें",
-          btn_copy_formatted: "फ़ॉर्मेट किया हुआ टेक्स्ट कॉपी करें",
           howto_step1: "कहीं से भी फ़ॉर्मेटेड टेक्स्ट कॉपी करें।",
           howto_step2_auto: "इस पेज को खोलें। आपका क्लिपबोर्ड अपने-आप साफ़ हो जाता है।",
           howto_step2_click: "इस पेज को खोलें और पेस्ट करें।",
           howto_step2_paste: "क्लिपबोर्ड एक्सेस अवरुद्ध है। इसके बजाय यहाँ पेस्ट करें।",
           howto_step3: "साफ़ टेक्स्ट को जहाँ चाहिए वहाँ पेस्ट करें।",
           msg_formatting_removed: "फ़ॉर्मेटिंग हटा दी गई",
-          msg_copied: "क्लिपबोर्ड पर कॉपी किया गया",
-          msg_formatted_copied: "फ़ॉर्मेट किया हुआ टेक्स्ट कॉपी किया गया",
-          msg_copy_failed: "कॉपी विफल",
-          tagline_paste: "पेस्ट",
-          tagline_clean: "साफ करें",
-          tagline_copy: "कॉपी",
-          tooltip_paste: "फ़ॉर्मेटेड टेक्स्ट पेस्ट करें",
-          tooltip_clean: "स्वचालित रूप से फ़ॉर्मेटिंग हटाता है",
-          tooltip_copy: "तुरंत क्लिपबोर्ड में कॉपी करता है",
           msg_cleaned_and_copied: "साफ किया और कॉपी किया",
           msg_cleaned_copy_failed: "साफ किया। कॉपी करने के लिए Ctrl/Cmd+C दबाएं",
           msg_images_not_supported: "छवियां समर्थित नहीं हैं - केवल टेक्स्ट पेस्ट करें",
           tagline_text: "फ़ॉर्मेटेड टेक्स्ट कॉपी करें। साफ़ पेस्ट करें।",
-          help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
-          help_bold: "बोल्ड",
-          help_italic: "इटैलिक",
-          help_link: "लिंक",
-          help_code: "कोड",
-          help_headings: "शीर्षक",
-          help_indentation: "इंडेंटेशन:",
-          help_indent: "इंडेंट",
-          help_unindent: "अनइंडेंट",
-          help_links_title: "लिंक:",
-          help_creates_hyperlink: "हाइपरलिंक बनाता है",
-          help_type: "टाइप करें",
-          help_to_autopair: "ब्रैकेट स्वचालित जोड़ी के लिए",
-          help_wraps_selection: "चयन को लिंक में लपेटता है",
-          help_auto_lists: "स्वचालित सूचियां:",
-          help_or: "या",
-          help_for_bullets: "बुलेट के लिए",
-          help_for_numbers: "संख्याओं के लिए",
-          help_for_checkboxes: "चेकबॉक्स के लिए",
-          help_for_quotes: "उद्धरणों के लिए",
-          help_auto_pairing: "स्वचालित जोड़ी:",
-          help_auto_complete: "स्वचालित पूर्ण",
-          help_press: "दबाएं",
-          help_in_lists: "सूचियों में जारी रखने के लिए",
+          page_title: "बिना फ़ॉर्मेटिंग के पेस्ट करें",
+          aria_paste: "पेस्ट करें",
           footer_open_source: "ओपन सोर्स द्वारा"
         },
         fr: {
-          page_subtitle: "bloc-notes privé",
           meta_description: "éditeur minimaliste axé sur la confidentialité pour une utilisation comme bloc-notes",
-          nav_subtitle: "bloc-notes",
-          tagline_fast: "instantané",
-          tagline_private: "privé",
-          tagline_calm: "calme",
-          tooltip_fast: "chargement instantané",
-          tooltip_private: "aucun enregistrement, jamais",
-          tooltip_calm: "sans distraction pour une concentration élevée",
           btn_font_sans: "Police sans-serif (épurée, moderne)",
           btn_font_mono: "Police monospace (code, machine à écrire)",
           btn_markdown: "convertir le balisage en markdown",
-          btn_remove_formatting: "Supprimer tout le formatage",
-          btn_copy_all: "tout copier",
-          btn_copy_formatted: "copier le texte formaté",
           howto_step1: "Copiez du texte formaté depuis n'importe où.",
           howto_step2_auto: "Ouvrez cette page. Votre presse-papiers est nettoyé automatiquement.",
           howto_step2_click: "Ouvrez cette page et collez.",
           howto_step2_paste: "L'accès au presse-papiers est bloqué. Collez ici.",
           howto_step3: "Collez le texte propre où vous en avez besoin.",
           msg_formatting_removed: "formatage supprimé",
-          msg_copied: "copié dans le presse-papiers",
-          msg_formatted_copied: "texte formaté copié",
-          msg_copy_failed: "échec de la copie",
-          tagline_paste: "coller",
-          tagline_clean: "nettoyer",
-          tagline_copy: "copier",
-          tooltip_paste: "collez du texte formaté",
-          tooltip_clean: "supprime automatiquement la mise en forme",
-          tooltip_copy: "copie instantanément dans le presse-papiers",
           msg_cleaned_and_copied: "Nettoyé et copié",
           msg_cleaned_copy_failed: "Nettoyé. Appuyez sur Ctrl/Cmd+C pour copier",
           msg_images_not_supported: "Images non prises en charge - collez du texte uniquement",
           tagline_text: "Copiez du texte formaté. Collez-le propre.",
-          help_keyboard_shortcuts: "Raccourcis clavier:",
-          help_bold: "Gras",
-          help_italic: "Italique",
-          help_link: "Lien",
-          help_code: "Code",
-          help_headings: "Titres",
-          help_indentation: "Indentation:",
-          help_indent: "Indenter",
-          help_unindent: "Désindenter",
-          help_links_title: "Liens:",
-          help_creates_hyperlink: "crée un hyperlien",
-          help_type: "Tapez",
-          help_to_autopair: "pour apparier automatiquement les crochets",
-          help_wraps_selection: "enveloppe la sélection dans un lien",
-          help_auto_lists: "Listes automatiques:",
-          help_or: "ou",
-          help_for_bullets: "pour les puces",
-          help_for_numbers: "pour les numéros",
-          help_for_checkboxes: "pour les cases à cocher",
-          help_for_quotes: "pour les citations",
-          help_auto_pairing: "Appariement automatique:",
-          help_auto_complete: "auto-complétion",
-          help_press: "Appuyez",
-          help_in_lists: "dans les listes pour continuer",
+          page_title: "Coller sans mise en forme",
+          aria_paste: "Coller",
           footer_open_source: "Open source par"
         },
         ar: {
-          page_subtitle: "مفكرة خاصة",
           meta_description: "محرر بسيط يركز على الخصوصية للاستخدام كمفكرة",
-          nav_subtitle: "مفكرة",
-          tagline_fast: "فوري",
-          tagline_private: "خاص",
-          tagline_calm: "هادئ",
-          tooltip_fast: "تحميل فوري",
-          tooltip_private: "لا سجلات، أبداً",
-          tooltip_calm: "خالٍ من التشتيت للتركيز العالي",
           btn_font_sans: "خط بدون serif (نظيف، حديث)",
           btn_font_mono: "خط أحادي المسافة (كود، آلة كاتبة)",
           btn_markdown: "تحويل العلامات إلى markdown",
-          btn_remove_formatting: "إزالة كل التنسيق",
-          btn_copy_all: "نسخ الكل",
-          btn_copy_formatted: "نسخ النص المنسق",
           howto_step1: "انسخ نصاً منسقاً من أي مكان.",
           howto_step2_auto: "افتح هذه الصفحة. يتم تنظيف الحافظة تلقائياً.",
           howto_step2_click: "افتح هذه الصفحة والصق.",
           howto_step2_paste: "الوصول إلى الحافظة محظور. الصق هنا بدلاً من ذلك.",
           howto_step3: "الصق النص النظيف أينما تحتاجه.",
           msg_formatting_removed: "تمت إزالة التنسيق",
-          msg_copied: "تم النسخ إلى الحافظة",
-          msg_formatted_copied: "تم نسخ النص المنسق",
-          msg_copy_failed: "فشل النسخ",
-          tagline_paste: "لصق",
-          tagline_clean: "تنظيف",
-          tagline_copy: "نسخ",
-          tooltip_paste: "الصق نصاً منسقاً",
-          tooltip_clean: "يزيل التنسيق تلقائياً",
-          tooltip_copy: "ينسخ إلى الحافظة فوراً",
           msg_cleaned_and_copied: "تم التنظيف والنسخ",
           msg_cleaned_copy_failed: "تم التنظيف. اضغط Ctrl/Cmd+C للنسخ",
           msg_images_not_supported: "الصور غير مدعومة - الصق النص فقط",
           tagline_text: "انسخ نصاً منسقاً. الصقه نظيفاً.",
-          help_keyboard_shortcuts: "اختصارات لوحة المفاتيح:",
-          help_bold: "غامق",
-          help_italic: "مائل",
-          help_link: "رابط",
-          help_code: "كود",
-          help_headings: "عناوين",
-          help_indentation: "المسافة البادئة:",
-          help_indent: "إضافة مسافة",
-          help_unindent: "إزالة مسافة",
-          help_links_title: "روابط:",
-          help_creates_hyperlink: "إنشاء ارتباط تشعبي",
-          help_type: "اكتب",
-          help_to_autopair: "للإقران التلقائي للأقواس",
-          help_wraps_selection: "يلف التحديد في رابط",
-          help_auto_lists: "القوائم التلقائية:",
-          help_or: "أو",
-          help_for_bullets: "للنقاط",
-          help_for_numbers: "للأرقام",
-          help_for_checkboxes: "لمربعات الاختيار",
-          help_for_quotes: "للاقتباسات",
-          help_auto_pairing: "الإقران التلقائي:",
-          help_auto_complete: "الإكمال التلقائي",
-          help_press: "اضغط",
-          help_in_lists: "في القوائم للمتابعة",
+          page_title: "لصق بدون تنسيق",
+          aria_paste: "لصق",
           footer_open_source: "مفتوح المصدر بواسطة"
         },
         bn: {
-          page_subtitle: "ব্যক্তিগত নোটপ্যাড",
           meta_description: "স্ক্র্যাচপ্যাড হিসাবে ব্যবহারের জন্য ন্যূনতম গোপনীয়তা-প্রথম সম্পাদক",
-          nav_subtitle: "নোটপ্যাড",
-          tagline_fast: "তাৎক্ষণিক",
-          tagline_private: "ব্যক্তিগত",
-          tagline_calm: "শান্ত",
-          tooltip_fast: "তাৎক্ষণিক লোডিং",
-          tooltip_private: "কোনো লগিং নেই, কখনও না",
-          tooltip_calm: "উচ্চ ফোকাসের জন্য বিক্ষেপমুক্ত",
           btn_font_sans: "সানস-সেরিফ ফন্ট (পরিষ্কার, আধুনিক)",
           btn_font_mono: "মনোস্পেস ফন্ট (কোড, টাইপরাইটার)",
           btn_markdown: "মার্কআপকে মার্কডাউনে রূপান্তর করুন",
-          btn_remove_formatting: "সমস্ত ফরম্যাটিং সরান",
-          btn_copy_all: "সব কপি করুন",
-          btn_copy_formatted: "ফরম্যাট করা টেক্সট কপি করুন",
           howto_step1: "যেকোনো জায়গা থেকে ফরম্যাটেড টেক্সট কপি করুন।",
           howto_step2_auto: "এই পেজটি খুলুন। আপনার ক্লিপবোর্ড স্বয়ংক্রিয়ভাবে পরিষ্কার হয়।",
           howto_step2_click: "এই পেজটি খুলে পেস্ট করুন।",
           howto_step2_paste: "ক্লিপবোর্ড অ্যাক্সেস ব্লক করা আছে। এর বদলে এখানে পেস্ট করুন।",
           howto_step3: "পরিষ্কার টেক্সট যেখানে দরকার সেখানে পেস্ট করুন।",
           msg_formatting_removed: "ফরম্যাটিং সরানো হয়েছে",
-          msg_copied: "ক্লিপবোর্ডে কপি করা হয়েছে",
-          msg_formatted_copied: "ফরম্যাট করা টেক্সট কপি করা হয়েছে",
-          msg_copy_failed: "কপি ব্যর্থ",
-          tagline_paste: "পেস্ট",
-          tagline_clean: "পরিষ্কার",
-          tagline_copy: "কপি",
-          tooltip_paste: "ফরম্যাটেড টেক্সট পেস্ট করুন",
-          tooltip_clean: "স্বয়ংক্রিয়ভাবে ফরম্যাটিং সরিয়ে দেয়",
-          tooltip_copy: "তাৎক্ষণিকভাবে ক্লিপবোর্ডে কপি করে",
           msg_cleaned_and_copied: "পরিষ্কার ও কপি হয়েছে",
           msg_cleaned_copy_failed: "পরিষ্কার হয়েছে। কপি করতে Ctrl/Cmd+C চাপুন",
           msg_images_not_supported: "ছবি সমর্থিত নয় - শুধুমাত্র টেক্সট পেস্ট করুন",
           tagline_text: "ফরম্যাটেড টেক্সট কপি করুন। পরিষ্কার পেস্ট করুন।",
-          help_keyboard_shortcuts: "কীবোর্ড শর্টকাট:",
-          help_bold: "বোল্ড",
-          help_italic: "ইটালিক",
-          help_link: "লিংক",
-          help_code: "কোড",
-          help_headings: "শিরোনাম",
-          help_indentation: "ইন্ডেন্টেশন:",
-          help_indent: "ইন্ডেন্ট",
-          help_unindent: "আনইন্ডেন্ট",
-          help_links_title: "লিংক:",
-          help_creates_hyperlink: "হাইপারলিংক তৈরি করে",
-          help_type: "টাইপ করুন",
-          help_to_autopair: "ব্র্যাকেট স্বয়ংক্রিয় জোড়ার জন্য",
-          help_wraps_selection: "নির্বাচনকে লিংকে মোড়ে",
-          help_auto_lists: "স্বয়ংক্রিয় তালিকা:",
-          help_or: "অথবা",
-          help_for_bullets: "বুলেটের জন্য",
-          help_for_numbers: "সংখ্যার জন্য",
-          help_for_checkboxes: "চেকবক্সের জন্য",
-          help_for_quotes: "উদ্ধৃতির জন্য",
-          help_auto_pairing: "স্বয়ংক্রিয় জোড়া:",
-          help_auto_complete: "স্বয়ংক্রিয় সম্পূর্ণ",
-          help_press: "চাপুন",
-          help_in_lists: "তালিকায় চালিয়ে যেতে",
+          page_title: "ফরম্যাটিং ছাড়া পেস্ট করুন",
+          aria_paste: "পেস্ট",
           footer_open_source: "ওপেন সোর্স দ্বারা"
         },
         ru: {
-          page_subtitle: "личный блокнот",
           meta_description: "минималистичный редактор с приоритетом конфиденциальности для использования в качестве блокнота",
-          nav_subtitle: "блокнот",
-          tagline_fast: "мгновенно",
-          tagline_private: "приватно",
-          tagline_calm: "спокойно",
-          tooltip_fast: "мгновенная загрузка",
-          tooltip_private: "без логирования, никогда",
-          tooltip_calm: "без отвлечений для высокой концентрации",
           btn_font_sans: "Шрифт без засечек (чистый, современный)",
           btn_font_mono: "Моноширинный шрифт (код, пишущая машинка)",
           btn_markdown: "преобразовать разметку в markdown",
-          btn_remove_formatting: "Удалить все форматирование",
-          btn_copy_all: "копировать все",
-          btn_copy_formatted: "копировать форматированный текст",
           howto_step1: "Скопируйте форматированный текст откуда угодно.",
           howto_step2_auto: "Откройте эту страницу. Буфер обмена очищается автоматически.",
           howto_step2_click: "Откройте эту страницу и вставьте текст.",
           howto_step2_paste: "Доступ к буферу обмена заблокирован. Вставьте текст сюда.",
           howto_step3: "Вставьте чистый текст, куда нужно.",
           msg_formatting_removed: "форматирование удалено",
-          msg_copied: "скопировано в буфер обмена",
-          msg_formatted_copied: "форматированный текст скопирован",
-          msg_copy_failed: "ошибка копирования",
-          tagline_paste: "вставить",
-          tagline_clean: "очистить",
-          tagline_copy: "копировать",
-          tooltip_paste: "вставить форматированный текст",
-          tooltip_clean: "автоматически удаляет форматирование",
-          tooltip_copy: "мгновенно копирует в буфер обмена",
           msg_cleaned_and_copied: "Очищено и скопировано",
           msg_cleaned_copy_failed: "Очищено. Нажмите Ctrl/Cmd+C, чтобы скопировать",
           msg_images_not_supported: "Изображения не поддерживаются - вставьте только текст",
           tagline_text: "Скопируйте форматированный текст. Вставьте чистым.",
-          help_keyboard_shortcuts: "Горячие клавиши:",
-          help_bold: "Жирный",
-          help_italic: "Курсив",
-          help_link: "Ссылка",
-          help_code: "Код",
-          help_headings: "Заголовки",
-          help_indentation: "Отступ:",
-          help_indent: "Увеличить отступ",
-          help_unindent: "Уменьшить отступ",
-          help_links_title: "Ссылки:",
-          help_creates_hyperlink: "создает гиперссылку",
-          help_type: "Введите",
-          help_to_autopair: "для автоматического сопряжения скобок",
-          help_wraps_selection: "обертывает выделение в ссылку",
-          help_auto_lists: "Автоматические списки:",
-          help_or: "или",
-          help_for_bullets: "для маркеров",
-          help_for_numbers: "для чисел",
-          help_for_checkboxes: "для флажков",
-          help_for_quotes: "для цитат",
-          help_auto_pairing: "Автосопряжение:",
-          help_auto_complete: "автозаполнение",
-          help_press: "Нажмите",
-          help_in_lists: "в списках для продолжения",
+          page_title: "Вставка без форматирования",
+          aria_paste: "Вставить",
           footer_open_source: "Открытый исходный код от"
         },
         pt: {
-          page_subtitle: "bloco de notas privado",
           meta_description: "editor minimalista com foco na privacidade para uso como rascunho",
-          nav_subtitle: "bloco de notas",
-          tagline_fast: "instantáneo",
-          tagline_private: "privado",
-          tagline_calm: "calmo",
-          tooltip_fast: "carregamento instantâneo",
-          tooltip_private: "sem registro, nunca",
-          tooltip_calm: "livre de distrações para alta concentração",
           btn_font_sans: "Fonte sem serifa (limpa, moderna)",
           btn_font_mono: "Fonte monoespaçada (código, máquina de escrever)",
           btn_markdown: "converter marcação para markdown",
-          btn_remove_formatting: "Remover toda a formatação",
-          btn_copy_all: "copiar tudo",
-          btn_copy_formatted: "copiar texto formatado",
           howto_step1: "Copie texto formatado de qualquer lugar.",
           howto_step2_auto: "Abra esta página. Sua área de transferência é limpa automaticamente.",
           howto_step2_click: "Abra esta página e cole.",
           howto_step2_paste: "O acesso à área de transferência está bloqueado. Cole aqui.",
           howto_step3: "Cole o texto limpo onde precisar.",
           msg_formatting_removed: "formatação removida",
-          msg_copied: "copiado para a área de transferência",
-          msg_formatted_copied: "texto formatado copiado",
-          msg_copy_failed: "falha ao copiar",
-          tagline_paste: "colar",
-          tagline_clean: "limpar",
-          tagline_copy: "copiar",
-          tooltip_paste: "colar texto formatado",
-          tooltip_clean: "remove formatação automaticamente",
-          tooltip_copy: "copia instantaneamente para a área de transferência",
           msg_cleaned_and_copied: "Limpo e copiado",
           msg_cleaned_copy_failed: "Limpo. Pressione Ctrl/Cmd+C para copiar",
           msg_images_not_supported: "Imagens não suportadas - cole apenas texto",
           tagline_text: "Copie texto formatado. Cole limpo.",
-          help_keyboard_shortcuts: "Atalhos de teclado:",
-          help_bold: "Negrito",
-          help_italic: "Itálico",
-          help_link: "Link",
-          help_code: "Código",
-          help_headings: "Títulos",
-          help_indentation: "Indentação:",
-          help_indent: "Indentar",
-          help_unindent: "Desindentar",
-          help_links_title: "Links:",
-          help_creates_hyperlink: "cria um hiperlink",
-          help_type: "Digite",
-          help_to_autopair: "para emparelhar colchetes automaticamente",
-          help_wraps_selection: "envolve a seleção em link",
-          help_auto_lists: "Listas automáticas:",
-          help_or: "ou",
-          help_for_bullets: "para marcadores",
-          help_for_numbers: "para números",
-          help_for_checkboxes: "para caixas de seleção",
-          help_for_quotes: "para citações",
-          help_auto_pairing: "Emparelhamento automático:",
-          help_auto_complete: "autocompletar",
-          help_press: "Pressione",
-          help_in_lists: "em listas para continuar",
+          page_title: "Colar sem formatação",
+          aria_paste: "Colar",
           footer_open_source: "Código aberto por"
         },
         de: {
-          page_subtitle: "privater Notizblock",
           meta_description: "minimalistischer, datenschutzorientierter Editor zur Verwendung als Notizblock",
-          nav_subtitle: "Notizblock",
-          tagline_fast: "sofort",
-          tagline_private: "privat",
-          tagline_calm: "ruhig",
-          tooltip_fast: "sofortiges Laden",
-          tooltip_private: "keine Protokollierung, niemals",
-          tooltip_calm: "ablenkungsfrei für hohe Konzentration",
           btn_font_sans: "Sans-Serif-Schrift (sauber, modern)",
           btn_font_mono: "Festbreitenschrift (Code, Schreibmaschine)",
           btn_markdown: "Markup in Markdown konvertieren",
-          btn_remove_formatting: "Alle Formatierungen entfernen",
-          btn_copy_all: "alles kopieren",
-          btn_copy_formatted: "formatierten Text kopieren",
           howto_step1: "Formatierten Text von irgendwoher kopieren.",
           howto_step2_auto: "Diese Seite öffnen. Die Zwischenablage wird automatisch bereinigt.",
           howto_step2_click: "Diese Seite öffnen und einfügen.",
           howto_step2_paste: "Der Zugriff auf die Zwischenablage ist blockiert. Stattdessen hier einfügen.",
           howto_step3: "Den bereinigten Text dort einfügen, wo du ihn brauchst.",
           msg_formatting_removed: "Formatierung entfernt",
-          msg_copied: "in die Zwischenablage kopiert",
-          msg_formatted_copied: "formatierter Text kopiert",
-          msg_copy_failed: "Kopieren fehlgeschlagen",
-          tagline_paste: "einfügen",
-          tagline_clean: "bereinigen",
-          tagline_copy: "kopieren",
-          tooltip_paste: "formatierten Text einfügen",
-          tooltip_clean: "entfernt automatisch Formatierungen",
-          tooltip_copy: "kopiert sofort in die Zwischenablage",
           msg_cleaned_and_copied: "Bereinigt und kopiert",
           msg_cleaned_copy_failed: "Bereinigt. Zum Kopieren Strg/Cmd+C drücken",
           msg_images_not_supported: "Bilder werden nicht unterstützt - nur Text einfügen",
           tagline_text: "Formatierten Text kopieren. Sauber einfügen.",
-          help_keyboard_shortcuts: "Tastenkombinationen:",
-          help_bold: "Fett",
-          help_italic: "Kursiv",
-          help_link: "Link",
-          help_code: "Code",
-          help_headings: "Überschriften",
-          help_indentation: "Einrückung:",
-          help_indent: "Einrücken",
-          help_unindent: "Ausrücken",
-          help_links_title: "Links:",
-          help_creates_hyperlink: "erstellt einen Hyperlink",
-          help_type: "Tippen",
-          help_to_autopair: "um Klammern automatisch zu paaren",
-          help_wraps_selection: "umschließt Auswahl mit Link",
-          help_auto_lists: "Automatische Listen:",
-          help_or: "oder",
-          help_for_bullets: "für Aufzählungszeichen",
-          help_for_numbers: "für Nummern",
-          help_for_checkboxes: "für Kontrollkästchen",
-          help_for_quotes: "für Zitate",
-          help_auto_pairing: "Automatische Paarung:",
-          help_auto_complete: "Autovervollständigung",
-          help_press: "Drücken",
-          help_in_lists: "in Listen zum Fortfahren",
+          page_title: "Ohne Formatierung einfügen",
+          aria_paste: "Einfügen",
           footer_open_source: "Open Source von"
         },
         ja: {
-          page_subtitle: "プライベートメモ帳",
           meta_description: "スクラッチパッドとして使用するための最小限のプライバシー優先エディタ",
-          nav_subtitle: "メモ帳",
-          tagline_fast: "即座",
-          tagline_private: "プライベート",
-          tagline_calm: "静か",
-          tooltip_fast: "即座に読み込み",
-          tooltip_private: "ログなし、絶対に",
-          tooltip_calm: "高い集中力のための気が散らない",
           btn_font_sans: "サンセリフフォント（クリーン、モダン）",
           btn_font_mono: "等幅フォント（コード、タイプライター）",
           btn_markdown: "マークアップをMarkdownに変換",
-          btn_remove_formatting: "すべての書式を削除",
-          btn_copy_all: "すべてコピー",
-          btn_copy_formatted: "書式付きテキストをコピー",
           howto_step1: "どこからでも書式付きテキストをコピーします。",
           howto_step2_auto: "このページを開くだけで、クリップボードは自動的にクリーンアップされます。",
           howto_step2_click: "このページを開いて、貼り付けます。",
           howto_step2_paste: "クリップボードへのアクセスがブロックされています。代わりにここに貼り付けてください。",
           howto_step3: "きれいになったテキストを必要な場所に貼り付けます。",
           msg_formatting_removed: "書式を削除しました",
-          msg_copied: "クリップボードにコピーしました",
-          msg_formatted_copied: "書式付きテキストをコピーしました",
-          msg_copy_failed: "コピー失敗",
-          tagline_paste: "貼り付け",
-          tagline_clean: "クリーン",
-          tagline_copy: "コピー",
-          tooltip_paste: "書式付きテキストを貼り付ける",
-          tooltip_clean: "自動的に書式を削除します",
-          tooltip_copy: "すぐにクリップボードにコピーします",
           msg_cleaned_and_copied: "クリーンアップしてコピーしました",
           msg_cleaned_copy_failed: "クリーンアップ完了。Ctrl/Cmd+C でコピーしてください",
           msg_images_not_supported: "画像はサポートされていません - テキストのみ貼り付けてください",
           tagline_text: "書式付きテキストをコピー。きれいに貼り付け。",
-          help_keyboard_shortcuts: "キーボードショートカット：",
-          help_bold: "太字",
-          help_italic: "斜体",
-          help_link: "リンク",
-          help_code: "コード",
-          help_headings: "見出し",
-          help_indentation: "インデント：",
-          help_indent: "インデント",
-          help_unindent: "インデント解除",
-          help_links_title: "リンク：",
-          help_creates_hyperlink: "ハイパーリンクを作成",
-          help_type: "入力",
-          help_to_autopair: "括弧を自動ペア",
-          help_wraps_selection: "選択をリンクで囲む",
-          help_auto_lists: "自動リスト：",
-          help_or: "または",
-          help_for_bullets: "箇条書き用",
-          help_for_numbers: "番号付き用",
-          help_for_checkboxes: "チェックボックス用",
-          help_for_quotes: "引用用",
-          help_auto_pairing: "自動ペア：",
-          help_auto_complete: "自動補完",
-          help_press: "押す",
-          help_in_lists: "リストで続ける",
+          page_title: "書式なしで貼り付け",
+          aria_paste: "貼り付け",
           footer_open_source: "オープンソース by"
         },
         ko: {
-          page_subtitle: "개인 메모장",
           meta_description: "스크래치패드로 사용하기 위한 미니멀한 개인정보 보호 우선 에디터",
-          nav_subtitle: "메모장",
-          tagline_fast: "즉시",
-          tagline_private: "비공개",
-          tagline_calm: "조용함",
-          tooltip_fast: "즉시 로딩",
-          tooltip_private: "로깅 없음, 절대",
-          tooltip_calm: "높은 집중력을 위한 방해 없음",
           btn_font_sans: "산세리프 폰트 (깔끔한, 현대적인)",
           btn_font_mono: "고정폭 폰트 (코드, 타자기)",
           btn_markdown: "마크업을 마크다운으로 변환",
-          btn_remove_formatting: "모든 서식 제거",
-          btn_copy_all: "모두 복사",
-          btn_copy_formatted: "서식이 있는 텍스트 복사",
           howto_step1: "어디서든 서식 있는 텍스트를 복사하세요.",
           howto_step2_auto: "이 페이지를 열기만 하면 클립보드가 자동으로 정리됩니다.",
           howto_step2_click: "이 페이지를 열고 붙여넣으세요.",
           howto_step2_paste: "클립보드 접근이 차단되어 있습니다. 대신 여기에 붙여넣으세요.",
           howto_step3: "정리된 텍스트를 필요한 곳에 붙여넣으세요.",
           msg_formatting_removed: "서식 제거됨",
-          msg_copied: "클립보드에 복사됨",
-          msg_formatted_copied: "서식이 있는 텍스트가 복사됨",
-          msg_copy_failed: "복사 실패",
-          tagline_paste: "붙여넣기",
-          tagline_clean: "정리",
-          tagline_copy: "복사",
-          tooltip_paste: "서식 있는 텍스트 붙여넣기",
-          tooltip_clean: "서식을 자동으로 제거합니다",
-          tooltip_copy: "즉시 클립보드에 복사합니다",
           msg_cleaned_and_copied: "정리 및 복사 완료",
           msg_cleaned_copy_failed: "정리 완료. Ctrl/Cmd+C를 눌러 복사하세요",
           msg_images_not_supported: "이미지는 지원되지 않습니다 - 텍스트만 붙여넣기",
           tagline_text: "서식 있는 텍스트를 복사하세요. 깔끔하게 붙여넣으세요.",
-          help_keyboard_shortcuts: "키보드 단축키:",
-          help_bold: "굵게",
-          help_italic: "기울임",
-          help_link: "링크",
-          help_code: "코드",
-          help_headings: "제목",
-          help_indentation: "들여쓰기:",
-          help_indent: "들여쓰기",
-          help_unindent: "내어쓰기",
-          help_links_title: "링크:",
-          help_creates_hyperlink: "하이퍼링크 생성",
-          help_type: "입력",
-          help_to_autopair: "괄호 자동 페어링",
-          help_wraps_selection: "선택 영역을 링크로 감싸기",
-          help_auto_lists: "자동 목록:",
-          help_or: "또는",
-          help_for_bullets: "글머리 기호용",
-          help_for_numbers: "번호용",
-          help_for_checkboxes: "체크박스용",
-          help_for_quotes: "인용문용",
-          help_auto_pairing: "자동 페어링:",
-          help_auto_complete: "자동 완성",
-          help_press: "누르기",
-          help_in_lists: "목록에서 계속하기",
+          page_title: "서식 없이 붙여넣기",
+          aria_paste: "붙여넣기",
           footer_open_source: "오픈소스 by"
         },
         it: {
-          page_subtitle: "blocco note privato",
           meta_description: "editor minimalista incentrato sulla privacy da utilizzare come blocco appunti",
-          nav_subtitle: "blocco note",
-          tagline_fast: "istantaneo",
-          tagline_private: "privato",
-          tagline_calm: "calmo",
-          tooltip_fast: "caricamento istantaneo",
-          tooltip_private: "nessuna registrazione, mai",
-          tooltip_calm: "senza distrazioni per alta concentrazione",
           btn_font_sans: "Font sans-serif (pulito, moderno)",
           btn_font_mono: "Font monospazio (codice, macchina da scrivere)",
           btn_markdown: "converti markup in markdown",
-          btn_remove_formatting: "Rimuovi tutta la formattazione",
-          btn_copy_all: "copia tutto",
-          btn_copy_formatted: "copia testo formattato",
           howto_step1: "Copia testo formattato da qualsiasi posto.",
           howto_step2_auto: "Apri questa pagina. Gli appunti vengono puliti automaticamente.",
           howto_step2_click: "Apri questa pagina e incolla.",
           howto_step2_paste: "L'accesso agli appunti è bloccato. Incolla qui.",
           howto_step3: "Incolla il testo pulito dove ti serve.",
           msg_formatting_removed: "formattazione rimossa",
-          msg_copied: "copiato negli appunti",
-          msg_formatted_copied: "testo formattato copiato",
-          msg_copy_failed: "copia fallita",
-          tagline_paste: "incolla",
-          tagline_clean: "pulisci",
-          tagline_copy: "copia",
-          tooltip_paste: "incolla testo formattato",
-          tooltip_clean: "rimuove automaticamente la formattazione",
-          tooltip_copy: "copia immediatamente negli appunti",
           msg_cleaned_and_copied: "Pulito e copiato",
           msg_cleaned_copy_failed: "Pulito. Premi Ctrl/Cmd+C per copiare",
           msg_images_not_supported: "Immagini non supportate - incolla solo testo",
           tagline_text: "Copia testo formattato. Incollalo pulito.",
-          help_keyboard_shortcuts: "Scorciatoie da tastiera:",
-          help_bold: "Grassetto",
-          help_italic: "Corsivo",
-          help_link: "Link",
-          help_code: "Codice",
-          help_headings: "Intestazioni",
-          help_indentation: "Indentazione:",
-          help_indent: "Indenta",
-          help_unindent: "Rimuovi indentazione",
-          help_links_title: "Link:",
-          help_creates_hyperlink: "crea un collegamento ipertestuale",
-          help_type: "Digita",
-          help_to_autopair: "per accoppiare automaticamente le parentesi",
-          help_wraps_selection: "avvolge la selezione in un link",
-          help_auto_lists: "Liste automatiche:",
-          help_or: "o",
-          help_for_bullets: "per i punti elenco",
-          help_for_numbers: "per i numeri",
-          help_for_checkboxes: "per le caselle di controllo",
-          help_for_quotes: "per le citazioni",
-          help_auto_pairing: "Accoppiamento automatico:",
-          help_auto_complete: "completamento automatico",
-          help_press: "Premi",
-          help_in_lists: "nelle liste per continuare",
+          page_title: "Incolla senza formattazione",
+          aria_paste: "Incolla",
           footer_open_source: "Open source di"
         },
         tr: {
-          page_subtitle: "özel not defteri",
           meta_description: "taslak olarak kullanmak için minimalist gizlilik odaklı düzenleyici",
-          nav_subtitle: "not defteri",
-          tagline_fast: "anında",
-          tagline_private: "özel",
-          tagline_calm: "sakin",
-          tooltip_fast: "anında yükleme",
-          tooltip_private: "kayıt yok, asla",
-          tooltip_calm: "yüksek odaklanma için dikkat dağıtıcı yok",
           btn_font_sans: "Sans-serif yazı tipi (temiz, modern)",
           btn_font_mono: "Monospace yazı tipi (kod, daktilo)",
           btn_markdown: "işaretlemeyi markdown'a dönüştür",
-          btn_remove_formatting: "Tüm biçimlendirmeyi kaldır",
-          btn_copy_all: "tümünü kopyala",
-          btn_copy_formatted: "biçimlendirilmiş metni kopyala",
           howto_step1: "Biçimlendirilmiş metni herhangi bir yerden kopyalayın.",
           howto_step2_auto: "Bu sayfayı açın. Panonuz otomatik olarak temizlenir.",
           howto_step2_click: "Bu sayfayı açın ve yapıştırın.",
           howto_step2_paste: "Pano erişimi engellendi. Bunun yerine buraya yapıştırın.",
           howto_step3: "Temiz metni ihtiyacınız olan yere yapıştırın.",
           msg_formatting_removed: "biçimlendirme kaldırıldı",
-          msg_copied: "panoya kopyalandı",
-          msg_formatted_copied: "biçimlendirilmiş metin kopyalandı",
-          msg_copy_failed: "kopyalama başarısız",
-          tagline_paste: "yapıştır",
-          tagline_clean: "temizle",
-          tagline_copy: "kopyala",
-          tooltip_paste: "biçimlendirilmiş metin yapıştır",
-          tooltip_clean: "biçimlendirmeyi otomatik olarak kaldırır",
-          tooltip_copy: "anında panoya kopyalar",
           msg_cleaned_and_copied: "Temizlendi ve kopyalandı",
           msg_cleaned_copy_failed: "Temizlendi. Kopyalamak için Ctrl/Cmd+C tuşlarına basın",
           msg_images_not_supported: "Resimler desteklenmiyor - yalnızca metin yapıştırın",
           tagline_text: "Biçimlendirilmiş metni kopyalayın. Temiz yapıştırın.",
-          help_keyboard_shortcuts: "Klavye Kısayolları:",
-          help_bold: "Kalın",
-          help_italic: "İtalik",
-          help_link: "Bağlantı",
-          help_code: "Kod",
-          help_headings: "Başlıklar",
-          help_indentation: "Girinti:",
-          help_indent: "Girintiyi artır",
-          help_unindent: "Girintiyi azalt",
-          help_links_title: "Bağlantılar:",
-          help_creates_hyperlink: "köprü oluşturur",
-          help_type: "Yazın",
-          help_to_autopair: "parantezleri otomatik eşleştir",
-          help_wraps_selection: "seçimi bağlantıyla sarar",
-          help_auto_lists: "Otomatik Listeler:",
-          help_or: "veya",
-          help_for_bullets: "madde işaretleri için",
-          help_for_numbers: "sayılar için",
-          help_for_checkboxes: "onay kutuları için",
-          help_for_quotes: "alıntılar için",
-          help_auto_pairing: "Otomatik Eşleştirme:",
-          help_auto_complete: "otomatik tamamlama",
-          help_press: "Basın",
-          help_in_lists: "listelerde devam etmek için",
+          page_title: "Biçimlendirmesiz Yapıştır",
+          aria_paste: "Yapıştır",
           footer_open_source: "Açık kaynak"
         },
         pl: {
-          page_subtitle: "prywatny notatnik",
           meta_description: "minimalistyczny edytor zorientowany na prywatność do użytku jako notatnik",
-          nav_subtitle: "notatnik",
-          tagline_fast: "natychmiastowy",
-          tagline_private: "prywatny",
-          tagline_calm: "spokojny",
-          tooltip_fast: "natychmiastowe ładowanie",
-          tooltip_private: "bez logowania, nigdy",
-          tooltip_calm: "bez rozpraszaczy dla wysokiej koncentracji",
           btn_font_sans: "Czcionka bezszeryfowa (czysta, nowoczesna)",
           btn_font_mono: "Czcionka o stałej szerokości (kod, maszyna do pisania)",
           btn_markdown: "konwertuj znaczniki na markdown",
-          btn_remove_formatting: "Usuń całe formatowanie",
-          btn_copy_all: "kopiuj wszystko",
-          btn_copy_formatted: "kopiuj sformatowany tekst",
           howto_step1: "Skopiuj sformatowany tekst skądkolwiek.",
           howto_step2_auto: "Otwórz tę stronę. Schowek zostanie wyczyszczony automatycznie.",
           howto_step2_click: "Otwórz tę stronę i wklej.",
           howto_step2_paste: "Dostęp do schowka jest zablokowany. Wklej tutaj.",
           howto_step3: "Wklej czysty tekst tam, gdzie go potrzebujesz.",
           msg_formatting_removed: "formatowanie usunięte",
-          msg_copied: "skopiowano do schowka",
-          msg_formatted_copied: "sformatowany tekst skopiowany",
-          msg_copy_failed: "kopiowanie nie powiodło się",
-          tagline_paste: "wklej",
-          tagline_clean: "wyczyść",
-          tagline_copy: "kopiuj",
-          tooltip_paste: "wklej sformatowany tekst",
-          tooltip_clean: "automatycznie usuwa formatowanie",
-          tooltip_copy: "natychmiast kopiuje do schowka",
           msg_cleaned_and_copied: "Wyczyszczono i skopiowano",
           msg_cleaned_copy_failed: "Wyczyszczono. Naciśnij Ctrl/Cmd+C, aby skopiować",
           msg_images_not_supported: "Obrazy nie są obsługiwane - wklej tylko tekst",
           tagline_text: "Skopiuj sformatowany tekst. Wklej czysty.",
-          help_keyboard_shortcuts: "Skróty klawiszowe:",
-          help_bold: "Pogrubienie",
-          help_italic: "Kursywa",
-          help_link: "Link",
-          help_code: "Kod",
-          help_headings: "Nagłówki",
-          help_indentation: "Wcięcie:",
-          help_indent: "Zwiększ wcięcie",
-          help_unindent: "Zmniejsz wcięcie",
-          help_links_title: "Linki:",
-          help_creates_hyperlink: "tworzy hiperłącze",
-          help_type: "Wpisz",
-          help_to_autopair: "aby automatycznie parować nawiasy",
-          help_wraps_selection: "owija zaznaczenie w link",
-          help_auto_lists: "Automatyczne listy:",
-          help_or: "lub",
-          help_for_bullets: "dla wypunktowań",
-          help_for_numbers: "dla numerów",
-          help_for_checkboxes: "dla pól wyboru",
-          help_for_quotes: "dla cytatów",
-          help_auto_pairing: "Automatyczne parowanie:",
-          help_auto_complete: "autouzupełnianie",
-          help_press: "Naciśnij",
-          help_in_lists: "na listach, aby kontynuować",
+          page_title: "Wklej bez formatowania",
+          aria_paste: "Wklej",
           footer_open_source: "Otwarte źródło od"
         },
         uk: {
-          page_subtitle: "приватний блокнот",
           meta_description: "мінімалістичний редактор з пріоритетом конфіденційності для використання як чернетка",
-          nav_subtitle: "блокнот",
-          tagline_fast: "миттєво",
-          tagline_private: "приватно",
-          tagline_calm: "спокійно",
-          tooltip_fast: "миттєве завантаження",
-          tooltip_private: "без логування, ніколи",
-          tooltip_calm: "без відволікань для високої концентрації",
           btn_font_sans: "Шрифт без засічок (чистий, сучасний)",
           btn_font_mono: "Моноширинний шрифт (код, друкарська машинка)",
           btn_markdown: "перетворити розмітку в markdown",
-          btn_remove_formatting: "Видалити все форматування",
-          btn_copy_all: "копіювати все",
-          btn_copy_formatted: "копіювати форматований текст",
           howto_step1: "Скопіюйте форматований текст звідки завгодно.",
           howto_step2_auto: "Відкрийте цю сторінку. Буфер обміну очищається автоматично.",
           howto_step2_click: "Відкрийте цю сторінку та вставте текст.",
           howto_step2_paste: "Доступ до буфера обміну заблоковано. Вставте текст сюди.",
           howto_step3: "Вставте чистий текст куди потрібно.",
           msg_formatting_removed: "форматування видалено",
-          msg_copied: "скопійовано в буфер обміну",
-          msg_formatted_copied: "форматований текст скопійовано",
-          msg_copy_failed: "помилка копіювання",
-          tagline_paste: "вставити",
-          tagline_clean: "очистити",
-          tagline_copy: "копіювати",
-          tooltip_paste: "вставити відформатований текст",
-          tooltip_clean: "автоматично видаляє форматування",
-          tooltip_copy: "миттєво копіює в буфер обміну",
           msg_cleaned_and_copied: "Очищено та скопійовано",
           msg_cleaned_copy_failed: "Очищено. Натисніть Ctrl/Cmd+C, щоб скопіювати",
           msg_images_not_supported: "Зображення не підтримуються - вставте лише текст",
           tagline_text: "Скопіюйте форматований текст. Вставте чистим.",
-          help_keyboard_shortcuts: "Гарячі клавіші:",
-          help_bold: "Жирний",
-          help_italic: "Курсив",
-          help_link: "Посилання",
-          help_code: "Код",
-          help_headings: "Заголовки",
-          help_indentation: "Відступ:",
-          help_indent: "Збільшити відступ",
-          help_unindent: "Зменшити відступ",
-          help_links_title: "Посилання:",
-          help_creates_hyperlink: "створює гіперпосилання",
-          help_type: "Введіть",
-          help_to_autopair: "для автоматичного спарювання дужок",
-          help_wraps_selection: "обертає виділення в посилання",
-          help_auto_lists: "Автоматичні списки:",
-          help_or: "або",
-          help_for_bullets: "для маркерів",
-          help_for_numbers: "для чисел",
-          help_for_checkboxes: "для прапорців",
-          help_for_quotes: "для цитат",
-          help_auto_pairing: "Автоспарювання:",
-          help_auto_complete: "автозаповнення",
-          help_press: "Натисніть",
-          help_in_lists: "у списках для продовження",
+          page_title: "Вставити без форматування",
+          aria_paste: "Вставити",
           footer_open_source: "Відкритий код від"
         },
         vi: {
-          page_subtitle: "sổ ghi chú riêng tư",
           meta_description: "trình soạn thảo tối giản ưu tiên quyền riêng tư để sử dụng làm nháp",
-          nav_subtitle: "sổ ghi chú",
-          tagline_fast: "tức thì",
-          tagline_private: "riêng tư",
-          tagline_calm: "yên tĩnh",
-          tooltip_fast: "tải tức thì",
-          tooltip_private: "không ghi nhật ký, bao giờ",
-          tooltip_calm: "không bị phân tâm để tập trung cao",
           btn_font_sans: "Phông chữ sans-serif (sạch, hiện đại)",
           btn_font_mono: "Phông chữ monospace (mã, máy đánh chữ)",
           btn_markdown: "chuyển đổi đánh dấu sang markdown",
-          btn_remove_formatting: "Xóa tất cả định dạng",
-          btn_copy_all: "sao chép tất cả",
-          btn_copy_formatted: "sao chép văn bản có định dạng",
           howto_step1: "Sao chép văn bản có định dạng từ bất kỳ đâu.",
           howto_step2_auto: "Mở trang này. Bộ nhớ tạm của bạn được làm sạch tự động.",
           howto_step2_click: "Mở trang này và dán.",
           howto_step2_paste: "Quyền truy cập bộ nhớ tạm bị chặn. Hãy dán vào đây.",
           howto_step3: "Dán văn bản sạch vào nơi bạn cần.",
           msg_formatting_removed: "đã xóa định dạng",
-          msg_copied: "đã sao chép vào clipboard",
-          msg_formatted_copied: "văn bản có định dạng đã được sao chép",
-          msg_copy_failed: "sao chép thất bại",
-          tagline_paste: "dán",
-          tagline_clean: "làm sạch",
-          tagline_copy: "sao chép",
-          tooltip_paste: "dán văn bản có định dạng",
-          tooltip_clean: "tự động xóa định dạng",
-          tooltip_copy: "sao chép ngay vào bộ nhớ tạm",
           msg_cleaned_and_copied: "Đã làm sạch và sao chép",
           msg_cleaned_copy_failed: "Đã làm sạch. Nhấn Ctrl/Cmd+C để sao chép",
           msg_images_not_supported: "Không hỗ trợ hình ảnh - chỉ dán văn bản",
           tagline_text: "Sao chép văn bản có định dạng. Dán sạch.",
-          help_keyboard_shortcuts: "Phím tắt:",
-          help_bold: "Đậm",
-          help_italic: "Nghiêng",
-          help_link: "Liên kết",
-          help_code: "Mã",
-          help_headings: "Tiêu đề",
-          help_indentation: "Thụt lề:",
-          help_indent: "Tăng thụt lề",
-          help_unindent: "Giảm thụt lề",
-          help_links_title: "Liên kết:",
-          help_creates_hyperlink: "tạo siêu liên kết",
-          help_type: "Gõ",
-          help_to_autopair: "để tự động ghép nối dấu ngoặc",
-          help_wraps_selection: "bao bọc vùng chọn trong liên kết",
-          help_auto_lists: "Danh sách tự động:",
-          help_or: "hoặc",
-          help_for_bullets: "cho dấu đầu dòng",
-          help_for_numbers: "cho số",
-          help_for_checkboxes: "cho hộp kiểm",
-          help_for_quotes: "cho trích dẫn",
-          help_auto_pairing: "Ghép nối tự động:",
-          help_auto_complete: "tự động hoàn thành",
-          help_press: "Nhấn",
-          help_in_lists: "trong danh sách để tiếp tục",
+          page_title: "Dán không định dạng",
+          aria_paste: "Dán",
           footer_open_source: "Mã nguồn mở bởi"
         },
         th: {
-          page_subtitle: "สมุดบันทึกส่วนตัว",
           meta_description: "โปรแกรมแก้ไขที่เน้นความเป็นส่วนตัวแบบมินิมัลสำหรับใช้เป็นร่าง",
-          nav_subtitle: "สมุดบันทึก",
-          tagline_fast: "ทันที",
-          tagline_private: "ส่วนตัว",
-          tagline_calm: "สงบ",
-          tooltip_fast: "โหลดทันที",
-          tooltip_private: "ไม่มีการบันทึก ไม่เคย",
-          tooltip_calm: "ไม่มีสิ่งรบกวนเพื่อการมีสมาธิสูง",
           btn_font_sans: "แบบอักษร Sans-serif (สะอาด ทันสมัย)",
           btn_font_mono: "แบบอักษร Monospace (โค้ด เครื่องพิมพ์ดีด)",
           btn_markdown: "แปลงมาร์กอัปเป็น markdown",
-          btn_remove_formatting: "ลบการจัดรูปแบบทั้งหมด",
-          btn_copy_all: "คัดลอกทั้งหมด",
-          btn_copy_formatted: "คัดลอกข้อความที่มีรูปแบบ",
           howto_step1: "คัดลอกข้อความที่มีการจัดรูปแบบจากที่ไหนก็ได้",
           howto_step2_auto: "เปิดหน้านี้ คลิปบอร์ดของคุณจะถูกทำความสะอาดโดยอัตโนมัติ",
           howto_step2_click: "เปิดหน้านี้แล้ววาง",
           howto_step2_paste: "การเข้าถึงคลิปบอร์ดถูกบล็อก ให้วางที่นี่แทน",
           howto_step3: "วางข้อความที่สะอาดแล้วในที่ที่คุณต้องการ",
           msg_formatting_removed: "ลบการจัดรูปแบบแล้ว",
-          msg_copied: "คัดลอกไปยังคลิปบอร์ดแล้ว",
-          msg_formatted_copied: "คัดลอกข้อความที่มีรูปแบบแล้ว",
-          msg_copy_failed: "คัดลอกล้มเหลว",
-          tagline_paste: "วาง",
-          tagline_clean: "ทำความสะอาด",
-          tagline_copy: "คัดลอก",
-          tooltip_paste: "วางข้อความที่มีการจัดรูปแบบ",
-          tooltip_clean: "ลบการจัดรูปแบบโดยอัตโนมัติ",
-          tooltip_copy: "คัดลอกไปยังคลิปบอร์ดทันที",
           msg_cleaned_and_copied: "ทำความสะอาดและคัดลอกแล้ว",
           msg_cleaned_copy_failed: "ทำความสะอาดแล้ว กด Ctrl/Cmd+C เพื่อคัดลอก",
           msg_images_not_supported: "ไม่รองรับรูปภาพ - วางเฉพาะข้อความ",
           tagline_text: "คัดลอกข้อความที่มีการจัดรูปแบบ แล้ววางแบบสะอาด",
-          help_keyboard_shortcuts: "แป้นพิมพ์ลัด:",
-          help_bold: "ตัวหนา",
-          help_italic: "ตัวเอียง",
-          help_link: "ลิงก์",
-          help_code: "โค้ด",
-          help_headings: "หัวเรื่อง",
-          help_indentation: "การเยื้อง:",
-          help_indent: "เพิ่มการเยื้อง",
-          help_unindent: "ลดการเยื้อง",
-          help_links_title: "ลิงก์:",
-          help_creates_hyperlink: "สร้างไฮเปอร์ลิงก์",
-          help_type: "พิมพ์",
-          help_to_autopair: "เพื่อจับคู่วงเล็บอัตโนมัติ",
-          help_wraps_selection: "ห่อส่วนที่เลือกในลิงก์",
-          help_auto_lists: "รายการอัตโนมัติ:",
-          help_or: "หรือ",
-          help_for_bullets: "สำหรับจุดหัวข้อย่อย",
-          help_for_numbers: "สำหรับตัวเลข",
-          help_for_checkboxes: "สำหรับช่องทำเครื่องหมาย",
-          help_for_quotes: "สำหรับคำพูด",
-          help_auto_pairing: "การจับคู่อัตโนมัติ:",
-          help_auto_complete: "เติมอัตโนมัติ",
-          help_press: "กด",
-          help_in_lists: "ในรายการเพื่อดำเนินการต่อ",
+          page_title: "วางโดยไม่มีการจัดรูปแบบ",
+          aria_paste: "วาง",
           footer_open_source: "โอเพนซอร์สโดย"
         },
         id: {
-          page_subtitle: "notepad pribadi",
           meta_description: "editor minimalis yang mengutamakan privasi untuk digunakan sebagai scratchpad",
-          nav_subtitle: "notepad",
-          tagline_fast: "instan",
-          tagline_private: "pribadi",
-          tagline_calm: "tenang",
-          tooltip_fast: "loading instan",
-          tooltip_private: "tidak ada logging, tidak pernah",
-          tooltip_calm: "bebas gangguan untuk fokus tinggi",
           btn_font_sans: "Font sans-serif (bersih, modern)",
           btn_font_mono: "Font monospace (kode, mesin tik)",
           btn_markdown: "konversi markup ke markdown",
-          btn_remove_formatting: "Hapus semua pemformatan",
-          btn_copy_all: "salin semua",
-          btn_copy_formatted: "salin teks berformat",
           howto_step1: "Salin teks berformat dari mana saja.",
           howto_step2_auto: "Buka halaman ini. Papan klip Anda dibersihkan secara otomatis.",
           howto_step2_click: "Buka halaman ini dan tempel.",
           howto_step2_paste: "Akses papan klip diblokir. Tempel di sini.",
           howto_step3: "Tempel teks bersih ke tempat yang Anda perlukan.",
           msg_formatting_removed: "pemformatan dihapus",
-          msg_copied: "disalin ke clipboard",
-          msg_formatted_copied: "teks berformat disalin",
-          msg_copy_failed: "gagal menyalin",
-          tagline_paste: "tempel",
-          tagline_clean: "bersihkan",
-          tagline_copy: "salin",
-          tooltip_paste: "tempel teks berformat",
-          tooltip_clean: "menghapus pemformatan secara otomatis",
-          tooltip_copy: "langsung menyalin ke papan klip",
           msg_cleaned_and_copied: "Dibersihkan & disalin",
           msg_cleaned_copy_failed: "Dibersihkan. Tekan Ctrl/Cmd+C untuk menyalin",
           msg_images_not_supported: "Gambar tidak didukung - tempel teks saja",
           tagline_text: "Salin teks berformat. Tempel dalam keadaan bersih.",
-          help_keyboard_shortcuts: "Pintasan Keyboard:",
-          help_bold: "Tebal",
-          help_italic: "Miring",
-          help_link: "Tautan",
-          help_code: "Kode",
-          help_headings: "Judul",
-          help_indentation: "Indentasi:",
-          help_indent: "Indentasi",
-          help_unindent: "Hapus indentasi",
-          help_links_title: "Tautan:",
-          help_creates_hyperlink: "membuat hyperlink",
-          help_type: "Ketik",
-          help_to_autopair: "untuk memasangkan tanda kurung otomatis",
-          help_wraps_selection: "membungkus seleksi dalam tautan",
-          help_auto_lists: "Daftar Otomatis:",
-          help_or: "atau",
-          help_for_bullets: "untuk poin",
-          help_for_numbers: "untuk angka",
-          help_for_checkboxes: "untuk kotak centang",
-          help_for_quotes: "untuk kutipan",
-          help_auto_pairing: "Pemasangan Otomatis:",
-          help_auto_complete: "pelengkapan otomatis",
-          help_press: "Tekan",
-          help_in_lists: "dalam daftar untuk melanjutkan",
+          page_title: "Tempel Tanpa Format",
+          aria_paste: "Tempel",
           footer_open_source: "Sumber terbuka oleh"
         },
         nl: {
-          page_subtitle: "privé notitieblok",
           meta_description: "minimalistische privacy-first editor voor gebruik als kladblok",
-          nav_subtitle: "notitieblok",
-          tagline_fast: "direct",
-          tagline_private: "privé",
-          tagline_calm: "rustig",
-          tooltip_fast: "instant laden",
-          tooltip_private: "geen logging, nooit",
-          tooltip_calm: "afleidingsvrij voor hoge focus",
           btn_font_sans: "Sans-serif lettertype (schoon, modern)",
           btn_font_mono: "Monospace lettertype (code, typemachine)",
           btn_markdown: "converteer opmaak naar markdown",
-          btn_remove_formatting: "Verwijder alle opmaak",
-          btn_copy_all: "kopieer alles",
-          btn_copy_formatted: "kopieer opgemaakte tekst",
           howto_step1: "Kopieer opgemaakte tekst van overal.",
           howto_step2_auto: "Open deze pagina. Je klembord wordt automatisch opgeschoond.",
           howto_step2_click: "Open deze pagina en plak.",
           howto_step2_paste: "Toegang tot het klembord is geblokkeerd. Plak hier.",
           howto_step3: "Plak de schone tekst waar je hem nodig hebt.",
           msg_formatting_removed: "opmaak verwijderd",
-          msg_copied: "gekopieerd naar klembord",
-          msg_formatted_copied: "opgemaakte tekst gekopieerd",
-          msg_copy_failed: "kopiëren mislukt",
-          tagline_paste: "plakken",
-          tagline_clean: "opschonen",
-          tagline_copy: "kopiëren",
-          tooltip_paste: "opgemaakte tekst plakken",
-          tooltip_clean: "verwijdert automatisch opmaak",
-          tooltip_copy: "kopieert direct naar klembord",
           msg_cleaned_and_copied: "Opgeschoond en gekopieerd",
           msg_cleaned_copy_failed: "Opgeschoond. Druk op Ctrl/Cmd+C om te kopiëren",
           msg_images_not_supported: "Afbeeldingen worden niet ondersteund - plak alleen tekst",
           tagline_text: "Kopieer opgemaakte tekst. Plak het schoon.",
-          help_keyboard_shortcuts: "Sneltoetsen:",
-          help_bold: "Vet",
-          help_italic: "Cursief",
-          help_link: "Link",
-          help_code: "Code",
-          help_headings: "Koppen",
-          help_indentation: "Inspringing:",
-          help_indent: "Inspringen",
-          help_unindent: "Inspringen ongedaan maken",
-          help_links_title: "Links:",
-          help_creates_hyperlink: "maakt een hyperlink",
-          help_type: "Typ",
-          help_to_autopair: "om haakjes automatisch te koppelen",
-          help_wraps_selection: "omhult selectie in link",
-          help_auto_lists: "Automatische lijsten:",
-          help_or: "of",
-          help_for_bullets: "voor opsommingstekens",
-          help_for_numbers: "voor nummers",
-          help_for_checkboxes: "voor selectievakjes",
-          help_for_quotes: "voor citaten",
-          help_auto_pairing: "Automatisch koppelen:",
-          help_auto_complete: "automatisch aanvullen",
-          help_press: "Druk op",
-          help_in_lists: "in lijsten om door te gaan",
+          page_title: "Plakken zonder opmaak",
+          aria_paste: "Plakken",
           footer_open_source: "Open source door"
         },
         ur: {
-          page_subtitle: "نجی نوٹ پیڈ",
           meta_description: "سکریچ پیڈ کے طور پر استعمال کے لیے کم سے کم رازداری پہلے ایڈیٹر",
-          nav_subtitle: "نوٹ پیڈ",
-          tagline_fast: "فوری",
-          tagline_private: "نجی",
-          tagline_calm: "پرسکون",
-          tooltip_fast: "فوری لوڈنگ",
-          tooltip_private: "کوئی لاگنگ نہیں، کبھی نہیں",
-          tooltip_calm: "اعلی فوکس کے لیے خلفشار سے پاک",
           btn_font_sans: "سینس سیرف فونٹ (صاف، جدید)",
           btn_font_mono: "مونوسپیس فونٹ (کوڈ، ٹائپ رائٹر)",
           btn_markdown: "مارک اپ کو مارکڈاؤن میں تبدیل کریں",
-          btn_remove_formatting: "تمام فارمیٹنگ ہٹائیں",
-          btn_copy_all: "سب کاپی کریں",
-          btn_copy_formatted: "فارمیٹ شدہ متن کاپی کریں",
           howto_step1: "کہیں سے بھی فارمیٹ شدہ متن کاپی کریں۔",
           howto_step2_auto: "یہ صفحہ کھولیں۔ آپ کا کلپ بورڈ خود بخود صاف ہو جاتا ہے۔",
           howto_step2_click: "یہ صفحہ کھولیں اور پیسٹ کریں۔",
           howto_step2_paste: "کلپ بورڈ تک رسائی بلاک ہے۔ اس کے بجائے یہاں پیسٹ کریں۔",
           howto_step3: "صاف متن جہاں ضرورت ہو وہاں پیسٹ کریں۔",
           msg_formatting_removed: "فارمیٹنگ ہٹا دی گئی",
-          msg_copied: "کلپ بورڈ میں کاپی کیا گیا",
-          msg_formatted_copied: "فارمیٹ شدہ متن کاپی کیا گیا",
-          msg_copy_failed: "کاپی ناکام",
-          tagline_paste: "پیسٹ",
-          tagline_clean: "صاف",
-          tagline_copy: "کاپی",
-          tooltip_paste: "فارمیٹ شدہ متن پیسٹ کریں",
-          tooltip_clean: "خود بخود فارمیٹنگ ہٹاتا ہے",
-          tooltip_copy: "فوری طور پر کلپ بورڈ میں کاپی کرتا ہے",
           msg_cleaned_and_copied: "صاف ہو گیا اور کاپی ہو گیا",
           msg_cleaned_copy_failed: "صاف ہو گیا۔ کاپی کرنے کے لیے Ctrl/Cmd+C دبائیں",
           msg_images_not_supported: "تصاویر معاون نہیں - صرف متن پیسٹ کریں",
           tagline_text: "فارمیٹ شدہ متن کاپی کریں۔ صاف پیسٹ کریں۔",
-          help_keyboard_shortcuts: "کی بورڈ شارٹ کٹس:",
-          help_bold: "بولڈ",
-          help_italic: "ترچھا",
-          help_link: "لنک",
-          help_code: "کوڈ",
-          help_headings: "عنوانات",
-          help_indentation: "انڈینٹیشن:",
-          help_indent: "انڈینٹ",
-          help_unindent: "ان انڈینٹ",
-          help_links_title: "لنکس:",
-          help_creates_hyperlink: "ہائپر لنک بناتا ہے",
-          help_type: "ٹائپ کریں",
-          help_to_autopair: "بریکٹ خودکار جوڑے کے لیے",
-          help_wraps_selection: "انتخاب کو لنک میں لپیٹتا ہے",
-          help_auto_lists: "خودکار فہرستیں:",
-          help_or: "یا",
-          help_for_bullets: "بلٹس کے لیے",
-          help_for_numbers: "نمبروں کے لیے",
-          help_for_checkboxes: "چیک باکسز کے لیے",
-          help_for_quotes: "اقتباسات کے لیے",
-          help_auto_pairing: "خودکار جوڑا بنانا:",
-          help_auto_complete: "خودکار مکمل",
-          help_press: "دبائیں",
-          help_in_lists: "فہرستوں میں جاری رکھنے کے لیے",
+          page_title: "بغیر فارمیٹنگ کے پیسٹ کریں",
+          aria_paste: "پیسٹ کریں",
           footer_open_source: "اوپن سورس"
         },
         sw: {
-          page_subtitle: "kumbukumbu binafsi",
           meta_description: "hariri ya kidogo inayotanguliza faragha kwa matumizi kama scratchpad",
-          nav_subtitle: "kumbukumbu",
-          tagline_fast: "papo hapo",
-          tagline_private: "binafsi",
-          tagline_calm: "tulivu",
-          tooltip_fast: "kupakia papo hapo",
-          tooltip_private: "hakuna kuingia, kamwe",
-          tooltip_calm: "bila usumbufu kwa mkusanyiko wa juu",
           btn_font_sans: "Fonti ya sans-serif (safi, ya kisasa)",
           btn_font_mono: "Fonti ya monospace (msimbo, mashine ya kuandika)",
           btn_markdown: "badilisha alama hadi markdown",
-          btn_remove_formatting: "Ondoa muundo wote",
-          btn_copy_all: "nakili yote",
-          btn_copy_formatted: "nakili maandishi yaliyoumbizwa",
           howto_step1: "Nakili maandishi yenye muundo kutoka mahali popote.",
           howto_step2_auto: "Fungua ukurasa huu. Ubao wako wa kunakili husafishwa kiotomatiki.",
           howto_step2_click: "Fungua ukurasa huu na ubandike.",
           howto_step2_paste: "Ufikiaji wa ubao wa kunakili umezuiwa. Bandika hapa.",
           howto_step3: "Bandika maandishi safi popote unapoyahitaji.",
           msg_formatting_removed: "muundo umeondolewa",
-          msg_copied: "imenakiliwa kwenye ubao wa kunakili",
-          msg_formatted_copied: "maandishi yaliyoumbizwa yamenakiliwa",
-          msg_copy_failed: "kunakili kumeshindwa",
-          tagline_paste: "bandika",
-          tagline_clean: "safisha",
-          tagline_copy: "nakili",
-          tooltip_paste: "bandika maandishi yenye uumbizaji",
-          tooltip_clean: "huondoa uumbizaji kiotomatiki",
-          tooltip_copy: "hunakili haraka kwenye ubao wa kunakili",
           msg_cleaned_and_copied: "Imesafishwa na kunakiliwa",
           msg_cleaned_copy_failed: "Imesafishwa. Bonyeza Ctrl/Cmd+C kunakili",
           msg_images_not_supported: "Picha hazitumiki - bandika maandishi tu",
           tagline_text: "Nakili maandishi yenye muundo. Bandika yakiwa safi.",
-          help_keyboard_shortcuts: "Njia za mkato za kibodi:",
-          help_bold: "Nene",
-          help_italic: "Italiki",
-          help_link: "Kiungo",
-          help_code: "Msimbo",
-          help_headings: "Vichwa",
-          help_indentation: "Uingizaji:",
-          help_indent: "Weka indent",
-          help_unindent: "Ondoa indent",
-          help_links_title: "Viungo:",
-          help_creates_hyperlink: "huunda kiungo cha hyperlink",
-          help_type: "Andika",
-          help_to_autopair: "ili kuoanisha mabano kiotomatiki",
-          help_wraps_selection: "huzungushia uteuzi kwenye kiungo",
-          help_auto_lists: "Orodha za kiotomatiki:",
-          help_or: "au",
-          help_for_bullets: "kwa alama za risasi",
-          help_for_numbers: "kwa nambari",
-          help_for_checkboxes: "kwa masanduku ya kuangalia",
-          help_for_quotes: "kwa nukuu",
-          help_auto_pairing: "Kuoanisha kiotomatiki:",
-          help_auto_complete: "kukamilisha kiotomatiki",
-          help_press: "Bonyeza",
-          help_in_lists: "katika orodha ili kuendelea",
+          page_title: "Bandika Bila Muundo",
+          aria_paste: "Bandika",
           footer_open_source: "Chanzo huru na"
         },
         mr: {
-          page_subtitle: "खाजगी नोटपॅड",
           meta_description: "स्क्रॅचपॅड म्हणून वापरण्यासाठी किमान गोपनीयता-प्रथम संपादक",
-          nav_subtitle: "नोटपॅड",
-          tagline_fast: "तत्काळ",
-          tagline_private: "खाजगी",
-          tagline_calm: "शांत",
-          tooltip_fast: "त्वरित लोडिंग",
-          tooltip_private: "लॉगिंग नाही, कधीही नाही",
-          tooltip_calm: "उच्च फोकससाठी विचलितपणा मुक्त",
           btn_font_sans: "सॅन्स-सेरिफ फॉन्ट (स्वच्छ, आधुनिक)",
           btn_font_mono: "मोनोस्पेस फॉन्ट (कोड, टाइपरायटर)",
           btn_markdown: "मार्कअपला मार्कडाउनमध्ये रूपांतरित करा",
-          btn_remove_formatting: "सर्व स्वरूपन काढा",
-          btn_copy_all: "सर्व कॉपी करा",
-          btn_copy_formatted: "स्वरूपित मजकूर कॉपी करा",
           howto_step1: "कुठूनही फॉरमॅट केलेला मजकूर कॉपी करा.",
           howto_step2_auto: "हे पेज उघडा. तुमचा क्लिपबोर्ड आपोआप स्वच्छ होतो.",
           howto_step2_click: "हे पेज उघडा आणि पेस्ट करा.",
           howto_step2_paste: "क्लिपबोर्ड प्रवेश अवरोधित आहे. त्याऐवजी येथे पेस्ट करा.",
           howto_step3: "स्वच्छ मजकूर हवा तेथे पेस्ट करा.",
           msg_formatting_removed: "स्वरूपन काढले",
-          msg_copied: "क्लिपबोर्डवर कॉपी केले",
-          msg_formatted_copied: "स्वरूपित मजकूर कॉपी केला",
-          msg_copy_failed: "कॉपी अयशस्वी",
-          tagline_paste: "पेस्ट",
-          tagline_clean: "स्वच्छ",
-          tagline_copy: "कॉपी",
-          tooltip_paste: "स्वरूपित मजकूर पेस्ट करा",
-          tooltip_clean: "आपोआप स्वरूपण काढते",
-          tooltip_copy: "क्लिपबोर्डवर त्वरित कॉपी करते",
           msg_cleaned_and_copied: "स्वच्छ केले आणि कॉपी केले",
           msg_cleaned_copy_failed: "स्वच्छ केले. कॉपी करण्यासाठी Ctrl/Cmd+C दाबा",
           msg_images_not_supported: "प्रतिमा समर्थित नाहीत - फक्त मजकूर पेस्ट करा",
           tagline_text: "फॉरमॅट केलेला मजकूर कॉपी करा. स्वच्छ पेस्ट करा.",
-          help_keyboard_shortcuts: "कीबोर्ड शॉर्टकट:",
-          help_bold: "ठळक",
-          help_italic: "तिरकी",
-          help_link: "दुवा",
-          help_code: "कोड",
-          help_headings: "शीर्षके",
-          help_indentation: "इंडेंटेशन:",
-          help_indent: "इंडेंट",
-          help_unindent: "अनइंडेंट",
-          help_links_title: "दुवे:",
-          help_creates_hyperlink: "हायपरलिंक तयार करते",
-          help_type: "टाइप करा",
-          help_to_autopair: "ब्रॅकेट्स स्वयं-जोड्यासाठी",
-          help_wraps_selection: "निवडलेले दुव्यामध्ये गुंडाळते",
-          help_auto_lists: "स्वयं-यादी:",
-          help_or: "किंवा",
-          help_for_bullets: "बुलेटसाठी",
-          help_for_numbers: "संख्यांसाठी",
-          help_for_checkboxes: "चेकबॉक्ससाठी",
-          help_for_quotes: "उद्धरणांसाठी",
-          help_auto_pairing: "स्वयं-जोडणी:",
-          help_auto_complete: "स्वयं-पूर्ण",
-          help_press: "दाबा",
-          help_in_lists: "यादीमध्ये सुरू ठेवण्यासाठी",
+          page_title: "फॉरमॅटिंगशिवाय पेस्ट करा",
+          aria_paste: "पेस्ट करा",
           footer_open_source: "ओपन सोर्स द्वारे"
         },
         te: {
-          page_subtitle: "ప్రైవేట్ నోట్‌ప్యాడ్",
           meta_description: "స్క్రాచ్‌ప్యాడ్‌గా ఉపయోగం కోసం కనిష్ట గోప్యత-మొదటి సంపాదకి",
-          nav_subtitle: "నోట్‌ప్యాడ్",
-          tagline_fast: "తక్షణ",
-          tagline_private: "ప్రైవేట్",
-          tagline_calm: "ప్రశాంతమైన",
-          tooltip_fast: "తక్షణ లోడింగ్",
-          tooltip_private: "లాగింగ్ లేదు, ఎప్పుడూ",
-          tooltip_calm: "అధిక ఫోకస్ కోసం పరధ్యానం లేని",
           btn_font_sans: "సాన్స్-సెరిఫ్ ఫాంట్ (శుభ్రమైన, ఆధునిక)",
           btn_font_mono: "మోనోస్పేస్ ఫాంట్ (కోడ్, టైప్‌రైటర్)",
           btn_markdown: "మార్కప్‌ను మార్క్‌డౌన్‌గా మార్చండి",
-          btn_remove_formatting: "అన్ని ఫార్మాటింగ్‌ను తొలగించండి",
-          btn_copy_all: "అన్నీ కాపీ చేయండి",
-          btn_copy_formatted: "ఫార్మాట్ చేసిన టెక్స్ట్‌ను కాపీ చేయండి",
           howto_step1: "ఎక్కడినుంచైనా ఫార్మాట్ చేసిన టెక్స్ట్ కాపీ చేయండి.",
           howto_step2_auto: "ఈ పేజీని తెరవండి. మీ క్లిప్‌బోర్డ్ ఆటోమేటిక్‌గా శుభ్రం అవుతుంది.",
           howto_step2_click: "ఈ పేజీని తెరిచి పేస్ట్ చేయండి.",
           howto_step2_paste: "క్లిప్‌బోర్డ్ యాక్సెస్ బ్లాక్ చేయబడింది. బదులుగా ఇక్కడ పేస్ట్ చేయండి.",
           howto_step3: "శుభ్రమైన టెక్స్ట్‌ను మీకు కావలసిన చోట పేస్ట్ చేయండి.",
           msg_formatting_removed: "ఫార్మాటింగ్ తొలగించబడింది",
-          msg_copied: "క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
-          msg_formatted_copied: "ఫార్మాట్ చేసిన టెక్స్ట్ కాపీ చేయబడింది",
-          msg_copy_failed: "కాపీ విఫలమైంది",
-          tagline_paste: "పేస్ట్",
-          tagline_clean: "శుభ్రం",
-          tagline_copy: "కాపీ",
-          tooltip_paste: "ఫార్మాట్ చేసిన టెక్స్ట్ పేస్ట్ చేయండి",
-          tooltip_clean: "స్వయంచాలకంగా ఫార్మాటింగ్ తొలగిస్తుంది",
-          tooltip_copy: "వెంటనే క్లిప్‌బోర్డ్‌కు కాపీ చేస్తుంది",
           msg_cleaned_and_copied: "శుభ్రం చేసి కాపీ చేయబడింది",
           msg_cleaned_copy_failed: "శుభ్రం చేయబడింది. కాపీ చేయడానికి Ctrl/Cmd+C నొక్కండి",
           msg_images_not_supported: "చిత్రాలు మద్దతు లేదు - టెక్స్ట్ మాత్రమే పేస్ట్ చేయండి",
           tagline_text: "ఫార్మాట్ చేసిన టెక్స్ట్ కాపీ చేయండి. శుభ్రంగా పేస్ట్ చేయండి.",
-          help_keyboard_shortcuts: "కీబోర్డ్ షార్ట్‌కట్స్:",
-          help_bold: "బోల్డ్",
-          help_italic: "ఇటాలిక్",
-          help_link: "లింక్",
-          help_code: "కోడ్",
-          help_headings: "శీర్షికలు",
-          help_indentation: "ఇండెంటేషన్:",
-          help_indent: "ఇండెంట్",
-          help_unindent: "అనిండెంట్",
-          help_links_title: "లింక్లు:",
-          help_creates_hyperlink: "హైపర్‌లింక్‌ను సృష్టిస్తుంది",
-          help_type: "టైప్ చేయండి",
-          help_to_autopair: "బ్రాకెట్‌లను ఆటో-పెయిర్ చేయడానికి",
-          help_wraps_selection: "ఎంపికను లింక్‌లో చుట్టుతుంది",
-          help_auto_lists: "ఆటో-జాబితాలు:",
-          help_or: "లేదా",
-          help_for_bullets: "బుల్లెట్ల కోసం",
-          help_for_numbers: "సంఖ్యల కోసం",
-          help_for_checkboxes: "చెక్‌బాక్స్‌ల కోసం",
-          help_for_quotes: "కోట్స్ కోసం",
-          help_auto_pairing: "ఆటో-పెయిరింగ్:",
-          help_auto_complete: "ఆటో-పూర్తి",
-          help_press: "నొక్కండి",
-          help_in_lists: "కొనసాగించడానికి జాబితాలలో",
+          page_title: "ఫార్మాటింగ్ లేకుండా పేస్ట్ చేయండి",
+          aria_paste: "పేస్ట్ చేయండి",
           footer_open_source: "ఓపెన్ సోర్స్ ద్వారా"
         },
         ta: {
-          page_subtitle: "தனிப்பட்ட குறிப்பேடு",
           meta_description: "ஸ்க்ராட்ச்பேடாக பயன்படுத்த குறைந்தபட்ச தனியுரிமை-முதல் எடிட்டர்",
-          nav_subtitle: "குறிப்பேடு",
-          tagline_fast: "உடனடி",
-          tagline_private: "தனிப்பட்ட",
-          tagline_calm: "அமைதியான",
-          tooltip_fast: "உடனடி ஏற்றுதல்",
-          tooltip_private: "பதிவு இல்லை, எப்போதும் இல்லை",
-          tooltip_calm: "உயர் கவனத்திற்கான கவனச்சிதறல் இல்லாத",
           btn_font_sans: "சான்ஸ்-செரிஃப் எழுத்துரு (சுத்தமான, நவீன)",
           btn_font_mono: "மோனோஸ்பேஸ் எழுத்துரு (குறியீடு, தட்டச்சுப்பொறி)",
           btn_markdown: "மார்க்அப்பை மார்க்டவுனாக மாற்றவும்",
-          btn_remove_formatting: "அனைத்து வடிவமைப்பையும் அகற்று",
-          btn_copy_all: "அனைத்தையும் நகலெடு",
-          btn_copy_formatted: "வடிவமைக்கப்பட்ட உரையை நகலெடு",
           howto_step1: "எங்கிருந்தும் வடிவமைக்கப்பட்ட உரையை நகலெடுக்கவும்.",
           howto_step2_auto: "இந்தப் பக்கத்தைத் திறக்கவும். உங்கள் கிளிப்போர்டு தானாகவே சுத்தம் செய்யப்படும்.",
           howto_step2_click: "இந்தப் பக்கத்தைத் திறந்து ஒட்டவும்.",
           howto_step2_paste: "கிளிப்போர்டு அணுகல் தடுக்கப்பட்டுள்ளது. அதற்குப் பதிலாக இங்கே ஒட்டவும்.",
           howto_step3: "சுத்தமான உரையை தேவையான இடத்தில் ஒட்டவும்.",
           msg_formatting_removed: "வடிவமைப்பு அகற்றப்பட்டது",
-          msg_copied: "கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது",
-          msg_formatted_copied: "வடிவமைக்கப்பட்ட உரை நகலெடுக்கப்பட்டது",
-          msg_copy_failed: "நகலெடுத்தல் தோல்வியடைந்தது",
-          tagline_paste: "ஒட்டு",
-          tagline_clean: "சுத்தம்",
-          tagline_copy: "நகல்",
-          tooltip_paste: "வடிவமைக்கப்பட்ட உரையை ஒட்டுங்கள்",
-          tooltip_clean: "தானாக வடிவமைப்பை நீக்குகிறது",
-          tooltip_copy: "உடனடியாக கிளிப்போர்டில் நகலெடுக்கிறது",
           msg_cleaned_and_copied: "சுத்தம் செய்து நகலெடுக்கப்பட்டது",
           msg_cleaned_copy_failed: "சுத்தம் செய்யப்பட்டது. நகலெடுக்க Ctrl/Cmd+C அழுத்தவும்",
           msg_images_not_supported: "படங்கள் ஆதரிக்கப்படவில்லை - உரை மட்டும் ஒட்டுங்கள்",
           tagline_text: "வடிவமைக்கப்பட்ட உரையை நகலெடுக்கவும். சுத்தமாக ஒட்டவும்.",
-          help_keyboard_shortcuts: "விசைப்பலகை குறுக்குவழிகள்:",
-          help_bold: "தடித்த",
-          help_italic: "சாய்வு",
-          help_link: "இணைப்பு",
-          help_code: "குறியீடு",
-          help_headings: "தலைப்புகள்",
-          help_indentation: "உள்தள்ளல்:",
-          help_indent: "உள்தள்ளு",
-          help_unindent: "உள்தள்ளலை நீக்கு",
-          help_links_title: "இணைப்புகள்:",
-          help_creates_hyperlink: "ஹைப்பர்லிங்க் உருவாக்குகிறது",
-          help_type: "தட்டச்சு செய்யவும்",
-          help_to_autopair: "அடைப்புக்குறிகளை தானாக இணைக்க",
-          help_wraps_selection: "தேர்வை இணைப்பில் சுற்றுகிறது",
-          help_auto_lists: "தானியங்கு பட்டியல்கள்:",
-          help_or: "அல்லது",
-          help_for_bullets: "புள்ளிகளுக்கு",
-          help_for_numbers: "எண்களுக்கு",
-          help_for_checkboxes: "தேர்வுப்பெட்டிகளுக்கு",
-          help_for_quotes: "மேற்கோள்களுக்கு",
-          help_auto_pairing: "தானியங்கு இணைத்தல்:",
-          help_auto_complete: "தானாக முடிக்கவும்",
-          help_press: "அழுத்தவும்",
-          help_in_lists: "தொடர பட்டியல்களில்",
+          page_title: "வடிவமைப்பின்றி ஒட்டவும்",
+          aria_paste: "ஒட்டவும்",
           footer_open_source: "திறந்த மூல"
         },
         gu: {
-          page_subtitle: "ખાનગી નોટપેડ",
           meta_description: "સ્ક્રેચપેડ તરીકે ઉપયોગ માટે ન્યૂનતમ ગોપનીયતા-પ્રથમ સંપાદક",
-          nav_subtitle: "નોટપેડ",
-          tagline_fast: "તાત્કાલિક",
-          tagline_private: "ખાનગી",
-          tagline_calm: "શાંત",
-          tooltip_fast: "તાત્કાલિક લોડિંગ",
-          tooltip_private: "લોગિંગ નહીં, ક્યારેય નહીં",
-          tooltip_calm: "ઉચ્ચ ફોકસ માટે વિક્ષેપ મુક્ત",
           btn_font_sans: "સાન્સ-સેરિફ ફોન્ટ (સ્વચ્છ, આધુનિક)",
           btn_font_mono: "મોનોસ્પેસ ફોન્ટ (કોડ, ટાઈપરાઈટર)",
           btn_markdown: "માર્કઅપને માર્કડાઉનમાં રૂપાંતરિત કરો",
-          btn_remove_formatting: "બધું ફોર્મેટિંગ દૂર કરો",
-          btn_copy_all: "બધું કોપી કરો",
-          btn_copy_formatted: "ફોર્મેટ થયેલ ટેક્સ્ટ કોપી કરો",
           howto_step1: "ગમે ત્યાંથી ફોર્મેટ કરેલ ટેક્સ્ટ કોપી કરો.",
           howto_step2_auto: "આ પેજ ખોલો. તમારું ક્લિપબોર્ડ આપમેળે સાફ થાય છે.",
           howto_step2_click: "આ પેજ ખોલો અને પેસ્ટ કરો.",
           howto_step2_paste: "ક્લિપબોર્ડ એક્સેસ બ્લૉક છે. તેના બદલે અહીં પેસ્ટ કરો.",
           howto_step3: "સ્વચ્છ ટેક્સ્ટ જ્યાં જોઈએ ત્યાં પેસ્ટ કરો.",
           msg_formatting_removed: "ફોર્મેટિંગ દૂર કર્યું",
-          msg_copied: "ક્લિપબોર્ડમાં કોપી કર્યું",
-          msg_formatted_copied: "ફોર્મેટ થયેલ ટેક્સ્ટ કોપી કર્યું",
-          msg_copy_failed: "કોપી નિષ્ફળ",
-          tagline_paste: "પેસ્ટ",
-          tagline_clean: "સાફ",
-          tagline_copy: "કૉપિ",
-          tooltip_paste: "ફોર્મેટ કરેલ ટેક્સ્ટ પેસ્ટ કરો",
-          tooltip_clean: "આપોઆપ ફોર્મેટિંગ દૂર કરે છે",
-          tooltip_copy: "ક્લિપબોર્ડ પર તરત કૉપિ કરે છે",
           msg_cleaned_and_copied: "સાફ કર્યું અને કોપી કર્યું",
           msg_cleaned_copy_failed: "સાફ કર્યું. કોપી કરવા Ctrl/Cmd+C દબાવો",
           msg_images_not_supported: "છબીઓ સમર્થિત નથી - ફક્ત ટેક્સ્ટ પેસ્ટ કરો",
           tagline_text: "ફોર્મેટ કરેલ ટેક્સ્ટ કોપી કરો. સ્વચ્છ પેસ્ટ કરો.",
-          help_keyboard_shortcuts: "કીબોર્ડ શોર્ટકટ્સ:",
-          help_bold: "બોલ્ડ",
-          help_italic: "ઇટાલિક",
-          help_link: "લિંક",
-          help_code: "કોડ",
-          help_headings: "શીર્ષકો",
-          help_indentation: "ઇન્ડેન્ટેશન:",
-          help_indent: "ઇન્ડેન્ટ",
-          help_unindent: "અનઇન્ડેન્ટ",
-          help_links_title: "લિંક્સ:",
-          help_creates_hyperlink: "હાયપરલિંક બનાવે છે",
-          help_type: "ટાઇપ કરો",
-          help_to_autopair: "બ્રેકેટ્સને ઓટો-પેર કરવા માટે",
-          help_wraps_selection: "પસંદગીને લિંકમાં લપેટે છે",
-          help_auto_lists: "ઓટો-લિસ્ટ્સ:",
-          help_or: "અથવા",
-          help_for_bullets: "બુલેટ્સ માટે",
-          help_for_numbers: "નંબરો માટે",
-          help_for_checkboxes: "ચેકબોક્સ માટે",
-          help_for_quotes: "ક્વોટ્સ માટે",
-          help_auto_pairing: "ઓટો-પેરિંગ:",
-          help_auto_complete: "ઓટો-પૂર્ણ",
-          help_press: "દબાવો",
-          help_in_lists: "ચાલુ રાખવા માટે સૂચિમાં",
+          page_title: "ફોર્મેટિંગ વિના પેસ્ટ કરો",
+          aria_paste: "પેસ્ટ કરો",
           footer_open_source: "ઓપન સોર્સ દ્વારા"
         },
         fa: {
-          page_subtitle: "دفترچه یادداشت خصوصی",
           meta_description: "ویرایشگر حداقلی با اولویت حریم خصوصی برای استفاده به عنوان یادداشت",
-          nav_subtitle: "دفترچه یادداشت",
-          tagline_fast: "فوری",
-          tagline_private: "خصوصی",
-          tagline_calm: "آرام",
-          tooltip_fast: "بارگذاری فوری",
-          tooltip_private: "بدون ثبت، هرگز",
-          tooltip_calm: "بدون حواس‌پرتی برای تمرکز بالا",
           btn_font_sans: "فونت سن‌سریف (تمیز، مدرن)",
           btn_font_mono: "فونت مونواسپیس (کد، ماشین تحریر)",
           btn_markdown: "تبدیل نشانه‌گذاری به مارک‌داون",
-          btn_remove_formatting: "حذف همه قالب‌بندی",
-          btn_copy_all: "کپی همه",
-          btn_copy_formatted: "کپی متن قالب‌بندی شده",
           howto_step1: "متن قالب‌بندی‌شده را از هرجا کپی کنید.",
           howto_step2_auto: "این صفحه را باز کنید. کلیپ‌بورد شما به‌طور خودکار پاک‌سازی می‌شود.",
           howto_step2_click: "این صفحه را باز کنید و بچسبانید.",
           howto_step2_paste: "دسترسی به کلیپ‌بورد مسدود است. به‌جای آن اینجا بچسبانید.",
           howto_step3: "متن پاک را هر جا نیاز دارید بچسبانید.",
           msg_formatting_removed: "قالب‌بندی حذف شد",
-          msg_copied: "در کلیپ‌بورد کپی شد",
-          msg_formatted_copied: "متن قالب‌بندی شده کپی شد",
-          msg_copy_failed: "کپی ناموفق",
-          tagline_paste: "چسباندن",
-          tagline_clean: "پاکسازی",
-          tagline_copy: "کپی",
-          tooltip_paste: "متن قالب‌بندی‌شده را بچسبانید",
-          tooltip_clean: "قالب‌بندی را به طور خودکار حذف می‌کند",
-          tooltip_copy: "فوری در کلیپ‌بورد کپی می‌کند",
           msg_cleaned_and_copied: "پاکسازی و کپی شد",
           msg_cleaned_copy_failed: "پاکسازی شد. برای کپی Ctrl/Cmd+C را بزنید",
           msg_images_not_supported: "تصاویر پشتیبانی نمی‌شوند - فقط متن بچسبانید",
           tagline_text: "متن قالب‌بندی‌شده را کپی کنید. تمیز بچسبانید.",
-          help_keyboard_shortcuts: "میانبرهای صفحه‌کلید:",
-          help_bold: "پررنگ",
-          help_italic: "کج",
-          help_link: "پیوند",
-          help_code: "کد",
-          help_headings: "سرفصل‌ها",
-          help_indentation: "تورفتگی:",
-          help_indent: "تورفتگی",
-          help_unindent: "حذف تورفتگی",
-          help_links_title: "پیوندها:",
-          help_creates_hyperlink: "ابرپیوند ایجاد می‌کند",
-          help_type: "تایپ کنید",
-          help_to_autopair: "برای جفت‌کردن خودکار پرانتزها",
-          help_wraps_selection: "انتخاب را در پیوند قرار می‌دهد",
-          help_auto_lists: "لیست‌های خودکار:",
-          help_or: "یا",
-          help_for_bullets: "برای نقطه‌ها",
-          help_for_numbers: "برای اعداد",
-          help_for_checkboxes: "برای چک‌باکس‌ها",
-          help_for_quotes: "برای نقل‌قول‌ها",
-          help_auto_pairing: "جفت‌کردن خودکار:",
-          help_auto_complete: "تکمیل خودکار",
-          help_press: "فشار دهید",
-          help_in_lists: "در لیست‌ها برای ادامه",
+          page_title: "چسباندن بدون قالب‌بندی",
+          aria_paste: "چسباندن",
           footer_open_source: "منبع باز توسط"
         },
         ps: {
-          page_subtitle: "ځانګړی نوټ پیډ",
           meta_description: "د سکریچ پیډ په توګه کارولو لپاره لږترلږه د محرمیت - لومړی مدیر",
-          nav_subtitle: "نوټ پیډ",
-          tagline_fast: "فوری",
-          tagline_private: "ځانګړی",
-          tagline_calm: "آرام",
-          tooltip_fast: "ژر ډکول",
-          tooltip_private: "نوم لیکنه نشته، هیڅکله",
-          tooltip_calm: "د لوړې تمرکز لپاره د پام اړولو څخه خالی",
           btn_font_sans: "سانس-سریف فونټ (پاک، عصری)",
           btn_font_mono: "مونوسپیس فونټ (کوډ، ټایپ رایټر)",
           btn_markdown: "نښه کول مارک ډاون ته واړوئ",
-          btn_remove_formatting: "ټول بڼه لرې کړئ",
-          btn_copy_all: "ټول کاپی کړئ",
-          btn_copy_formatted: "بڼه شوی متن کاپی کړئ",
           howto_step1: "له هرځای نه بڼه شوی متن کاپي کړئ.",
           howto_step2_auto: "دا پاڼه پرانیزئ. ستاسو کلیپبورډ په اتوماتیک ډول پاکېږي.",
           howto_step2_click: "دا پاڼه پرانیزئ او پیسټ کړئ.",
           howto_step2_paste: "کلیپبورډ ته لاسرسی بند دی. پرځای یې دلته پیسټ کړئ.",
           howto_step3: "پاک متن چېرته چې ورته اړتیا لرئ پیسټ کړئ.",
           msg_formatting_removed: "بڼه لرې شوه",
-          msg_copied: "کلپ بورډ ته کاپی شو",
-          msg_formatted_copied: "بڼه شوی متن کاپی شو",
-          msg_copy_failed: "کاپی ناکام شو",
-          tagline_paste: "پیسټ",
-          tagline_clean: "پاکول",
-          tagline_copy: "کاپي",
-          tooltip_paste: "فارمیټ شوی متن پیسټ کړئ",
-          tooltip_clean: "د فارمیټ اتوماتیک لرې کول",
-          tooltip_copy: "فوري کلپبورډ ته کاپي کوي",
           msg_cleaned_and_copied: "پاک شو او کاپي شو",
           msg_cleaned_copy_failed: "پاک شو. د کاپي لپاره Ctrl/Cmd+C ووهئ",
           msg_images_not_supported: "انځورونه ملاتړ نه کیږي - یوازې متن پیسټ کړئ",
           tagline_text: "بڼه شوی متن کاپي کړئ. پاک یې پیسټ کړئ.",
-          help_keyboard_shortcuts: "د کیبورډ لنډې لارې:",
-          help_bold: "زوړ",
-          help_italic: "کجه",
-          help_link: "لینک",
-          help_code: "کوډ",
-          help_headings: "سرلیکونه",
-          help_indentation: "تورول:",
-          help_indent: "تورول",
-          help_unindent: "تورول لرې کول",
-          help_links_title: "لینکونه:",
-          help_creates_hyperlink: "هایپرلینک جوړوي",
-          help_type: "ټایپ کړئ",
-          help_to_autopair: "د خود جوړه کولو لپاره قوسونه",
-          help_wraps_selection: "انتخاب په لینک کې پوښي",
-          help_auto_lists: "خود لیستونه:",
-          help_or: "یا",
-          help_for_bullets: "د ګولیو لپاره",
-          help_for_numbers: "د شمیرو لپاره",
-          help_for_checkboxes: "د چیک بکسونو لپاره",
-          help_for_quotes: "د کوټونو لپاره",
-          help_auto_pairing: "خود جوړه کول:",
-          help_auto_complete: "خود بشپړول",
-          help_press: "فشار ورکړئ",
-          help_in_lists: "په لیستونو کې د دوام لپاره",
+          page_title: "پرته له بڼې پیسټ کړئ",
+          aria_paste: "پیسټ",
           footer_open_source: "خلاص سرچینه"
         },
         kn: {
-          page_subtitle: "ಖಾಸಗಿ ನೋಟ್‌ಪ್ಯಾಡ್",
           meta_description: "ಸ್ಕ್ರಾಚ್‌ಪ್ಯಾಡ್‌ನಂತೆ ಬಳಸಲು ಕನಿಷ್ಠ ಗೌಪ್ಯತೆ-ಮೊದಲ ಸಂಪಾದಕ",
-          nav_subtitle: "ನೋಟ್‌ಪ್ಯಾಡ್",
-          tagline_fast: "ತತ್ಕ್ಷಣ",
-          tagline_private: "ಖಾಸಗಿ",
-          tagline_calm: "ಶಾಂತ",
-          tooltip_fast: "ತ್ವರಿತ ಲೋಡಿಂಗ್",
-          tooltip_private: "ಲಾಗಿಂಗ್ ಇಲ್ಲ, ಎಂದಿಗೂ",
-          tooltip_calm: "ಹೆಚ್ಚಿನ ಗಮನಕ್ಕಾಗಿ ವಿಚಲನ ಮುಕ್ತ",
           btn_font_sans: "ಸಾನ್ಸ್-ಸೆರಿಫ್ ಫಾಂಟ್ (ಸ್ವಚ್ಛ, ಆಧುನಿಕ)",
           btn_font_mono: "ಮೊನೊಸ್ಪೇಸ್ ಫಾಂಟ್ (ಕೋಡ್, ಟೈಪ್‌ರೈಟರ್)",
           btn_markdown: "ಮಾರ್ಕಪ್ ಅನ್ನು ಮಾರ್ಕ್‌ಡೌನ್‌ಗೆ ಪರಿವರ್ತಿಸಿ",
-          btn_remove_formatting: "ಎಲ್ಲಾ ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ತೆಗೆದುಹಾಕಿ",
-          btn_copy_all: "ಎಲ್ಲವನ್ನೂ ನಕಲಿಸಿ",
-          btn_copy_formatted: "ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯವನ್ನು ನಕಲಿಸಿ",
           howto_step1: "ಎಲ್ಲಿಂದಲಾದರೂ ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯವನ್ನು ನಕಲಿಸಿ.",
           howto_step2_auto: "ಈ ಪುಟವನ್ನು ತೆರೆಯಿರಿ. ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ತಾನಾಗಿ ಶುದ್ಧವಾಗುತ್ತದೆ.",
           howto_step2_click: "ಈ ಪುಟವನ್ನು ತೆರೆದು ಅಂಟಿಸಿ.",
           howto_step2_paste: "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್ ಪ್ರವೇಶವನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ. ಬದಲಿಗೆ ಇಲ್ಲಿ ಅಂಟಿಸಿ.",
           howto_step3: "ಶುದ್ಧ ಪಠ್ಯವನ್ನು ಬೇಕಾದ ಸ್ಥಳದಲ್ಲಿ ಅಂಟಿಸಿ.",
           msg_formatting_removed: "ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ತೆಗೆದುಹಾಕಲಾಗಿದೆ",
-          msg_copied: "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
-          msg_formatted_copied: "ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯ ನಕಲಿಸಲಾಗಿದೆ",
-          msg_copy_failed: "ನಕಲು ವಿಫಲವಾಗಿದೆ",
-          tagline_paste: "ಅಂಟಿಸು",
-          tagline_clean: "ಶುಚಿ",
-          tagline_copy: "ನಕಲು",
-          tooltip_paste: "ಸ್ವರೂಪಿತ ಪಠ್ಯ ಅಂಟಿಸಿ",
-          tooltip_clean: "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸ್ವರೂಪಣೆ ತೆಗೆಯುತ್ತದೆ",
-          tooltip_copy: "ತಕ್ಷಣ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸುತ್ತದೆ",
           msg_cleaned_and_copied: "ಶುಚಿಗೊಳಿಸಿ ನಕಲಿಸಲಾಗಿದೆ",
           msg_cleaned_copy_failed: "ಶುಚಿಗೊಳಿಸಲಾಗಿದೆ. ನಕಲಿಸಲು Ctrl/Cmd+C ಒತ್ತಿ",
           msg_images_not_supported: "ಚಿತ್ರಗಳು ಬೆಂಬಲಿತವಲ್ಲ - ಕೇವಲ ಪಠ್ಯ ಅಂಟಿಸಿ",
           tagline_text: "ಫಾರ್ಮ್ಯಾಟ್ ಮಾಡಿದ ಪಠ್ಯವನ್ನು ನಕಲಿಸಿ. ಶುದ್ಧವಾಗಿ ಅಂಟಿಸಿ.",
-          help_keyboard_shortcuts: "ಕೀಬೋರ್ಡ್ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು:",
-          help_bold: "ದಪ್ಪ",
-          help_italic: "ಓರೆ",
-          help_link: "ಲಿಂಕ್",
-          help_code: "ಕೋಡ್",
-          help_headings: "ಶೀರ್ಷಿಕೆಗಳು",
-          help_indentation: "ಇಂಡೆಂಟೇಶನ್:",
-          help_indent: "ಇಂಡೆಂಟ್",
-          help_unindent: "ಅನ್‌ಇಂಡೆಂಟ್",
-          help_links_title: "ಲಿಂಕ್‌ಗಳು:",
-          help_creates_hyperlink: "ಹೈಪರ್‌ಲಿಂಕ್ ರಚಿಸುತ್ತದೆ",
-          help_type: "ಟೈಪ್ ಮಾಡಿ",
-          help_to_autopair: "ಬ್ರಾಕೆಟ್‌ಗಳನ್ನು ಸ್ವಯಂ-ಜೋಡಿಸಲು",
-          help_wraps_selection: "ಆಯ್ಕೆಯನ್ನು ಲಿಂಕ್‌ನಲ್ಲಿ ಸುತ್ತುತ್ತದೆ",
-          help_auto_lists: "ಸ್ವಯಂ-ಪಟ್ಟಿಗಳು:",
-          help_or: "ಅಥವಾ",
-          help_for_bullets: "ಬುಲೆಟ್‌ಗಳಿಗೆ",
-          help_for_numbers: "ಸಂಖ್ಯೆಗಳಿಗೆ",
-          help_for_checkboxes: "ಚೆಕ್‌ಬಾಕ್ಸ್‌ಗಳಿಗೆ",
-          help_for_quotes: "ಉದ್ಧರಣಗಳಿಗೆ",
-          help_auto_pairing: "ಸ್ವಯಂ-ಜೋಡಣೆ:",
-          help_auto_complete: "ಸ್ವಯಂ-ಪೂರ್ಣ",
-          help_press: "ಒತ್ತಿರಿ",
-          help_in_lists: "ಮುಂದುವರಿಸಲು ಪಟ್ಟಿಗಳಲ್ಲಿ",
+          page_title: "ಫಾರ್ಮ್ಯಾಟಿಂಗ್ ಇಲ್ಲದೆ ಅಂಟಿಸಿ",
+          aria_paste: "ಅಂಟಿಸಿ",
           footer_open_source: "ಓಪನ್ ಸೋರ್ಸ್ ಮೂಲಕ"
         },
         ml: {
-          page_subtitle: "സ്വകാര്യ നോട്ട്പാഡ്",
           meta_description: "സ്ക്രാച്ച്പാഡായി ഉപയോഗിക്കുന്നതിന് ഏറ്റവും കുറഞ്ഞ സ്വകാര്യത-ആദ്യ എഡിറ്റർ",
-          nav_subtitle: "നോട്ട്പാഡ്",
-          tagline_fast: "തൽക്ഷണം",
-          tagline_private: "സ്വകാര്യം",
-          tagline_calm: "ശാന്തം",
-          tooltip_fast: "തൽക്ഷണ ലോഡിംഗ്",
-          tooltip_private: "ലോഗിംഗ് ഇല്ല, ഒരിക്കലും",
-          tooltip_calm: "ഉയർന്ന ഫോക്കസിനായി ശ്രദ്ധതിരിച്ചുവിടൽ രഹിതം",
           btn_font_sans: "സാൻസ്-സെരിഫ് ഫോണ്ട് (വൃത്തിയുള്ള, ആധുനിക)",
           btn_font_mono: "മോണോസ്‌പേസ് ഫോണ്ട് (കോഡ്, ടൈപ്പ്‌റൈറ്റർ)",
           btn_markdown: "മാർക്ക്അപ്പ് മാർക്ക്ഡൗണായി പരിവർത്തനം ചെയ്യുക",
-          btn_remove_formatting: "എല്ലാ ഫോർമാറ്റിംഗും നീക്കം ചെയ്യുക",
-          btn_copy_all: "എല്ലാം പകർത്തുക",
-          btn_copy_formatted: "ഫോർമാറ്റ് ചെയ്ത ടെക്‌സ്റ്റ് പകർത്തുക",
           howto_step1: "എവിടെ നിന്നും ഫോർമാറ്റ് ചെയ്ത ടെക്സ്റ്റ് പകർത്തുക.",
           howto_step2_auto: "ഈ പേജ് തുറക്കുക. നിങ്ങളുടെ ക്ലിപ്ബോർഡ് സ്വയം വൃത്തിയാക്കപ്പെടും.",
           howto_step2_click: "ഈ പേജ് തുറന്ന് ഒട്ടിക്കുക.",
           howto_step2_paste: "ക്ലിപ്ബോർഡ് ആക്സസ് തടഞ്ഞിരിക്കുന്നു. പകരം ഇവിടെ ഒട്ടിക്കുക.",
           howto_step3: "വൃത്തിയാക്കിയ ടെക്സ്റ്റ് ആവശ്യമുള്ളിടത്ത് ഒട്ടിക്കുക.",
           msg_formatting_removed: "ഫോർമാറ്റിംഗ് നീക്കം ചെയ്തു",
-          msg_copied: "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
-          msg_formatted_copied: "ഫോർമാറ്റ് ചെയ്ത ടെക്‌സ്റ്റ് പകർത്തി",
-          msg_copy_failed: "പകർത്തൽ പരാജയപ്പെട്ടു",
-          tagline_paste: "ഒട്ടിക്കുക",
-          tagline_clean: "ശുദ്ധം",
-          tagline_copy: "പകർപ്പ്",
-          tooltip_paste: "ഫോർമാറ്റ് ചെയ്ത ടെക്സ്റ്റ് ഒട്ടിക്കുക",
-          tooltip_clean: "ഫോർമാറ്റിംഗ് സ്വയം നീക്കം ചെയ്യുന്നു",
-          tooltip_copy: "ഉടൻ ക്ലിപ്‌ബോർഡിലേക്ക് പകർത്തുന്നു",
           msg_cleaned_and_copied: "ശുദ്ധമാക്കി, പകർത്തി",
           msg_cleaned_copy_failed: "ശുദ്ധമാക്കി. പകർത്താൻ Ctrl/Cmd+C അമർത്തുക",
           msg_images_not_supported: "ചിത്രങ്ങൾ പിന്തുണക്കുന്നില്ല - ടെക്സ്റ്റ് മാത്രം ഒട്ടിക്കുക",
           tagline_text: "ഫോർമാറ്റ് ചെയ്ത ടെക്സ്റ്റ് പകർത്തുക. വൃത്തിയായി ഒട്ടിക്കുക.",
-          help_keyboard_shortcuts: "കീബോർഡ് കുറുക്കുവഴികൾ:",
-          help_bold: "ബോൾഡ്",
-          help_italic: "ഇറ്റാലിക്",
-          help_link: "ലിങ്ക്",
-          help_code: "കോഡ്",
-          help_headings: "തലക്കെട്ടുകൾ",
-          help_indentation: "ഇൻഡെന്റേഷൻ:",
-          help_indent: "ഇൻഡെന്റ്",
-          help_unindent: "അൺഇൻഡെന്റ്",
-          help_links_title: "ലിങ്കുകൾ:",
-          help_creates_hyperlink: "ഹൈപ്പർലിങ്ക് സൃഷ്ടിക്കുന്നു",
-          help_type: "ടൈപ്പ് ചെയ്യുക",
-          help_to_autopair: "ബ്രാക്കറ്റുകൾ ഓട്ടോ-പെയർ ചെയ്യാൻ",
-          help_wraps_selection: "തിരഞ്ഞെടുക്കൽ ലിങ്കിൽ പൊതിയുന്നു",
-          help_auto_lists: "ഓട്ടോ-ലിസ്റ്റുകൾ:",
-          help_or: "അല്ലെങ്കിൽ",
-          help_for_bullets: "ബുള്ളറ്റുകൾക്ക്",
-          help_for_numbers: "നമ്പറുകൾക്ക്",
-          help_for_checkboxes: "ചെക്ക്ബോക്സുകൾക്ക്",
-          help_for_quotes: "ഉദ്ധരണികൾക്ക്",
-          help_auto_pairing: "ഓട്ടോ-പെയറിംഗ്:",
-          help_auto_complete: "ഓട്ടോ-പൂർത്തീകരണം",
-          help_press: "അമർത്തുക",
-          help_in_lists: "തുടരാൻ ലിസ്റ്റുകളിൽ",
+          page_title: "ഫോർമാറ്റിംഗ് ഇല്ലാതെ ഒട്ടിക്കുക",
+          aria_paste: "ഒട്ടിക്കുക",
           footer_open_source: "ഓപ്പൺ സോഴ്‌സ്"
         }
       };
@@ -2257,15 +969,12 @@
        */
       function cacheDOMElements() {
         DOM.editor = document.querySelector('#mcguffin');
-        DOM.counter = document.getElementById('counter');
         DOM.tagline = document.getElementById('tagline');
         DOM.formattingMessage = document.getElementById('formatting-message');
         DOM.markdownBtn = document.getElementById('convert-to-markdown');
         DOM.markdownPreview = document.getElementById('markdown-preview');
-        DOM.markdownHelp = document.getElementById('markdown-help');
         DOM.previewControls = document.getElementById('preview-controls');
         DOM.removeFormattingBtn = document.getElementById('remove-formatting');
-        DOM.toggleHelpBtn = document.getElementById('toggle-help');
         DOM.buttons = document.querySelector('#buttons');
         DOM.fontButtons = document.querySelectorAll('[data-font]');
       }
@@ -2275,6 +984,7 @@
        * @param {string} text - Message to display
        */
       function showPrompt(text) {
+        debugLog('toast:', JSON.stringify(text));
         const message = DOM.formattingMessage;
         message.textContent = text;
         message.classList.remove('fade');
@@ -2384,8 +1094,8 @@
         // Update html lang attribute
         htmlEl.setAttribute('lang', lang);
 
-        // The window title is the tagline, in the selected language
-        document.title = t('tagline_text');
+        // The window title, in the selected language
+        document.title = t('page_title');
 
         // Update meta description
         const metaDesc = document.querySelector('meta[data-i18n-content]');
@@ -2403,6 +1113,12 @@
         document.querySelectorAll('[data-i18n-title]:not(title)').forEach(el => {
           const key = el.getAttribute('data-i18n-title');
           if (key) el.setAttribute('title', t(key));
+        });
+
+        // Update accessible labels
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+          const key = el.getAttribute('data-i18n-aria-label');
+          if (key) el.setAttribute('aria-label', t(key));
         });
 
         // Update placeholder attributes
@@ -2743,7 +1459,10 @@
        */
       function copyToClipboard(text) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          return navigator.clipboard.writeText(text).then(() => true, () => false);
+          return navigator.clipboard.writeText(text).then(
+            () => { debugLog('writeText ok,', text.length, 'chars'); return true; },
+            (err) => { debugLog('writeText FAILED:', describeError(err)); return false; }
+          );
         }
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -2754,6 +1473,7 @@
         let ok = false;
         try { ok = document.execCommand('copy'); } catch (_) {}
         document.body.removeChild(textarea);
+        debugLog('execCommand copy fallback ->', ok);
         return Promise.resolve(ok);
       }
 
@@ -2767,9 +1487,6 @@
         sel.addRange(range);
       }
 
-      /** Plain text currently shown in the editor by a user-triggered clean. */
-      let displayedText = null;
-
       /** Strip formatting from a raw string (HTML or plain text); returns plain text. */
       function cleanRaw(rawContent) {
         const parser = new DOMParser();
@@ -2780,7 +1497,8 @@
       /**
        * Clean a raw string (HTML or plain text) and put the result on the clipboard.
        * Unless `silent`, also show it in the editor and report the real outcome
-       * with a toast. Silent runs touch nothing but the clipboard.
+       * with a toast. Silent runs (automatic, no user action) touch nothing but the
+       * clipboard.
        * Resolves to the cleaned text.
        */
       function cleanAndCopyText(rawContent, { silent = false } = {}) {
@@ -2793,9 +1511,6 @@
             if (line) DOM.editor.appendChild(document.createTextNode(line));
           });
 
-          characterCount = cleanedText.trim().length;
-          DOM.counter.textContent = characterCount;
-          displayedText = cleanedText;
         }
 
         // Report the real outcome: the clipboard write can be denied (no user
@@ -2832,7 +1547,11 @@
 
           const clipboardData = event.clipboardData || window.clipboardData;
 
-          if (!clipboardData) return;
+          if (!clipboardData) { debugLog('paste event: no clipboardData'); return; }
+          debugLog('paste event', {
+            target: event.target.nodeName + (event.target.id ? '#' + event.target.id : ''),
+            types: Array.from(clipboardData.types || []),
+          });
 
           // Check for images (reject them)
           const items = clipboardData.items;
@@ -2848,125 +1567,123 @@
           const rawContent = clipboardData.getData('text/html') ||
                              clipboardData.getData('text/plain');
 
-          if (!rawContent || rawContent.trim() === '') return;
+          if (!rawContent || rawContent.trim() === '') { debugLog('paste event: empty content, ignored'); return; }
 
+          debugLog('paste event: cleaning', rawContent.length, 'chars');
           cleanAndCopyText(rawContent);
           DOM.editor.focus();
         }, { capture: true }); // Run in capture phase!
       }
 
       /**
-       * Clean the clipboard without a manual paste, in two modes:
-       *  - silent: automatic (page load, tab refocus) and only possible once the
-       *    browser has granted clipboard-read. Rewrites the clipboard as plain
-       *    text and shows nothing.
-       *  - visible: on a user action (click, tap, key). Cleans and copies the
-       *    clipboard, then shows the cleaned text and the toast. Needs a user
-       *    gesture, and prompts for permission where the browser requires it.
-       * A visible read is attempted once per visit to the tab (first load, then
-       * each refocus) so Safari/Firefox don't show their paste bubble on every click.
+       * Clean the clipboard silently, with no user action, once the browser has
+       * already granted clipboard-read (Chrome/Edge after the first grant): on page
+       * load and whenever the tab regains focus. Rewrites the clipboard as plain text
+       * and shows nothing.
+       *
+       * Deliberately NOT triggered by clicks or keypresses: a read fired by an
+       * arbitrary click raises a permission prompt (Chrome) or the "Paste" bubble
+       * (Safari/Firefox) at a surprising moment. Pasting into the page is the one
+       * visible action, and it goes through the paste event instead.
        */
       function initializeAutoClipboardRead() {
-        if (!navigator.clipboard || !navigator.clipboard.read) return;
+        debugLog('init', debugEnv(), navigator.userAgent);
+        if (!navigator.clipboard || !navigator.clipboard.read) {
+          debugLog('init: navigator.clipboard.read unavailable, auto-clean disabled');
+          return;
+        }
 
-        const silentDone = new Set();   // clipboard contents already cleaned silently
+        const silentDone = new Set();   // clipboard contents already cleaned
         let granted = false;
-        let pending = true;             // a visible read is due on the next action
         let busy = false;
 
-        async function run(silent) {
-          if (busy || !document.hasFocus()) return;
+        async function run() {
+          if (busy || !document.hasFocus()) {
+            debugLog('silent clean skipped:', busy ? 'already busy' : 'document not focused', debugEnv());
+            return;
+          }
           busy = true;
-          if (!silent) pending = false;
+          let phase = 'read';
+          debugLog('silent clean start', debugEnv());
           try {
             let raw = '';
             let hasHtml = false;
-            for (const item of await navigator.clipboard.read()) {
+            const clipItems = await navigator.clipboard.read();
+            phase = 'getType';
+            debugLog('silent clean clipboard.read ok:', clipItems.map((i) => i.types));
+            for (const item of clipItems) {
               if (item.types.includes('text/html')) {
                 raw = await (await item.getType('text/html')).text();
                 hasHtml = true;
               } else if (item.types.includes('text/plain')) {
                 raw = await (await item.getType('text/plain')).text();
               } else if (item.types.some((type) => type.startsWith('image/'))) {
-                if (!silent) showPrompt(t('msg_images_not_supported'));
+                debugLog('silent clean: clipboard holds an image, ignored');
                 return;
               }
               if (raw) break;
             }
-            if (!raw.trim()) return;
-
-            if (silent) {
-              // Only rewrite when there is formatting to strip, and once per content
-              if (!hasHtml || silentDone.has(raw)) return;
-              silentDone.add(raw);
-              await cleanAndCopyText(raw, { silent: true });
-            } else if (cleanRaw(raw) !== displayedText) {
-              await cleanAndCopyText(raw);
+            phase = 'clean/copy';
+            debugLog('silent clean raw:', { length: raw.length, hasHtml });
+            // Only rewrite when there is formatting to strip, and once per content
+            if (!raw.trim() || !hasHtml || silentDone.has(raw)) {
+              debugLog('silent clean skipped:', !raw.trim() ? 'clipboard text is empty' : !hasHtml ? 'no HTML flavor to strip' : 'already cleaned this content');
+              return;
             }
-          } catch (_) {
-            // Permission denied or dismissed. Say so rather than failing silently;
-            // a silent (automatic) attempt stays quiet.
-            if (!silent) showPrompt(t('howto_step2_paste'));
+            silentDone.add(raw);
+            await cleanAndCopyText(raw, { silent: true });
+            debugLog('silent clean rewrote the clipboard');
+          } catch (err) {
+            // Stay quiet: this was automatic, and manual paste still works
+            debugLog(`silent clean FAILED at phase "${phase}":`, describeError(err), debugEnv());
           } finally {
             busy = false;
           }
         }
 
-        function onAction(event) {
-          if (!pending) return;
-          // Selecting the help text shouldn't consume the read or swap the page under it
-          if (event.target.closest && event.target.closest('.howto')) return;
-          if (event.type === 'pointerdown' && event.button !== 0) return;
-          // Shortcuts like Ctrl/Cmd+C or +V are handled by the copy and paste events
-          if (event.type === 'keydown' && (event.ctrlKey || event.metaKey || event.altKey)) return;
-          // Here Enter means "clean the clipboard", not "insert a line break" into the output
-          if (event.key === 'Enter' && !event.isComposing && DOM.editor.contains(event.target)) {
-            event.preventDefault();
-          }
-          run(false);
-        }
-
         function onReturn() {
-          pending = true;
-          if (granted) run(true);
+          debugLog('tab regained focus/visibility. granted =', granted);
+          if (granted) run();
         }
 
-        document.addEventListener('pointerdown', onAction);
-        document.addEventListener('keydown', onAction);
-        // Copying from this page (e.g. the help text) puts something new on the clipboard
-        document.addEventListener('copy', () => { pending = false; });
         window.addEventListener('focus', onReturn);
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') onReturn();
         });
 
+        if (!navigator.permissions) debugLog('permissions API unavailable');
         navigator.permissions?.query({ name: 'clipboard-read' }).then((status) => {
           granted = status.state === 'granted';
-          status.addEventListener('change', () => { granted = status.state === 'granted'; });
-          if (granted) run(true);
-        }).catch(() => {});
+          debugLog('permission clipboard-read:', status.state);
+          status.addEventListener('change', () => {
+            granted = status.state === 'granted';
+            debugLog('permission clipboard-read changed to:', status.state);
+          });
+          if (granted) run();
+        }).catch((err) => { debugLog('permissions.query(clipboard-read) rejected:', describeError(err)); });
       }
 
       /**
        * Tailor step 2 of the how-it-works table to what this browser allows:
        *   auto  - clipboard-read already granted, nothing to do
-       *   click - needs a click and/or permission prompt (also Safari/Firefox,
-       *           which can't report the permission state)
-       *   paste - clipboard API unavailable or blocked, paste into the box
+       *   click - permission still to be prompted, or can't be queried (Safari/Firefox):
+       *           the user pastes (the text says so)
+       *   paste - clipboard API unavailable or denied, paste into the box
        */
       function initializeHowToMode() {
         const table = document.querySelector('.howto');
         const step = document.getElementById('howto-step2');
         if (!table || !step) return;
 
-        function setMode(mode) {
+        function setMode(mode, why) {
+          debugLog('how-to step 2 mode ->', mode, '(' + why + ')');
           table.setAttribute('data-mode', mode);
           step.setAttribute('data-i18n', `howto_step2_${mode}`);
           step.textContent = t(`howto_step2_${mode}`);
         }
 
         if (!window.isSecureContext || !navigator.clipboard || !navigator.clipboard.read) {
-          setMode('paste');
+          setMode('paste', 'insecure context or navigator.clipboard.read missing');
           return;
         }
 
@@ -2974,14 +1691,15 @@
           state === 'granted' ? 'auto' : state === 'denied' ? 'paste' : 'click';
 
         navigator.permissions.query({ name: 'clipboard-read' }).then((status) => {
-          setMode(fromState(status.state));
-          status.addEventListener('change', () => setMode(fromState(status.state)));
-        }).catch(() => setMode('click'));
+          setMode(fromState(status.state), 'permission state "' + status.state + '"');
+          status.addEventListener('change', () => setMode(fromState(status.state), 'permission changed to "' + status.state + '"'));
+        }).catch((err) => setMode('click', 'permissions.query rejected: ' + describeError(err)));
       }
 
       /**
        * While the output is empty the focused editor has nothing to select, so
-       * Select All (Ctrl/Cmd+A) selects the how-it-works text instead of nothing.
+       * Select All (Ctrl/Cmd+A) selects the styled sample text instead of nothing:
+       * copy it, paste it back, and watch the formatting go.
        * Once there is cleaned text, Select All keeps its normal meaning.
        */
       function initializeSelectAllHelp() {
@@ -2989,11 +1707,12 @@
           if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
           if (event.key.toLowerCase() !== 'a') return;
           const table = document.querySelector('.howto');
-          if (!table || getComputedStyle(table).display === 'none') return;
+          const sample = table && table.querySelector('.sample-styled');
+          if (!sample || getComputedStyle(table).display === 'none') return;
           if (event.target !== DOM.editor) return;
           event.preventDefault();
           const range = document.createRange();
-          range.selectNodeContents(table);
+          range.selectNodeContents(sample);
           const sel = window.getSelection();
           sel.removeAllRanges();
           sel.addRange(range);
@@ -3001,12 +1720,11 @@
       }
 
       /**
-       * Initialize character counter and markdown preview updates
+       * Initialize markdown preview updates
        */
       function initializeEditorInput() {
         DOM.editor.addEventListener("input", () => {
-          characterCount = DOM.editor.innerText.trim().length;
-          DOM.counter.innerText = characterCount;
+          const characterCount = DOM.editor.innerText.trim().length;
 
           // Update markdown preview if in markdown mode
           if (markdownMode) {
@@ -3077,27 +1795,6 @@
             DOM.markdownBtn.classList.remove('btn-markdown-active');
             DOM.markdownPreview.classList.remove('active');
             DOM.previewControls.classList.remove('active');
-            DOM.markdownHelp.classList.remove('active');
-            DOM.toggleHelpBtn.classList.remove('btn-markdown-active');
-          }
-        });
-      }
-
-      /**
-       * Initialize help toggle button
-       */
-      function initializeHelpToggle() {
-        DOM.toggleHelpBtn.addEventListener("click", () => {
-          // Only allow help toggle when in markdown mode
-          if (!markdownMode) return;
-
-          const isActive = DOM.markdownHelp.classList.contains('active');
-          if (isActive) {
-            DOM.markdownHelp.classList.remove('active');
-            DOM.toggleHelpBtn.classList.remove('btn-markdown-active');
-          } else {
-            DOM.markdownHelp.classList.add('active');
-            DOM.toggleHelpBtn.classList.add('btn-markdown-active');
           }
         });
       }
@@ -3500,7 +2197,6 @@
         initializeEditorInput();
         initializeFontButtons();
         // initializeMarkdownToggle();  // DISABLED: UI hidden for cleaner mode
-        // initializeHelpToggle();  // DISABLED: Help UI hidden
         // initializeMarkdownKeyboard();  // DISABLED: Conflicts with auto-clean paste
 
         // Set button state based on markdown mode
@@ -3575,15 +2271,15 @@
         <span id="formatting-message"></span>
         <table class="howto" data-mode="click">
           <tr>
-            <td><span class="sample-styled"><span class="s-a">Lorem</span> <span class="s-b">ipsum</span> <span class="s-c">dolor</span><sup class="s-d">2</sup></span></td>
+            <td><span class="sample-styled"><span class="s-a">Lorem</span> <span class="s-b">ipsum</span> <sup class="s-c">dolor</sup></span></td>
             <td><span class="step-num">1</span><span data-i18n="howto_step1">Copy formatted text from anywhere.</span></td>
           </tr>
           <tr>
-            <td><span class="url-chip">sqratch.us</span><svg class="paste-key" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="paste"><rect x="5" y="4.5" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="4" rx="1"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></svg></td>
+            <td><span class="url-chip">sqratch.us</span><svg class="paste-key" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" data-i18n-aria-label="aria_paste" aria-label="Paste"><rect x="5" y="4.5" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="4" rx="1"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></svg></td>
             <td><span class="step-num">2</span><span id="howto-step2" data-i18n="howto_step2_click">Open this page and paste.</span></td>
           </tr>
           <tr>
-            <td>Lorem ipsum</td>
+            <td>Lorem ipsum dolor</td>
             <td><span class="step-num">3</span><span data-i18n="howto_step3">Paste the clean text wherever you need it.</span></td>
           </tr>
         </table>
@@ -3594,49 +2290,10 @@
           autofocus
           ></article>
         </div>
-          <div style="overflow: auto;">
-            <p id="counter"></p>
-          </div>
           <div id="preview-controls">
             <div id="markdown-preview-label" style="font-size: 0.75em; color: #aaa;">Preview</div>
-            <div>
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-help" title="show/hide help">?</button>
-            </div>
           </div>
           <div id="markdown-preview"></div>
-          <div id="markdown-help">
-            <div class="help-section">
-              <strong data-i18n="help_keyboard_shortcuts">Keyboard Shortcuts:</strong>
-              <kbd>Ctrl/Cmd+B</kbd> <span data-i18n="help_bold">Bold</span> •
-              <kbd>Ctrl/Cmd+I</kbd> <span data-i18n="help_italic">Italic</span> •
-              <kbd>Ctrl/Cmd+K</kbd> <span data-i18n="help_link">Link</span> •
-              <kbd>Ctrl/Cmd+`</kbd> <span data-i18n="help_code">Code</span> •
-              <kbd>Ctrl/Cmd+1-6</kbd> <span data-i18n="help_headings">Headings</span>
-            </div>
-            <div class="help-section">
-              <strong data-i18n="help_indentation">Indentation:</strong>
-              <kbd>Tab</kbd> <span data-i18n="help_indent">Indent</span> •
-              <kbd>Shift+Tab</kbd> <span data-i18n="help_unindent">Unindent</span>
-            </div>
-            <div class="help-section">
-              <strong data-i18n="help_links_title">Links:</strong>
-              <code>[text](url)</code> <span data-i18n="help_creates_hyperlink">creates a hyperlink</span> •
-              <span data-i18n="help_type">Type</span> <code>[</code> <span data-i18n="help_to_autopair">to auto-pair brackets</span> •
-              <kbd>Ctrl/Cmd+K</kbd> <span data-i18n="help_wraps_selection">wraps selection in link</span>
-            </div>
-            <div class="help-section">
-              <strong data-i18n="help_auto_lists">Auto-Lists:</strong>
-              <span data-i18n="help_type">Type</span> <code>* </code> <span data-i18n="help_or">or</span> <code>- </code> <span data-i18n="help_for_bullets">for bullets</span> •
-              <code>1. </code> <span data-i18n="help_for_numbers">for numbers</span> •
-              <code>- [ ] </code> <span data-i18n="help_for_checkboxes">for checkboxes</span> •
-              <code>> </code> <span data-i18n="help_for_quotes">for quotes</span>
-            </div>
-            <div class="help-section">
-              <strong data-i18n="help_auto_pairing">Auto-Pairing:</strong>
-              <code>**</code> <code>`</code> <code>[</code> <span data-i18n="help_auto_complete">auto-complete</span> •
-              <span data-i18n="help_press">Press</span> <kbd>Enter</kbd> <span data-i18n="help_in_lists">in lists to continue</span>
-            </div>
-          </div>
         </div><!-- article container -->
 
 

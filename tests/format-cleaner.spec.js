@@ -37,11 +37,6 @@ async function editorText(page) {
   return page.locator('#mcguffin').textContent();
 }
 
-/** Read the current character-counter value. */
-async function counterText(page) {
-  return page.locator('#counter').textContent();
-}
-
 /** Read the current prompt/message text. */
 async function promptText(page) {
   return page.locator('#formatting-message').textContent();
@@ -58,10 +53,10 @@ test.describe('page structure', () => {
     await expect(page.locator('nav')).not.toContainText('Copy Clean');
   });
 
-  test('window title is the tagline, in the selected language', async ({ page }) => {
-    await expect(page).toHaveTitle('Copy formatted text. Paste it clean.');
+  test('window title is "Paste Without Formatting", in the selected language', async ({ page }) => {
+    await expect(page).toHaveTitle('Paste Without Formatting');
     await page.locator('#language-selector').selectOption('fr');
-    await expect(page).toHaveTitle(/Copiez du texte formaté/);
+    await expect(page).toHaveTitle('Coller sans mise en forme');
   });
 
   test('tagline says "Copy formatted text. Paste it clean."', async ({ page }) => {
@@ -80,17 +75,17 @@ test.describe('page structure', () => {
     expect(focused).toBe('mcguffin');
   });
 
-  test('counter starts empty', async ({ page }) => {
-    // Counter is updated only on input, so it starts blank
-    await expect(page.locator('#counter')).toHaveText('');
+  test('there is no character counter', async ({ page }) => {
+    await expect(page.locator('#counter')).toHaveCount(0);
   });
 
   test('markdown toggle button is hidden', async ({ page }) => {
     await expect(page.locator('#convert-to-markdown')).toBeHidden();
   });
 
-  test('help toggle button is hidden', async ({ page }) => {
-    await expect(page.locator('#toggle-help')).toBeHidden();
+  test('the markdown help panel and its toggle are gone', async ({ page }) => {
+    await expect(page.locator('#toggle-help')).toHaveCount(0);
+    await expect(page.locator('#markdown-help')).toHaveCount(0);
   });
 
   test('markdown preview area is hidden', async ({ page }) => {
@@ -142,12 +137,6 @@ test.describe('manual paste', () => {
     await paste(page, { plain: 'second paste' });
     const text = await editorText(page);
     expect(text).toBe('second paste');
-  });
-
-  test('updates character counter after paste', async ({ page }) => {
-    await paste(page, { plain: 'hello' });
-    const count = await counterText(page);
-    expect(count).toBe('5');
   });
 
   test('shows "cleaned & copied" once the clipboard write succeeds', async ({ page }) => {
@@ -260,27 +249,6 @@ test.describe('how-it-works step 2', () => {
     await expect(page.locator('.howto .url-chip')).toBeHidden();
   });
 
-  test('a keypress alone triggers the clipboard read; nothing is read before it', async ({ page }) => {
-    await page.addInitScript(() => {
-      window.__clipboardReads = 0;
-      navigator.clipboard.read = () => { window.__clipboardReads++; return Promise.resolve([]); };
-    });
-    await page.goto('/');
-    expect(await page.evaluate(() => window.__clipboardReads)).toBe(0);
-    await page.keyboard.press('a');
-    await expect.poll(() => page.evaluate(() => window.__clipboardReads)).toBe(1);
-  });
-
-  test('a click alone also triggers the clipboard read', async ({ page }) => {
-    await page.addInitScript(() => {
-      window.__clipboardReads = 0;
-      navigator.clipboard.read = () => { window.__clipboardReads++; return Promise.resolve([]); };
-    });
-    await page.goto('/');
-    await page.mouse.click(5, 300);
-    await expect.poll(() => page.evaluate(() => window.__clipboardReads)).toBe(1);
-  });
-
   test('needs nothing from the user when permission is already granted', async ({ page }) => {
     await stubPermission(page, 'granted');
     await page.goto('/');
@@ -350,6 +318,20 @@ test.describe('paste target', () => {
     await expect(page.locator('#mcguffin')).toHaveText('Hello world');
   });
 
+  test('copying the selected sample and pasting it back shows it cleaned', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('ControlOrMeta+c');
+    const html = await page.evaluate(async () => {
+      const [item] = await navigator.clipboard.read();
+      return item.types.includes('text/html') ? await (await item.getType('text/html')).text() : '';
+    });
+    expect(html).toMatch(/style=/);              // the copy really is rich text
+    await page.keyboard.press('ControlOrMeta+v');
+    await expect(page.locator('#mcguffin')).toHaveText('Lorem ipsum dolor');
+    await expect(page.locator('#formatting-message')).toHaveText(/cleaned/i);
+  });
+
   test('a paste that does not target the editor is still cleaned', async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => {
@@ -361,7 +343,7 @@ test.describe('paste target', () => {
   });
 });
 
-// ─── automatic (silent) vs user-triggered (visible) cleaning ─────────────────
+// ─── automatic (silent) clipboard cleaning; clicks and keys never read ────────
 
 test.describe('clipboard cleaning', () => {
   const HTML = '<p><b>Hello</b> world</p>';
@@ -396,87 +378,51 @@ test.describe('clipboard cleaning', () => {
     expect(await reads(page)).toBe(0);
   });
 
-  test('a click cleans, copies, and shows the text and toast', async ({ page }) => {
+  test('clicks and keypresses never read the clipboard or show a toast', async ({ page }) => {
     await stubClipboard(page, 'prompt');
     await page.goto('/');
     await page.mouse.click(5, 300);
-    await expect(page.locator('#mcguffin')).toHaveText('Hello world');
-    await expect(page.locator('#formatting-message')).toHaveText(/cleaned & copied/i);
-    expect(await page.evaluate(() => window.__written)).toEqual(['Hello world']);
-  });
-
-  test('Enter does the same', async ({ page }) => {
-    await stubClipboard(page, 'prompt');
-    await page.goto('/');
     await page.keyboard.press('Enter');
-    await expect(page.locator('#mcguffin')).toHaveText('Hello world');
-    await expect(page.locator('#formatting-message')).toHaveText(/cleaned & copied/i);
+    await page.keyboard.press('a');
+    await page.locator('#language-selector').click();
+    await page.waitForTimeout(300);
+    expect(await reads(page)).toBe(0);
+    expect(await promptText(page)).toBe('');
+    expect(await editorText(page)).not.toContain('Hello');
   });
 
-  test('Enter does not leave blank lines in the output', async ({ page }) => {
-    await stubClipboard(page, 'prompt');
+  test('after the automatic clean, clicks and keys still do not read again', async ({ page }) => {
+    await stubClipboard(page, 'granted');
     await page.goto('/');
+    await expect.poll(() => reads(page)).toBe(1);
+    await page.mouse.click(5, 300);
     await page.keyboard.press('Enter');
-    await expect(page.locator('#mcguffin')).toHaveText('Hello world');
-    expect(await page.locator('#mcguffin').innerHTML()).not.toContain('<div>');
+    await page.waitForTimeout(300);
+    expect(await reads(page)).toBe(1);
+    expect(await promptText(page)).toBe('');
   });
 
-  test('a refused clipboard read says so instead of failing silently', async ({ page }) => {
+  test('a failed silent read stays quiet', async ({ page }) => {
     await page.addInitScript(() => {
-      navigator.permissions.query = async () => ({ state: 'prompt', addEventListener() {} });
+      navigator.permissions.query = async () => ({ state: 'granted', addEventListener() {} });
       navigator.clipboard.read = async () => { throw new DOMException('denied', 'NotAllowedError'); };
     });
     await page.goto('/');
+    await page.waitForTimeout(300);
+    expect(await promptText(page)).toBe('');
+    expect(await editorText(page)).toBe('');
+  });
+
+  test('Enter in the box is a normal line break', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#mcguffin').click({ position: { x: 5, y: 5 } });
+    await page.keyboard.type('a');
     await page.keyboard.press('Enter');
-    await expect(page.locator('#formatting-message')).toHaveText(/blocked/i);
-    expect(await page.locator('#mcguffin').innerHTML()).toBe('');
+    await page.keyboard.type('b');
+    expect(await page.locator('#mcguffin').innerText()).toMatch(/a\s+b/);
   });
 
-  test('after an automatic clean, an action still shows the text and toast', async ({ page }) => {
-    await stubClipboard(page, 'granted');
-    await page.goto('/');
-    await expect.poll(() => page.evaluate(() => window.__written.length)).toBe(1);
-    await page.mouse.click(5, 300);
-    await expect(page.locator('#mcguffin')).toHaveText('Hello world');
-    await expect(page.locator('#formatting-message')).toHaveText(/cleaned & copied/i);
-  });
-
-  test('only one visible read per visit, so repeated clicks do not re-prompt', async ({ page }) => {
-    await stubClipboard(page, 'prompt');
-    await page.goto('/');
-    await page.mouse.click(5, 300);
-    await page.mouse.click(5, 300);
-    await page.keyboard.press('Enter');
-    await expect.poll(() => reads(page)).toBe(1);
-  });
-
-  test('Ctrl/Cmd shortcuts do not trigger a read', async ({ page }) => {
-    await stubClipboard(page, 'prompt');
-    await page.goto('/');
-    await page.keyboard.press('Control+c');
-    await page.keyboard.press('Meta+c');
-    await page.waitForTimeout(200);
-    expect(await reads(page)).toBe(0);
-  });
-
-  test('Select All on the empty page selects the step text, not the examples', async ({ page }) => {
-    await page.goto('/');
-    await page.keyboard.press('ControlOrMeta+a');
-    const selected = await page.evaluate(() => window.getSelection().toString());
-    expect(selected).toContain('Copy formatted text from anywhere.');
-    expect(selected).toContain('Paste the clean text wherever you need it.');
-    expect(selected).not.toContain('Lorem');
-  });
-
-  test('Select All keeps its normal meaning once there is cleaned text', async ({ page }) => {
-    await page.goto('/');
-    await paste(page, { plain: 'some text' });
-    await page.keyboard.press('ControlOrMeta+a');
-    const selected = await page.evaluate(() => window.getSelection().toString());
-    expect(selected).toBe('some text');
-  });
-
-  test('the step text is selectable and clicking it does not read the clipboard', async ({ page }) => {
+  test('the step text is selectable and clicking it selects rather than reads', async ({ page }) => {
     await stubClipboard(page, 'prompt');
     await page.goto('/');
     const step = page.locator('#howto-step2');
@@ -485,6 +431,40 @@ test.describe('clipboard cleaning', () => {
     const selected = await page.evaluate(() => window.getSelection().toString());
     expect(selected).toMatch(/Open this page/);
     expect(await reads(page)).toBe(0);
+  });
+});
+
+// ─── how-it-works table: examples, Select All, accessible label ───────────────
+
+test.describe('how-it-works table', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('the "before" and "after" examples use the same words', async ({ page }) => {
+    const before = await page.locator('.howto tr').nth(0).locator('td').first().innerText();
+    const after = await page.locator('.howto tr').nth(2).locator('td').first().innerText();
+    // Styling (colors, superscript) must not change the words
+    expect(before.trim()).toBe(after.trim());
+  });
+
+  test('Select All on the empty page selects the styled sample', async ({ page }) => {
+    await page.keyboard.press('ControlOrMeta+a');
+    const selected = await page.evaluate(() => window.getSelection().toString());
+    expect(selected).toBe('Lorem ipsum dolor');
+  });
+
+  test('Select All keeps its normal meaning once there is cleaned text', async ({ page }) => {
+    await paste(page, { plain: 'some text' });
+    await page.keyboard.press('ControlOrMeta+a');
+    const selected = await page.evaluate(() => window.getSelection().toString());
+    expect(selected).toBe('some text');
+  });
+
+  test('the paste icon has an accessible label that follows the language', async ({ page }) => {
+    await expect(page.locator('.howto .paste-key')).toHaveAttribute('aria-label', 'Paste');
+    await page.locator('#language-selector').selectOption('fr');
+    await expect(page.locator('.howto .paste-key')).toHaveAttribute('aria-label', 'Coller');
   });
 });
 
@@ -540,25 +520,37 @@ test.describe('paste edge cases', () => {
     expect(text?.trim()).toBe('');
   });
 
-  test('handles large content and updates counter accurately', async ({ page }) => {
+  test('handles large content', async ({ page }) => {
     const large = 'x'.repeat(10000);
     await paste(page, { plain: large });
     const text = await editorText(page);
     expect(text?.length).toBe(10000);
-    const count = await counterText(page);
-    expect(count).toBe('10000');
   });
 
-  test('counter reflects trimmed length (ignores surrounding whitespace)', async ({ page }) => {
+  test('trims surrounding whitespace', async ({ page }) => {
     await paste(page, { plain: '  hi  ' });
-    const count = await counterText(page);
-    expect(count).toBe('2');
+    expect(await editorText(page)).toBe('hi');
   });
 });
 
-// ─── character counter ───────────────────────────────────────────────────────
+// ─── typing ──────────────────────────────────────────────────────────────────
 
-test.describe('character counter', () => {
+test.describe('typing', () => {
+  test('no I-beam or caret on initial load; both appear once text is pasted', async ({ page }) => {
+    await page.goto('/');
+    const read = () => page.locator('#mcguffin').evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { cursor: cs.cursor, caret: cs.caretColor };
+    });
+    const empty = await read();
+    expect(empty.cursor).toBe('default');
+    expect(empty.caret).toBe('rgba(0, 0, 0, 0)');
+    await page.locator('#mcguffin').evaluate((el) => { el.textContent = 'hello'; });
+    const filled = await read();
+    expect(filled.cursor).toBe('text');
+    expect(filled.caret).not.toBe('rgba(0, 0, 0, 0)');
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
@@ -567,7 +559,7 @@ test.describe('character counter', () => {
     // Click the box's corner: the selectable help text covers its middle while empty
     await page.locator('#mcguffin').click({ position: { x: 5, y: 5 } });
     await page.keyboard.type('hello');
-    await expect(page.locator('#counter')).toHaveText('5');
+    await expect(page.locator('#mcguffin')).toHaveText('hello');
   });
 });
 
