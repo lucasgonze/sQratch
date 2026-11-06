@@ -12,11 +12,7 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui"
   },
-  "dependencies": {
-    "package-lock.json": "^1.0.0",
-    "package.json": "^2.0.1"
-  },
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.65.0"
   }
 }
