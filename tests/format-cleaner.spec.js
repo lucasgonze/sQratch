@@ -75,17 +75,17 @@ test.describe('page structure', () => {
     expect(focused).toBe('mcguffin');
   });
 
-  test('there is no character counter', async ({ page }) => {
-    await expect(page.locator('#counter')).toHaveCount(0);
+  test('there is no visible character counter', async ({ page }) => {
+    await expect(page.locator('#counter')).toBeHidden();
   });
 
   test('markdown toggle button is hidden', async ({ page }) => {
     await expect(page.locator('#convert-to-markdown')).toBeHidden();
   });
 
-  test('the markdown help panel and its toggle are gone', async ({ page }) => {
-    await expect(page.locator('#toggle-help')).toHaveCount(0);
-    await expect(page.locator('#markdown-help')).toHaveCount(0);
+  test('the markdown help panel and its toggle are hidden', async ({ page }) => {
+    await expect(page.locator('#toggle-help')).toBeHidden();
+    await expect(page.locator('#markdown-help')).toBeHidden();
   });
 
   test('markdown preview area is hidden', async ({ page }) => {
@@ -220,12 +220,12 @@ test.describe('newline handling', () => {
 });
 
 // ─── copy-all button ─────────────────────────────────────────────────────────
-// Button removed — paste already copies the cleaned text.
+// Hidden in Copy Clean mode — paste already copies the cleaned text. Quick Edit shows it.
 
-test.describe('copy-all button absent', () => {
-  test('copy-all button does not exist in the DOM', async ({ page }) => {
+test.describe('copy-all button hidden', () => {
+  test('copy-all button is hidden in Copy Clean mode', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#copy-all')).toHaveCount(0);
+    await expect(page.locator('#copy-all')).toBeHidden();
   });
 });
 
@@ -469,12 +469,12 @@ test.describe('how-it-works table', () => {
 });
 
 // ─── remove-formatting button ────────────────────────────────────────────────
-// Button removed — auto-clean on paste replaces it.
+// Hidden in Copy Clean mode — auto-clean on paste replaces it. Quick Edit shows it.
 
-test.describe('remove-formatting button absent', () => {
-  test('remove-formatting button does not exist in the DOM', async ({ page }) => {
+test.describe('remove-formatting button hidden', () => {
+  test('remove-formatting button is hidden in Copy Clean mode', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#remove-formatting')).toHaveCount(0);
+    await expect(page.locator('#remove-formatting')).toBeHidden();
   });
 });
 
